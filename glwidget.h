@@ -10,7 +10,7 @@
 using namespace glm;
 
 #include <QOpenGLWidget>
-
+#include <shader.h>
 class GLWidget:public QOpenGLWidget
 {
 public:
@@ -20,6 +20,7 @@ public:
     void paintGL();
 
 private:
+    Shader *shaderObject;
     GLuint shaderProgram;
     GLuint VAO;
 };

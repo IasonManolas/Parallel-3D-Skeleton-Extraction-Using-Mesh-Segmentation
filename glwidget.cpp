@@ -22,7 +22,7 @@ const GLchar* fragmentShaderSource = "#version 330 core\n"
     "color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
     "}\n\0";
 
-GLWidget::GLWidget(QWidget *parent)
+GLWidget::GLWidget(QWidget *parent):shaderObject()
 {
 
     QOpenGLWidget *widget=this;
@@ -48,49 +48,7 @@ void GLWidget::initializeGL()
 //        glViewport(0, 0, width, height);
 
 
-    //Vertex Shader
-    GLuint vertexShader=glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader,1,&vertexShaderSource,NULL);
-    glCompileShader(vertexShader);
-
-    //Check for compile time errors
-    GLint success;
-    GLchar infoLog[512];
-    glGetShaderiv(vertexShader,GL_COMPILE_STATUS,&success);
-    if(!success)
-    {
-        glGetShaderInfoLog(vertexShader,512,NULL,infoLog);
-        std::cout<<"ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"<<infoLog<<std::endl;
-    }
-
-    //Fragment Shader
-    GLuint fragmentShader=glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader,1,&fragmentShaderSource,NULL);
-    glCompileShader(fragmentShader);
-
-    //Check for compile time errors
-    glGetShaderiv(fragmentShader,GL_COMPILE_STATUS,&success);
-    if(!success)
-    {
-        glGetShaderInfoLog(fragmentShader,512,NULL,infoLog);
-        std::cout<<"ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"<<infoLog<<std::endl;
-    }
-
-    //Link shaders
-    shaderProgram=glCreateProgram();
-    glAttachShader(shaderProgram,vertexShader);
-    glAttachShader(shaderProgram,fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    //Check for linking errors
-    glGetProgramiv(shaderProgram,GL_LINK_STATUS,&success);
-    if(!success)
-    {
-        glGetProgramInfoLog(shaderProgram,512,NULL,infoLog);
-        std::cout<<"ERROR::SHADER::PROGRAM::LINKING_FAILED\n"<<infoLog<<std::endl;
-    }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    shaderObject=new Shader(vertexShaderSource,fragmentShaderSource);
 
     GLfloat vertices[] = {
              0.5f,  0.5f, 0.0f,  // Top Right
@@ -138,7 +96,7 @@ void GLWidget::paintGL()
     //Clear the colorbuffer
     glClearColor(0.2f,0.3f,0.3f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT);    //Draw our first triangle
-    glUseProgram(shaderProgram);
+    glUseProgram(shaderObject->programID);
     glBindVertexArray(VAO);
 
     glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
