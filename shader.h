@@ -3,13 +3,47 @@
 
 #include <GL/glew.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 class Shader
 {
 public:
     GLuint programID;
-    Shader(const GLchar* vertexShaderSource,const GLchar* fragmentShaderSource)
+    Shader(const GLchar* vertexPath,const GLchar* fragmentPath)
     {
-            //Vertex Shader
+
+        // 1. Retrieve the vertex/fragment source code from filePath
+        std::string vertexCode;
+        std::string fragmentCode;
+        std::ifstream vShaderFile;
+        std::ifstream fShaderFile;
+        // ensures ifstream objects can throw exceptions:
+        vShaderFile.exceptions (std::ifstream::badbit);
+        fShaderFile.exceptions (std::ifstream::badbit);
+        try
+        {
+            // Open files
+            vShaderFile.open(vertexPath);
+            fShaderFile.open(fragmentPath);
+            std::stringstream vShaderStream, fShaderStream;
+            // Read file's buffer contents into streams
+            vShaderStream << vShaderFile.rdbuf();
+            fShaderStream << fShaderFile.rdbuf();
+            // close file handlers
+            vShaderFile.close();
+            fShaderFile.close();
+            // Convert stream into string
+            vertexCode = vShaderStream.str();
+            fragmentCode = fShaderStream.str();
+        }
+        catch (std::ifstream::failure e)
+        {
+            std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+        }
+        const GLchar* vertexShaderSource = vertexCode.c_str();
+        const GLchar * fragmentShaderSource = fragmentCode.c_str();
+
+        //Vertex Shader
         GLuint vertexShader=glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader,1,&vertexShaderSource,NULL);
         glCompileShader(vertexShader);
@@ -54,9 +88,14 @@ public:
         glDeleteShader(fragmentShader);
 
     }
-    Shader()
-    {
 
+    Shader() //using this constructor in class GLWidget before opengl is initialized (?)
+    {
+    }
+
+    void Use()
+    {
+        glUseProgram(programID);
     }
 };
 

@@ -26,3 +26,8 @@ unix:!macx: LIBS += -L$$PWD/../../../../../usr/lib64/ -lGLEW
 
 INCLUDEPATH += $$PWD/../../../../../usr/include/GL
 DEPENDPATH += $$PWD/../../../../../usr/include/GL
+
+DISTFILES += \
+   shaders/fragment.glsl \
+   shaders/vertex.glsl
+

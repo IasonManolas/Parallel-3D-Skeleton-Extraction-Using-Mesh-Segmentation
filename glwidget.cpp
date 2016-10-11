@@ -5,24 +5,11 @@
 #include <iostream>
 #include <QDebug>
 #include <QOpenGLContext>
+#include <QCoreApplication>
+#include <QTime>
 // Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 600;
-
-// Shaders
-const GLchar* vertexShaderSource = "#version 330 core\n"
-  "layout (location = 0)in vec3 position;\n"
-    "void main()\n"
-    "{\n"
-    "gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
-    "}\0";
-const GLchar* fragmentShaderSource = "#version 330 core\n"
-    "out vec4 color;\n"
-    "void main()\n"
-    "{\n"
-    "color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\n\0";
-
-GLWidget::GLWidget(QWidget *parent):shaderObject()
+GLWidget::GLWidget(QWidget *parent):shaderObject() //I have to constructors for class Shader in order
+  //to use the "real" one after the opengl context is active
 {
 
     QOpenGLWidget *widget=this;
@@ -47,18 +34,20 @@ void GLWidget::initializeGL()
 //    glfwGetFramebufferSize(window, &width, &height);
 //        glViewport(0, 0, width, height);
 
+    //Load shader files
 
-    shaderObject=new Shader(vertexShaderSource,fragmentShaderSource);
+      //I have to constructors for class Shader in order
+    //to use the "real" one after the opengl context is active
+    //IS THIS SYNTAX OS dependant? build dir must be inside source dir
+    shaderObject=new Shader("../shaders/vertex.glsl","../shaders/fragment.glsl");
 
     GLfloat vertices[] = {
-             0.5f,  0.5f, 0.0f,  // Top Right
-             0.5f, -0.5f, 0.0f,  // Bottom Right
-            -0.5f, -0.5f, 0.0f,  // Bottom Left
-            -0.5f,  0.5f, 0.0f   // Top Left
-        };
-        GLuint indices[] = {  // Note that we start from 0!
-            0, 1, 3,  // First Triangle
-            1, 2, 3   // Second Triangle
+        // Positions         // Colors
+         0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // Bottom Right
+        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // Bottom Left
+         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // Top
+    };            GLuint indices[] = {  // Note that we start from 0!
+            0, 1, 2,  // First Triangle
         };
 
 
@@ -77,12 +66,18 @@ void GLWidget::initializeGL()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(GLfloat),(GLvoid*)0);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,6*sizeof(GLfloat),(GLvoid*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,6*sizeof(GLfloat),(GLvoid*)(3*sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
 
     glBindBuffer(GL_ARRAY_BUFFER,0);
 
     glBindVertexArray(0);
+
+//    connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
+//            timer.start(30);
 
 }
 void GLWidget::resizeGL(int w, int h)
@@ -96,10 +91,9 @@ void GLWidget::paintGL()
     //Clear the colorbuffer
     glClearColor(0.2f,0.3f,0.3f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT);    //Draw our first triangle
-    glUseProgram(shaderObject->programID);
     glBindVertexArray(VAO);
-
-    glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+    shaderObject->Use();
+    glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_INT,0);
     glBindVertexArray(0);
 
 }

@@ -10,6 +10,7 @@
 using namespace glm;
 
 #include <QOpenGLWidget>
+#include <QTimer>
 #include <shader.h>
 class GLWidget:public QOpenGLWidget
 {
@@ -23,6 +24,7 @@ private:
     Shader *shaderObject;
     GLuint shaderProgram;
     GLuint VAO;
+    QTimer timer;
 };
 
 #endif // GLWIDGET_H
