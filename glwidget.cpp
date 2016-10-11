@@ -137,16 +137,7 @@ void GLWidget::paintGL()
     //Render
     //Clear the colorbuffer
     glClearColor(0.2f,0.3f,0.3f,1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-std::cout<<"Painted!"<<std::endl;
-qDebug() << "Widget OpenGl: " << format().majorVersion() << "." << format().minorVersion();
-qDebug() << "Context valid: " << context()->isValid();
-qDebug() << "Really used OpenGl: " << context()->format().majorVersion() << "." << context()->format().minorVersion();
-qDebug() << "OpenGl information: VENDOR:       " << (const char*)glGetString(GL_VENDOR);
-qDebug() << "                    RENDERDER:    " << (const char*)glGetString(GL_RENDERER);
-qDebug() << "                    VERSION:      " << (const char*)glGetString(GL_VERSION);
-qDebug() << "                    GLSL VERSION: " << (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
-    //Draw our first triangle
+    glClear(GL_COLOR_BUFFER_BIT);    //Draw our first triangle
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
 
