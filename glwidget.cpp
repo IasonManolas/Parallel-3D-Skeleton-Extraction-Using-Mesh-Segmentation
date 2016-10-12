@@ -14,7 +14,10 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // Window dimensions
-const GLuint WIDTH = 800, HEIGHT = 600;
+#define  WIDTH GLuint(800)
+#define  HEIGHT GLuint(600)
+
+float thetaDegrees=0;
 GLWidget::GLWidget(QWidget *parent):shaderObject() //I have to constructors for class Shader in order
   //to use the "real" one after the opengl context is active
 {
@@ -112,9 +115,10 @@ void GLWidget::initializeGL()
     glBindBuffer(GL_ARRAY_BUFFER,0);
 
     glBindVertexArray(0);
+    glEnable(GL_DEPTH_TEST);
 
-//    connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
-//            timer.start(30);
+    connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
+            timer.start(30);
 
 }
 void GLWidget::resizeGL(int w, int h)
@@ -127,15 +131,16 @@ void GLWidget::paintGL()
     //Render
     //Clear the colorbuffer
     glClearColor(0.2f,0.3f,0.3f,1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    thetaDegrees+=1.0f;
     // Create transformations
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 projection;
-    model = glm::rotate(model, -55.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(thetaDegrees), glm::vec3(0.5f, 1.0f, 1.0f));
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    projection = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
+    projection = glm::perspective(45.0f, (GLfloat)(WIDTH / HEIGHT), 0.1f, 100.0f);
     // Get their uniform location
     GLint modelLoc = glGetUniformLocation(shaderObject->programID, "model");
     GLint viewLoc = glGetUniformLocation(shaderObject->programID, "view");
