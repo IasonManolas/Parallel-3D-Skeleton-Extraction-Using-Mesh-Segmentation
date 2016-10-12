@@ -13,6 +13,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+//SOIL Image Loader
+#include <SOIL.h>
 // Window dimensions
 #define  WIDTH GLuint(800)
 #define  HEIGHT GLuint(600)
@@ -40,37 +42,25 @@ void GLWidget::initializeGL()
     if( GLEW_OK != err ){
     qDebug() << "[Error] GLEW failed to initialize. " << (const char*)glewGetErrorString(err);
     }
-    int width,height;
-//    glfwGetFramebufferSize(window, &width, &height);
-//        glViewport(0, 0, width, height);
+    glViewport(0,0,WIDTH,HEIGHT);
 
-    //Load shader files
+    glEnable(GL_DEPTH_TEST);
 
-      //I have to constructors for class Shader in order
+    //I have to constructors for class Shader in order
     //to use the "real" one after the opengl context is active
-    //IS THIS SYNTAX OS dependant? build dir must be inside source dir
-    shaderObject=new Shader("../shaders/vertex.glsl","../shaders/fragment.glsl");
-
-//    GLfloat vertices[] = {
-//        // Positions         // Colors
-//         0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // Bottom Right
-//        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // Bottom Left
-//         0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // Top
-//    };            GLuint indices[] = {  // Note that we start from 0!
-//            0, 1, 2,  // First Triangle
-//        };
-
+    //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
+    shaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
 
         GLfloat vertices[] = {
-            0.5f, -0.5f,  0.5f, //FBR 0
-           -0.5f, -0.5f,  0.5f, //FBL 1
-            0.5f,  0.5f,  0.5f, //FTR 2
-           -0.5f,  0.5f,  0.5f, //FTL 3
+            0.5f, -0.5f,  0.5f, 	1.0f, 0.0f, //FBR 0
+           -0.5f, -0.5f,  0.5f, 	0.0f, 0.0f, //FBL 1
+            0.5f,  0.5f,  0.5f, 	1.0f, 1.0f, //FTR 2
+           -0.5f,  0.5f,  0.5f, 	0.0f, 1.0f, //FTL 3
 
-            0.5f, -0.5f, -0.5f, //BBR 4
-           -0.5f, -0.5f, -0.5f, //BBL 5
-            0.5f,  0.5f, -0.5f, //BTR 6
-           -0.5f,  0.5f, -0.5f, //BTL 7
+            0.5f, -0.5f, -0.5f, 	1.0f, 0.0f, //BBR 4
+           -0.5f, -0.5f, -0.5f, 	0.0f, 0.0f, //BBL 5
+            0.5f,  0.5f, -0.5f, 	1.0f, 1.0f, //BTR 6
+           -0.5f,  0.5f, -0.5f, 	0.0f, 1.0f //BTL 7
             };
         GLuint indices[] = {  // Note that we start from 0!
                 2, 3, 1,  //Triangle 1
@@ -106,16 +96,54 @@ void GLWidget::initializeGL()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(GLfloat),(GLvoid*)0);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,5*sizeof(GLfloat),(GLvoid*)0);
     glEnableVertexAttribArray(0);
 //    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,6*sizeof(GLfloat),(GLvoid*)(3*sizeof(GLfloat)));
 //    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,5*sizeof(GLfloat),(GLvoid*)(3*sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
 
 
     glBindBuffer(GL_ARRAY_BUFFER,0);
 
-    glBindVertexArray(0);
-    glEnable(GL_DEPTH_TEST);
+    glBindVertexArray(0); // Unbind VAO
+
+    // Load and create a texture
+     // ====================
+    // Texture 1
+    // ====================
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1); // All upcoming GL_TEXTURE_2D operations now have effect on our texture object
+    // Set our texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // Set texture filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Load, create texture and generate mipmaps
+    int width, height;
+    unsigned char* image = SOIL_load_image("../OpenGL_WithoutWrappers/container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    SOIL_free_image_data(image);
+    glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
+    // ===================
+    // Texture 2
+    // ===================
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // Set our texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // Set texture filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Load, create texture and generate mipmaps
+    image = SOIL_load_image("../OpenGL_WithoutWrappers/awesomeface.png", &width, &height, 0, SOIL_LOAD_RGB);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    SOIL_free_image_data(image);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
@@ -133,12 +161,22 @@ void GLWidget::paintGL()
     glClearColor(0.2f,0.3f,0.3f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // Bind Textures using texture units
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    glUniform1i(glGetUniformLocation(shaderObject->programID, "ourTexture1"), 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    glUniform1i(glGetUniformLocation(shaderObject->programID, "ourTexture2"), 1);
+
+    shaderObject->Use();
+
     thetaDegrees+=1.0f;
     // Create transformations
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 projection;
-    model = glm::rotate(model, glm::radians(thetaDegrees), glm::vec3(0.5f, 1.0f, 1.0f));
+    model = glm::rotate(model, glm::radians(thetaDegrees), glm::vec3(1.0f, 0.1f, 0.4f));
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
     projection = glm::perspective(45.0f, (GLfloat)(WIDTH / HEIGHT), 0.1f, 100.0f);
     // Get their uniform location
@@ -152,8 +190,9 @@ void GLWidget::paintGL()
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     glBindVertexArray(VAO);
-    shaderObject->Use();
     glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,0);
     glBindVertexArray(0);
+
+    //remember to create a destroy widget function for delete Shader, DeleteVertexArrays and DeleteBuffers
 
 }

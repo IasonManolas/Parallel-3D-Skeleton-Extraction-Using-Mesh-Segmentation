@@ -25,6 +25,9 @@ private:
     GLuint shaderProgram;
     GLuint VAO;
     QTimer timer;
+    GLuint texture1;
+    GLuint texture2;
+
 };
 
 #endif // GLWIDGET_H
