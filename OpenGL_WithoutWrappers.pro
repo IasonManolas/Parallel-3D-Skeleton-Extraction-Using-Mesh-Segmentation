@@ -10,7 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = OpenGL_WithoutWrappers
 TEMPLATE = app
-
+CONFIG+=c++11
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -19,7 +19,8 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     glwidget.h \
     shader.h \
-    ui_mainwindow.h
+    ui_mainwindow.h \
+    camera.h
 
 FORMS    += mainwindow.ui
 

@@ -20,7 +20,20 @@
 #define  HEIGHT GLuint(600)
 
 float thetaDegrees=0;
-GLWidget::GLWidget(QWidget *parent):shaderObject() //I have to constructors for class Shader in order
+glm::vec3 cubePositions[] = {
+    glm::vec3( 0.0f,  0.0f,  0.0f),
+    glm::vec3( 2.0f,  5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f),
+    glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3( 2.4f, -0.4f, -3.5f),
+    glm::vec3(-1.7f,  3.0f, -7.5f),
+    glm::vec3( 1.3f, -2.0f, -2.5f),
+    glm::vec3( 1.5f,  2.0f, -2.5f),
+    glm::vec3( 1.5f,  0.2f, -1.5f),
+    glm::vec3(-1.3f,  1.0f, -1.5f)
+  };
+bool keys[4];
+GLWidget::GLWidget(QWidget *parent):shaderObject(),camObject() //I have to constructors for class Shader in order
   //to use the "real" one after the opengl context is active
 {
 
@@ -31,6 +44,15 @@ GLWidget::GLWidget(QWidget *parent):shaderObject() //I have to constructors for 
     format.setVersion(4, 1);
     format.setProfile(QSurfaceFormat::CoreProfile);
     widget->setFormat(format);
+
+    setFocusPolicy(Qt::StrongFocus);
+}
+
+GLWidget::~GLWidget()
+{
+    makeCurrent();
+    delete shaderObject;
+    delete camObject;
 }
 void GLWidget::initializeGL()
 {
@@ -145,8 +167,13 @@ void GLWidget::initializeGL()
     SOIL_free_image_data(image);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    //Create camera
+    camObject=new Camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
+
+
 
 }
 void GLWidget::resizeGL(int w, int h)
@@ -172,27 +199,73 @@ void GLWidget::paintGL()
     shaderObject->Use();
 
     thetaDegrees+=1.0f;
-    // Create transformations
-    glm::mat4 model;
+
+    // Camera/View transformation
     glm::mat4 view;
+    GLfloat radius = 10.0f;
+//    GLfloat camX = sin(thetaDegrees/30) * radius;
+//    GLfloat camZ = cos(thetaDegrees/30) * radius;
+//    camObject->pos=glm::vec3(camX,camObject->pos.y,camZ);
+    do_movement();
+    view = glm::lookAt(camObject->getPos(),camObject->getPos()+camObject->getFront(),camObject->getUp());
+
+    // Projection
     glm::mat4 projection;
-    model = glm::rotate(model, glm::radians(thetaDegrees), glm::vec3(1.0f, 0.1f, 0.4f));
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    projection = glm::perspective(45.0f, (GLfloat)(WIDTH / HEIGHT), 0.1f, 100.0f);
-    // Get their uniform location
+    projection = glm::perspective(45.0f, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
+
+    // Get the uniform locations
     GLint modelLoc = glGetUniformLocation(shaderObject->programID, "model");
     GLint viewLoc = glGetUniformLocation(shaderObject->programID, "view");
     GLint projLoc = glGetUniformLocation(shaderObject->programID, "projection");
-    // Pass them to the shaders
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+    // Pass the matrices to the shader
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,0);
+    for (int i=0;i<10;i++)
+    {
+        // Calculate the model matrix for each object and pass it to shader before drawing
+        glm::mat4 model;
+        model = glm::translate(model,cubePositions[i]);
+        GLfloat angle = 20.0f * i;
+        model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+        glDrawElements(GL_TRIANGLES, 36,GL_UNSIGNED_INT, 0);
+    }
     glBindVertexArray(0);
 
     //remember to create a destroy widget function for delete Shader, DeleteVertexArrays and DeleteBuffers
+
+}
+
+void GLWidget::keyPressEvent(QKeyEvent *event)//what does this mean?: If you reimplement this handler, it is very important that you call the base class implementation if you do not act upon the key.
+{
+    if(event->key()==Qt::Key_Up) keys[0]=true;
+    if(event->key()==Qt::Key_Down) keys[1]=true;
+    if(event->key()==Qt::Key_Right) keys[2]=true;
+    if(event->key()==Qt::Key_Left) keys[3]=true;
+}
+
+void GLWidget::keyReleaseEvent(QKeyEvent *event)
+{
+    if(event->key()==Qt::Key_Up) keys[0]=false;
+    if(event->key()==Qt::Key_Down) keys[1]=false;
+    if(event->key()==Qt::Key_Right) keys[2]=false;
+    if(event->key()==Qt::Key_Left) keys[3]=false;
+
+}
+void GLWidget::do_movement()
+{
+    GLfloat cameraSpeed=0.01f;
+    if(keys[0])
+            camObject->setPos(camObject->getPos()+cameraSpeed*camObject->getFront());
+    if(keys[1])
+            camObject->setPos(camObject->getPos()-cameraSpeed*camObject->getFront());
+    if(keys[2])
+        camObject->setPos(camObject->getPos()+cameraSpeed*glm::normalize(glm::cross(camObject->getFront(),camObject->getUp())));
+    if(keys[3])
+        camObject->setPos(camObject->getPos()-cameraSpeed*glm::normalize(glm::cross(camObject->getFront(),camObject->getUp())));
 
 }
