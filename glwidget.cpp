@@ -258,7 +258,7 @@ void GLWidget::keyReleaseEvent(QKeyEvent *event)
 }
 void GLWidget::do_movement()
 {
-    GLfloat cameraSpeed=0.01f;
+    GLfloat cameraSpeed=0.05f;
     if(keys[0])
             camObject->setPos(camObject->getPos()+cameraSpeed*camObject->getFront());
     if(keys[1])
