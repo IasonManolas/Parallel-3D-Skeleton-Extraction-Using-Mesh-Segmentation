@@ -244,5 +244,5 @@ void GLWidget::mouseReleaseEvent(QMouseEvent *event)
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
     std::cout<<"x="<<event->pos().x()<<" y="<<event->pos().y()<<std::endl;
-
+	this->
 }
