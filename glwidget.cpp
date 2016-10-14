@@ -12,14 +12,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
 //SOIL Image Loader
 #include <SOIL.h>
+
 // Window dimensions
 #define  WIDTH GLuint(800)
 #define  HEIGHT GLuint(600)
 
-float thetaDegrees=0;
 GLWidget::GLWidget(QWidget *parent):shaderObject(),camObject() //I have to constructors for class Shader in order
   //to use the "real" one after the opengl context is active
 {
@@ -155,7 +154,7 @@ void GLWidget::initializeGL()
     glBindTexture(GL_TEXTURE_2D, 0);
 
     //Create camera
-    camObject=new Camera(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,0.0f,-1.0f),glm::vec3(0.0f,1.0f,0.0f));
+    camObject=new Camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
@@ -185,15 +184,9 @@ void GLWidget::paintGL()
 
     shaderObject->Use();
 
-    thetaDegrees+=1.0f;
-
     // Camera/View transformation
     glm::mat4 view;
-    GLfloat radius = 10.0f;
-//    GLfloat camX = sin(thetaDegrees/30) * radius;
-//    GLfloat camZ = cos(thetaDegrees/30) * radius;
-//    camObject->pos=glm::vec3(camX,camObject->pos.y,camZ);
-    view = glm::lookAt(camObject->getPos(),camObject->getPos()+camObject->getFront(),camObject->getUp());
+    view = camObject->getViewMatrix();
 
     // Projection
     glm::mat4 projection;
@@ -211,7 +204,7 @@ void GLWidget::paintGL()
     glBindVertexArray(VAO);
     // Calculate the model matrix for each object and pass it to shader before drawing
     glm::mat4 model;
-    model = glm::translate(model,glm::vec3(0.0f,0.0f,-3.0f));
+    model = glm::translate(model,glm::vec3(0.0f,0.0f,0.0f));
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glDrawElements(GL_TRIANGLES, 36,GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -233,6 +226,8 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 {
     std::cout<<"mouse pressed"<<std::endl;
 
+    //initialize mouse position
+    lastMousePos=QVector2D(event->localPos());
 }
 
 void GLWidget::mouseReleaseEvent(QMouseEvent *event)
@@ -243,6 +238,20 @@ void GLWidget::mouseReleaseEvent(QMouseEvent *event)
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    std::cout<<"x="<<event->pos().x()<<" y="<<event->pos().y()<<std::endl;
+    QVector2D mouseOffset=QVector2D(event->localPos())-lastMousePos;
+    lastMousePos=QVector2D(event->localPos());
+
+    if(event->buttons()== Qt::LeftButton)
+    {
+        glm::vec2 mouseMoveOffset(mouseOffset.x(),mouseOffset.y());
+        camObject->processMouseMovement(mouseMoveOffset);
+    }
+}
+
+void GLWidget::wheelEvent(QWheelEvent *event)
+{
+    qDebug()<<event->delta();
+   camObject->processWheelMovement(event->delta());
 
 }
+

@@ -13,6 +13,7 @@
 #include <QOpenGLWidget>
 #include <QKeyEvent>
 #include <QTimer>
+#include <QVector2D>
 
 //My headers
 #include <shader.h>
@@ -36,7 +37,7 @@ private:
     void mousePressEvent(QMouseEvent* event);
     void mouseReleaseEvent(QMouseEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
-
+    void wheelEvent(QWheelEvent *event);
 private:
     Shader *shaderObject;
     GLuint shaderProgram;
@@ -45,5 +46,6 @@ private:
     GLuint texture1;
     GLuint texture2;
     Camera *camObject;
+    QVector2D lastMousePos;
 };
 #endif // GLWIDGET_H

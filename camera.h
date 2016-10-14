@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp> //glm::lookAt()
+#include <glm/gtx/rotate_vector.hpp> //glm::rotate
 
 class Camera
 {
@@ -13,26 +14,20 @@ public:
         this->pos=pos;
         this->target=target;
         this->up=up;
-        front=glm::normalize(target-pos);
-        right=glm::normalize(glm::cross(front,up));
     }
 
-    glm::mat4 getViewMat()
+    glm::mat4 getViewMatrix()
     {
         return glm::lookAt(pos,target,up);
     }
 
+    void processMouseMovement(const glm::vec2& mouseOffsetVec);
+    void processWheelMovement(const int wheelDelta);
     glm::vec3 getPos() const;
     void setPos(const glm::vec3 &value);
 
     glm::vec3 getTarget() const;
     void setTarget(const glm::vec3 &value);
-
-    glm::vec3 getFront() const;
-    void setFront(const glm::vec3 &value);
-
-    glm::vec3 getRight() const;
-    void setRight(const glm::vec3 &value);
 
     glm::vec3 getUp() const;
     void setUp(const glm::vec3 &value);
@@ -40,13 +35,27 @@ public:
 private:
     glm::vec3 pos;
     glm::vec3 target;
-    glm::vec3 front;
-    glm::vec3 right;
     glm::vec3 up;
 
-    glm::mat4 view;
 };
 
+
+inline void Camera::processMouseMovement(const glm::vec2& mouseOffsetVec)
+{
+    glm::vec3 rotationAxis(-mouseOffsetVec.y,-mouseOffsetVec.x,0.0);
+    float angle=rotationAxis.length()/100.0;
+    rotationAxis=glm::normalize(rotationAxis);
+    this->setPos(glm::rotate(this->getPos(),angle,rotationAxis));
+}
+
+inline void Camera::processWheelMovement(const int wheelDelta)
+{
+    if(wheelDelta>0)
+    this->setPos(this->getPos()+0.1f*glm::normalize(this->getTarget()-this->getPos()));
+    else
+    this->setPos(this->getPos()-0.1f*glm::normalize(this->getTarget()-this->getPos()));
+
+}
 
 inline glm::vec3 Camera::getPos() const
 {
@@ -66,26 +75,6 @@ return target;
 inline void Camera::setTarget(const glm::vec3 &value)
 {
 target = value;
-}
-
-inline glm::vec3 Camera::getFront() const
-{
-return front;
-}
-
-inline void Camera::setFront(const glm::vec3 &value)
-{
-front = value;
-}
-
-inline glm::vec3 Camera::getRight() const
-{
-return right;
-}
-
-inline void Camera::setRight(const glm::vec3 &value)
-{
-right = value;
 }
 
 inline glm::vec3 Camera::getUp() const
