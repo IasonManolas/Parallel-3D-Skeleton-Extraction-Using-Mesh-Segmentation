@@ -250,7 +250,6 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void GLWidget::wheelEvent(QWheelEvent *event)
 {
-    qDebug()<<event->delta();
    camObject->processWheelMovement(event->delta());
 
 }
