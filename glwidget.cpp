@@ -38,6 +38,7 @@ GLWidget::~GLWidget()
 {
     makeCurrent();
     delete shaderObject;
+    delete lampShaderObject;
     delete camObject;
 }
 void GLWidget::initializeGL()
@@ -58,37 +59,54 @@ void GLWidget::initializeGL()
     //to use the "real" one after the opengl context is active
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
     shaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
+    lampShaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/lightfragment.glsl");
+     //Create camera
+    camObject=new Camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
 
-        GLfloat vertices[] = {
-            0.5f, -0.5f,  0.5f, 	1.0f, 0.0f, //FBR 0
-           -0.5f, -0.5f,  0.5f, 	0.0f, 0.0f, //FBL 1
-            0.5f,  0.5f,  0.5f, 	1.0f, 1.0f, //FTR 2
-           -0.5f,  0.5f,  0.5f, 	0.0f, 1.0f, //FTL 3
+    GLfloat vertices[] = {
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-            0.5f, -0.5f, -0.5f, 	1.0f, 0.0f, //BBR 4
-           -0.5f, -0.5f, -0.5f, 	0.0f, 0.0f, //BBL 5
-            0.5f,  0.5f, -0.5f, 	1.0f, 1.0f, //BTR 6
-           -0.5f,  0.5f, -0.5f, 	0.0f, 1.0f //BTL 7
-            };
-        GLuint indices[] = {  // Note that we start from 0!
-                2, 3, 1,  //Triangle 1
-                1, 0, 2,  // Triangle 2
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-                4, 7, 6,  // Triangle 3
-                7, 4, 5,  // Triangle 4
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-                2, 6, 7,  // Triangle 5
-                7, 3, 2,  // Triangle 6
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-                0, 1, 5,  // Triangle 7
-                5, 4, 0,  // Triangle 8
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-                1, 3, 7,  // Triangle 9
-                1, 7, 5,  // Triangle 10
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+    };
 
-                2, 0, 4,  // Triangle 11
-                4, 6, 2  // Triangle 12
-            };
     GLuint VBO,EBO;
 
     glGenVertexArrays(1,&VAO);
@@ -101,60 +119,25 @@ void GLWidget::initializeGL()
     glBindBuffer(GL_ARRAY_BUFFER,VBO);
     glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices,GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(indices),indices,GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,5*sizeof(GLfloat),(GLvoid*)0);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,6*sizeof(GLfloat),(GLvoid*)0);
     glEnableVertexAttribArray(0);
-//    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,6*sizeof(GLfloat),(GLvoid*)(3*sizeof(GLfloat)));
-//    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2,2,GL_FLOAT,GL_FALSE,5*sizeof(GLfloat),(GLvoid*)(3*sizeof(GLfloat)));
-    glEnableVertexAttribArray(2);
 
-
-    glBindBuffer(GL_ARRAY_BUFFER,0);
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,6*sizeof(GLfloat),(GLvoid*)(3*sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
 
     glBindVertexArray(0); // Unbind VAO
 
-    // Load and create a texture
-     // ====================
-    // Texture 1
-    // ====================
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1); // All upcoming GL_TEXTURE_2D operations now have effect on our texture object
-    // Set our texture parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // Set texture filtering
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // Load, create texture and generate mipmaps
-    int width, height;
-    unsigned char* image = SOIL_load_image("../OpenGL_WithoutWrappers/container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    SOIL_free_image_data(image);
-    glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
-    // ===================
-    // Texture 2
-    // ===================
-    glGenTextures(1, &texture2);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    // Set our texture parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // Set texture filtering
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // Load, create texture and generate mipmaps
-    image = SOIL_load_image("../OpenGL_WithoutWrappers/awesomeface.png", &width, &height, 0, SOIL_LOAD_RGB);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    SOIL_free_image_data(image);
-    glBindTexture(GL_TEXTURE_2D, 0);
+   glGenVertexArrays(1,&lightVAO);
+   glBindVertexArray(lightVAO);
 
-    //Create camera
-    camObject=new Camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+   glBindBuffer(GL_ARRAY_BUFFER,VBO);
+
+   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,6*sizeof(GLfloat),(GLvoid*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
@@ -169,20 +152,25 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::paintGL()
 {
-    //Render
     //Clear the colorbuffer
-    glClearColor(0.2f,0.3f,0.3f,1.0f);
+    glClearColor(0.1f,0.1f,0.1f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Bind Textures using texture units
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-    glUniform1i(glGetUniformLocation(shaderObject->programID, "ourTexture1"), 0);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    glUniform1i(glGetUniformLocation(shaderObject->programID, "ourTexture2"), 1);
-
     shaderObject->Use();
+
+    glm::vec3 lightPos(1.2f,1.0f,2.0f);
+    GLint objectColorLoc=glGetUniformLocation(shaderObject->programID,"objectColor");
+    GLint lightColorLoc=glGetUniformLocation(shaderObject->programID,"lightColor");
+    GLint lightPosLoc=glGetUniformLocation(shaderObject->programID,"lightPos");
+    GLint viewPosLoc=glGetAttribLocation(shaderObject->programID,"viewPos");
+    glUniform3f(objectColorLoc,1.0f,0.5f,0.31f);
+    glUniform3f(lightColorLoc,1.0f,1.0f,1.0f);
+    glUniform3f(lightPosLoc,lightPos.x,lightPos.y,lightPos.z);
+    glm::vec3 camPos=camObject->getPos();
+//    glUniform3f(viewPosLoc,camPos.x,camPos.y,camPos.z);
+    glUniform3f(viewPosLoc,0.0,0.0,3.0);
+
+//    std::cout<<"camPos.x="<<camPos.x<<" camPos.y="<<camPos.y<<" camPos.z="<<camPos.z<<std::endl;
 
     // Camera/View transformation
     glm::mat4 view;
@@ -201,14 +189,34 @@ void GLWidget::paintGL()
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
+
     glBindVertexArray(VAO);
     // Calculate the model matrix for each object and pass it to shader before drawing
     glm::mat4 model;
     model = glm::translate(model,glm::vec3(0.0f,0.0f,0.0f));
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glDrawElements(GL_TRIANGLES, 36,GL_UNSIGNED_INT, 0);
+    glDrawArrays(GL_TRIANGLES, 0,36);
     glBindVertexArray(0);
 
+    //Light Cube drawing
+    lampShaderObject->Use();
+
+    // Get the uniform locations
+    modelLoc = glGetUniformLocation(lampShaderObject->programID, "model");
+    viewLoc = glGetUniformLocation(lampShaderObject->programID, "view");
+    projLoc = glGetUniformLocation(lampShaderObject->programID, "projection");
+
+    // Pass the matrices to the shader
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+    glBindVertexArray(lightVAO);
+    model=glm::mat4();
+    model=glm::translate(model,lightPos);
+    model=glm::scale(model,glm::vec3(0.2f));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glDrawArrays(GL_TRIANGLES, 0,36);
+    glBindVertexArray(0);
     //remember to create a destroy widget function for delete Shader, DeleteVertexArrays and DeleteBuffers
 
 }
@@ -224,15 +232,12 @@ void GLWidget::keyReleaseEvent(QKeyEvent *event)
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
-    std::cout<<"mouse pressed"<<std::endl;
-
     //initialize mouse position
     lastMousePos=QVector2D(event->localPos());
 }
 
 void GLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-    std::cout<<"mouse released"<<std::endl;
 
 }
 

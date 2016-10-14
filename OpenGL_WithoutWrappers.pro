@@ -32,7 +32,8 @@ DEPENDPATH += $$PWD/../../../../../usr/include/GL
 DISTFILES += \
    shaders/fragment.glsl \
    shaders/vertex.glsl \
-    container.jpg
+    container.jpg \
+    shaders/lightfragment.glsl
 
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../../usr/local/lib/release/ -lSOIL

@@ -47,5 +47,8 @@ private:
     GLuint texture2;
     Camera *camObject;
     QVector2D lastMousePos;
+    GLuint lightVAO;
+    Shader *lampShaderObject;
+
 };
 #endif // GLWIDGET_H
