@@ -158,23 +158,36 @@ void GLWidget::paintGL()
 
     shaderObject->Use();
 
-    glm::vec3 lightPos(1.2f,1.0f,2.0f);
-    GLint objectColorLoc=glGetUniformLocation(shaderObject->programID,"objectColor");
-    GLint lightColorLoc=glGetUniformLocation(shaderObject->programID,"lightColor");
-    GLint lightPosLoc=glGetUniformLocation(shaderObject->programID,"lightPos");
     GLint viewPosLoc=glGetAttribLocation(shaderObject->programID,"viewPos");
-    glUniform3f(objectColorLoc,1.0f,0.5f,0.31f);
-    glUniform3f(lightColorLoc,1.0f,1.0f,1.0f);
-    glUniform3f(lightPosLoc,lightPos.x,lightPos.y,lightPos.z);
-    glm::vec3 camPos=camObject->getPos();
-//    glUniform3f(viewPosLoc,camPos.x,camPos.y,camPos.z);
-    glUniform3f(viewPosLoc,0.0,0.0,3.0);
+    glm::vec3 camPos=camObject->getPosition();
+    glUniform3f(viewPosLoc,camPos.x,camPos.y,camPos.z);
+
+    GLint matAmbientLoc  = glGetUniformLocation(shaderObject->programID, "material.ambient");
+    GLint matDiffuseLoc  = glGetUniformLocation(shaderObject->programID, "material.diffuse");
+    GLint matSpecularLoc = glGetUniformLocation(shaderObject->programID, "material.specular");
+    GLint matShineLoc    = glGetUniformLocation(shaderObject->programID, "material.shininess");
+    glUniform3f(matAmbientLoc,  1.0f, 0.5f, 0.31f);
+    glUniform3f(matDiffuseLoc,  1.0f, 0.5f, 0.31f);
+    glUniform3f(matSpecularLoc, 0.5f, 0.5f, 0.5f);
+    glUniform1f(matShineLoc,    32.0f);
+
+    glm::vec3 lightPos(1.2f,1.0f,2.0f);
+    GLint lightAmbientLoc  = glGetUniformLocation(shaderObject->programID, "light.ambient");
+    GLint lightDiffuseLoc  = glGetUniformLocation(shaderObject->programID, "light.diffuse");
+    GLint lightSpecularLoc = glGetUniformLocation(shaderObject->programID, "light.specular");
+    GLint lightPositionLoc = glGetUniformLocation(shaderObject->programID,"light.position");
+    glUniform3f(lightAmbientLoc,  0.2f, 0.2f, 0.2f);
+    glUniform3f(lightDiffuseLoc,  0.5f, 0.5f, 0.5f); // Let's darken the light a bit to fit the scene
+    glUniform3f(lightSpecularLoc, 1.0f, 1.0f, 1.0f);
+    glUniform3f(lightPositionLoc,lightPos.x,lightPos.y,lightPos.z);
 
 //    std::cout<<"camPos.x="<<camPos.x<<" camPos.y="<<camPos.y<<" camPos.z="<<camPos.z<<std::endl;
 
     // Camera/View transformation
     glm::mat4 view;
     view = camObject->getViewMatrix();
+
+//    std::cout<<"camPos.x="<<camPos.x<<" camPos.y="<<camPos.y<<" camPos.z="<<camPos.z<<std::endl;
 
     // Projection
     glm::mat4 projection;
@@ -249,7 +262,8 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     if(event->buttons()== Qt::LeftButton)
     {
         glm::vec2 mouseMoveOffset(mouseOffset.x(),mouseOffset.y());
-        camObject->processMouseMovement(mouseMoveOffset);
+//    std::cout<<"mouseoffset.x="<<mouseOffset.x()<<" mouseoffset.y="<<mouseOffset.y()<<std::endl;
+        camObject->processMouseMovement(mouseOffset);
     }
 }
 
