@@ -14,13 +14,15 @@ CONFIG+=c++11
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    glwidget.cpp
+    glwidget.cpp \
+    mesh.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
     shader.h \
     ui_mainwindow.h \
-    camera.h
+    camera.h \
+    mesh.h
 
 FORMS    += mainwindow.ui
 
