@@ -61,7 +61,7 @@ void GLWidget::initializeGL()
     shaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
     lampShaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/lightfragment.glsl");
      //Create camera
-    camObject=new Camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+    camObject=new Camera(glm::vec3(0.0f,0.0f,5.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
 
     GLfloat vertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -171,23 +171,21 @@ void GLWidget::paintGL()
     glUniform3f(matSpecularLoc, 0.5f, 0.5f, 0.5f);
     glUniform1f(matShineLoc,    32.0f);
 
-    glm::vec3 lightPos(1.2f,1.0f,2.0f);
+    glm::vec3 lightDirection(-0.2f,-0.2f,-1.0f);
     GLint lightAmbientLoc  = glGetUniformLocation(shaderObject->programID, "light.ambient");
     GLint lightDiffuseLoc  = glGetUniformLocation(shaderObject->programID, "light.diffuse");
     GLint lightSpecularLoc = glGetUniformLocation(shaderObject->programID, "light.specular");
-    GLint lightPositionLoc = glGetUniformLocation(shaderObject->programID,"light.position");
+    GLint lightDirectionLoc = glGetUniformLocation(shaderObject->programID,"light.direction");
     glUniform3f(lightAmbientLoc,  0.2f, 0.2f, 0.2f);
     glUniform3f(lightDiffuseLoc,  0.5f, 0.5f, 0.5f); // Let's darken the light a bit to fit the scene
     glUniform3f(lightSpecularLoc, 1.0f, 1.0f, 1.0f);
-    glUniform3f(lightPositionLoc,lightPos.x,lightPos.y,lightPos.z);
+    glUniform3f(lightDirectionLoc,lightDirection.x,lightDirection.y,lightDirection.z);
 
 //    std::cout<<"camPos.x="<<camPos.x<<" camPos.y="<<camPos.y<<" camPos.z="<<camPos.z<<std::endl;
 
     // Camera/View transformation
     glm::mat4 view;
-    view = camObject->getViewMatrix();
-
-//    std::cout<<"camPos.x="<<camPos.x<<" camPos.y="<<camPos.y<<" camPos.z="<<camPos.z<<std::endl;
+    view = camObject->getViewMat();
 
     // Projection
     glm::mat4 projection;
@@ -211,25 +209,25 @@ void GLWidget::paintGL()
     glDrawArrays(GL_TRIANGLES, 0,36);
     glBindVertexArray(0);
 
-    //Light Cube drawing
-    lampShaderObject->Use();
+//    //Light Cube drawing
+//    lampShaderObject->Use();
 
-    // Get the uniform locations
-    modelLoc = glGetUniformLocation(lampShaderObject->programID, "model");
-    viewLoc = glGetUniformLocation(lampShaderObject->programID, "view");
-    projLoc = glGetUniformLocation(lampShaderObject->programID, "projection");
+//    // Get the uniform locations
+//    modelLoc = glGetUniformLocation(lampShaderObject->programID, "model");
+//    viewLoc = glGetUniformLocation(lampShaderObject->programID, "view");
+//    projLoc = glGetUniformLocation(lampShaderObject->programID, "projection");
 
-    // Pass the matrices to the shader
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+//    // Pass the matrices to the shader
+//    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+//    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-    glBindVertexArray(lightVAO);
-    model=glm::mat4();
-    model=glm::translate(model,lightPos);
-    model=glm::scale(model,glm::vec3(0.2f));
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glDrawArrays(GL_TRIANGLES, 0,36);
-    glBindVertexArray(0);
+//    glBindVertexArray(lightVAO);
+//    model=glm::mat4();
+//    model=glm::translate(model,lightDirection);
+//    model=glm::scale(model,glm::vec3(0.2f));
+//    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+//    glDrawArrays(GL_TRIANGLES, 0,36);
+//    glBindVertexArray(0);
     //remember to create a destroy widget function for delete Shader, DeleteVertexArrays and DeleteBuffers
 
 }
@@ -262,7 +260,6 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     if(event->buttons()== Qt::LeftButton)
     {
         glm::vec2 mouseMoveOffset(mouseOffset.x(),mouseOffset.y());
-//    std::cout<<"mouseoffset.x="<<mouseOffset.x()<<" mouseoffset.y="<<mouseOffset.y()<<std::endl;
         camObject->processMouseMovement(mouseOffset);
     }
 }
