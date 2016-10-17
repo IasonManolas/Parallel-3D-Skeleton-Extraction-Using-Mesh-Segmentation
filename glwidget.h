@@ -16,9 +16,9 @@
 #include <QVector2D>
 
 //My headers
-#include <shader.h>
-#include <camera.h>
-
+#include "shader.h"
+#include "camera.h"
+#include "model.h"
 using namespace glm;
 
 class GLWidget:public QOpenGLWidget
@@ -40,15 +40,16 @@ private:
     void wheelEvent(QWheelEvent *event);
 private:
     Shader *shaderObject;
-    GLuint shaderProgram;
-    GLuint VAO;
+    //GLuint shaderProgram;
+//    GLuint VAO;
     QTimer timer;
-    GLuint texture1;
-    GLuint texture2;
+//    GLuint texture1;
+//    GLuint texture2;
     Camera *camObject;
     QVector2D lastMousePos;
-    GLuint lightVAO;
-    Shader *lampShaderObject;
+//    GLuint lightVAO;
+   // Shader *lampShaderObject;
+    Model* ourModel;
 
 };
 #endif // GLWIDGET_H

@@ -15,14 +15,16 @@ CONFIG+=c++11
 SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
-    mesh.cpp
+    mesh.cpp \
+    model.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
     shader.h \
     ui_mainwindow.h \
     camera.h \
-    mesh.h
+    mesh.h \
+    model.h
 
 FORMS    += mainwindow.ui
 
@@ -35,7 +37,10 @@ DISTFILES += \
    shaders/fragment.glsl \
    shaders/vertex.glsl \
     container.jpg \
-    shaders/lightfragment.glsl
+    nanosuit.obj \
+    Models/default.png \
+    Models/copyright.txt \
+    Models/default.mtl
 
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../../usr/local/lib/release/ -lSOIL
@@ -50,3 +55,8 @@ else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../../..
 else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/release/SOIL.lib
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/debug/SOIL.lib
 else:unix: PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/libSOIL.a
+
+unix:!macx: LIBS += -L$$PWD/../../../../../usr/local/lib/ -lassimp
+
+INCLUDEPATH += $$PWD/../../../../../usr/local/include
+DEPENDPATH += $$PWD/../../../../../usr/local/include
