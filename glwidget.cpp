@@ -64,7 +64,7 @@ void GLWidget::initializeGL()
      //Create camera
     camObject=new Camera(glm::vec3(0.0f,0.0f,5.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
 
-    ourModel=new Model("../OpenGL_WithoutWrappers/Models/bunny.obj");
+    ourModel=new Model("../OpenGL_WithoutWrappers/nanosuit/nanosuit.obj");
        connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
 
