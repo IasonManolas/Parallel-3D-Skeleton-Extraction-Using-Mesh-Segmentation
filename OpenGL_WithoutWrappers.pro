@@ -43,8 +43,8 @@ DISTFILES += \
     Models/default.mtl
 
 
-#win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../../usr/local/lib/release/ -lSOIL
-#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../../usr/local/lib/debug/ -lSOIL
+#win32:config(release, debug|release): libs += -l$$pwd/../../../../../usr/local/lib/release/ -lsoil
+#else:win32:config(debug, debug|release): libs += -l$$pwd/../../../../../usr/local/lib/debug/ -lsoil
 #else:unix:
  LIBS += -L$$PWD/../../../../../usr/local/lib/ -lSOIL
 

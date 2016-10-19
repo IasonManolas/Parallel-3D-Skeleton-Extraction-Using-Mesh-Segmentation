@@ -19,6 +19,9 @@
 #define  WIDTH GLuint(800)
 #define  HEIGHT GLuint(600)
 
+// Light attributes
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
 GLWidget::GLWidget(QWidget *parent):shaderObject(),camObject() //I have to constructors for class Shader in order
   //to use the "real" one after the opengl context is active
 {
@@ -64,7 +67,8 @@ void GLWidget::initializeGL()
      //Create camera
     camObject=new Camera(glm::vec3(0.0f,0.0f,5.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
 
-    ourModel=new Model("../OpenGL_WithoutWrappers/nanosuit/nanosuit.obj");
+    ourModel=new Model("../OpenGL_WithoutWrappers/Models/horse.obj");
+//    ourModel=new Model("../OpenGL_WithoutWrappers/nanosuit/nanosuit.obj");
        connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
 
@@ -83,6 +87,25 @@ void GLWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     shaderObject->Use();
+
+//    GLint lightPosLoc    = glGetUniformLocation(shaderObject->programID, "light.position");
+//    glUniform3f(lightPosLoc,    lightPos.x, lightPos.y, lightPos.z);
+    glUniform3f(glGetUniformLocation(shaderObject->programID, "viewPos"),camObject->getPosition().x,camObject->getPosition().y, camObject->getPosition().z);
+    // Set lights properties
+    glUniform3f(glGetUniformLocation(shaderObject->programID,"light.direction"),0.4f,-0.4f,-0.2f);
+
+    glm::vec3 lightColor(1.0f,1.0f,1.0f);
+    glm::vec3 diffuseColor = lightColor ; // Decrease the influence
+    glm::vec3 ambientColor = diffuseColor; // Low influence
+    glUniform3f(glGetUniformLocation(shaderObject->programID, "light.ambient"),  ambientColor.x, ambientColor.y, ambientColor.z);
+    glUniform3f(glGetUniformLocation(shaderObject->programID, "light.diffuse"),  diffuseColor.x, diffuseColor.y, diffuseColor.z);
+    glUniform3f(glGetUniformLocation(shaderObject->programID, "light.specular"), 1.0f, 1.0f, 1.0f);
+    // Set material properties
+    glUniform3f(glGetUniformLocation(shaderObject->programID, "material.ambient"),1.0f, 0.5f, 0.31f);
+    glUniform3f(glGetUniformLocation(shaderObject->programID, "material.diffuse"),  1.0f,0.5f,0.31f);
+    glUniform3f(glGetUniformLocation(shaderObject->programID, "material.specular"), 0.5f,0.5f,0.5f); // Specular doesn't have full effect on this object's material
+    glUniform1f(glGetUniformLocation(shaderObject->programID, "material.shininess"), 32.0f);
+
     // Transformation matrices
    glm::mat4 projection = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f);
    glm::mat4 view = camObject->getViewMat();
