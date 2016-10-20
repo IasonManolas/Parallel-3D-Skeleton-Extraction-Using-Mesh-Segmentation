@@ -65,7 +65,13 @@ void GLWidget::initializeGL()
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
     shaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
     camObject=Camera(glm::vec3(0.0f,0.0f,5.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+
     ourModel=new Model("../OpenGL_WithoutWrappers/Models/bunny.obj");
+    PolyhedronBuilder<HalfedgeDS> builder(ourModel->meshes[0]);
+
+    P.delegate(builder);
+    std::cout<<P.size_of_vertices()<<std::endl;
+
     light=DirectionalLight(glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f));
    material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));

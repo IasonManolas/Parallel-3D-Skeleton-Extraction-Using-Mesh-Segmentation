@@ -21,7 +21,7 @@
 #include "model.h"
 #include "directionallight.h"
 #include "material.h"
-
+#include "polyhedronbuilder.h"
 using namespace glm;
 
 class GLWidget:public QOpenGLWidget
@@ -49,6 +49,7 @@ private:
     Model* ourModel;
     DirectionalLight light;
     Material material;
+    Polyhedron P;
 
 };
 #endif // GLWIDGET_H

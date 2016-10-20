@@ -27,10 +27,12 @@ HEADERS  += mainwindow.h \
     model.h \
     directionallight.h \
     light.h \
-    material.h
+    material.h \
+    polyhedronbuilder.h
 
 FORMS    += mainwindow.ui
 
+LIBS+=-lCGAL
 unix:!macx: LIBS += -L$$PWD/../../../../../usr/lib64/ -lGLEW
 
 INCLUDEPATH += $$PWD/../../../../../usr/include/GL
