@@ -24,7 +24,10 @@ HEADERS  += mainwindow.h \
     ui_mainwindow.h \
     camera.h \
     mesh.h \
-    model.h
+    model.h \
+    directionallight.h \
+    light.h \
+    material.h
 
 FORMS    += mainwindow.ui
 

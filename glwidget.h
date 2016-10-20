@@ -19,6 +19,9 @@
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
+#include "directionallight.h"
+#include "material.h"
+
 using namespace glm;
 
 class GLWidget:public QOpenGLWidget
@@ -39,17 +42,13 @@ private:
     void mouseMoveEvent(QMouseEvent* event);
     void wheelEvent(QWheelEvent *event);
 private:
-    Shader *shaderObject;
-    //GLuint shaderProgram;
-//    GLuint VAO;
+    Shader* shaderObject;
     QTimer timer;
-//    GLuint texture1;
-//    GLuint texture2;
-    Camera *camObject;
+    Camera camObject;
     QVector2D lastMousePos;
-//    GLuint lightVAO;
-   // Shader *lampShaderObject;
     Model* ourModel;
+    DirectionalLight light;
+    Material material;
 
 };
 #endif // GLWIDGET_H

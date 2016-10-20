@@ -42,8 +42,9 @@ GLWidget::~GLWidget()
     makeCurrent();
     delete shaderObject;
     //delete lampShaderObject;
-    delete camObject;
+//    delete camObject;
     delete ourModel;
+//    delete light;
 }
 void GLWidget::initializeGL()
 {
@@ -63,15 +64,12 @@ void GLWidget::initializeGL()
     //to use the "real" one after the opengl context is active
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
     shaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
-    //lampShaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/lightfragment.glsl");
-     //Create camera
-    camObject=new Camera(glm::vec3(0.0f,0.0f,5.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
-
-    ourModel=new Model("../OpenGL_WithoutWrappers/Models/horse.obj");
-//    ourModel=new Model("../OpenGL_WithoutWrappers/nanosuit/nanosuit.obj");
-       connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
+    camObject=Camera(glm::vec3(0.0f,0.0f,5.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+    ourModel=new Model("../OpenGL_WithoutWrappers/Models/bunny.obj");
+    light=DirectionalLight(glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f));
+   material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
+    connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
-
 
 
 }
@@ -83,32 +81,18 @@ void GLWidget::resizeGL(int w, int h)
 void GLWidget::paintGL()
 {
     //Clear the colorbuffer
-    glClearColor(0.1f,0.1f,0.1f,1.0f);
+    glClearColor(0.0f,0.0f,0.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     shaderObject->Use();
 
-//    GLint lightPosLoc    = glGetUniformLocation(shaderObject->programID, "light.position");
-//    glUniform3f(lightPosLoc,    lightPos.x, lightPos.y, lightPos.z);
-    glUniform3f(glGetUniformLocation(shaderObject->programID, "viewPos"),camObject->getPosition().x,camObject->getPosition().y, camObject->getPosition().z);
-    // Set lights properties
-    glUniform3f(glGetUniformLocation(shaderObject->programID,"light.direction"),0.4f,-0.4f,-0.2f);
+    light.setUniforms(shaderObject);
+    material.setUniforms(shaderObject);
+    glUniform3f(glGetUniformLocation(shaderObject->programID, "viewPos"),camObject.getPosition().x,camObject.getPosition().y, camObject.getPosition().z);
 
-    glm::vec3 lightColor(1.0f,1.0f,1.0f);
-    glm::vec3 diffuseColor = lightColor ; // Decrease the influence
-    glm::vec3 ambientColor = diffuseColor; // Low influence
-    glUniform3f(glGetUniformLocation(shaderObject->programID, "light.ambient"),  ambientColor.x, ambientColor.y, ambientColor.z);
-    glUniform3f(glGetUniformLocation(shaderObject->programID, "light.diffuse"),  diffuseColor.x, diffuseColor.y, diffuseColor.z);
-    glUniform3f(glGetUniformLocation(shaderObject->programID, "light.specular"), 1.0f, 1.0f, 1.0f);
-    // Set material properties
-    glUniform3f(glGetUniformLocation(shaderObject->programID, "material.ambient"),1.0f, 0.5f, 0.31f);
-    glUniform3f(glGetUniformLocation(shaderObject->programID, "material.diffuse"),  1.0f,0.5f,0.31f);
-    glUniform3f(glGetUniformLocation(shaderObject->programID, "material.specular"), 0.5f,0.5f,0.5f); // Specular doesn't have full effect on this object's material
-    glUniform1f(glGetUniformLocation(shaderObject->programID, "material.shininess"), 32.0f);
-
-    // Transformation matrices
+   // Transformation matrices
    glm::mat4 projection = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f);
-   glm::mat4 view = camObject->getViewMat();
+   glm::mat4 view = camObject.getViewMat();
    glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
    glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
@@ -117,6 +101,7 @@ void GLWidget::paintGL()
    model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // Translate it down a bit so it's at the center of the scene
    model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// It's a bit too big for our scene, so scale it down
    glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
    ourModel->Draw(shaderObject);
 }
 
@@ -148,13 +133,13 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     if(event->buttons()== Qt::LeftButton)
     {
         glm::vec2 mouseMoveOffset(mouseOffset.x(),mouseOffset.y());
-        camObject->processMouseMovement(mouseOffset);
+        camObject.processMouseMovement(mouseOffset);
     }
 }
 
 void GLWidget::wheelEvent(QWheelEvent *event)
 {
-   camObject->processWheelMovement(event->delta());
+   camObject.processWheelMovement(event->delta());
 
 }
 

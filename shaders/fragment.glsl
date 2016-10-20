@@ -38,13 +38,13 @@ uniform Light light;
 void main()
 {
     // Ambient
-    vec3 ambient = light.ambient*vec3(texture(texture_diffuse1,TexCoords)) ;
+    vec3 ambient = light.ambient*material.ambient ;
 
     // Diffuse
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(-light.direction);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff * vec3(texture(texture_diffuse1,TexCoords));
+    vec3 diffuse = light.diffuse * diff * material.diffuse;
 
     // Specular
     vec3 viewDir = normalize(viewPos - FragPos);

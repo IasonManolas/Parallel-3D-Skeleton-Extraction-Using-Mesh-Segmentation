@@ -1,8 +1,18 @@
 #include "model.h"
-
+#include <ctime>
 Model::Model(GLchar *path)
 {
+    std::clock_t start;
+        double duration;
+
+    start = std::clock();
+    std::cout<<"Started Loading Model."<<std::endl;
+
     this->loadModel(path);
+
+    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+    std::cout<<"Model successfully loaded in "<<duration<<" seconds."<<std::endl;
+    getVertNumb();
 }
 
 void Model::Draw(Shader* shader)
@@ -14,7 +24,7 @@ void Model::Draw(Shader* shader)
 void Model::loadModel(std::string path)
 {
     Assimp::Importer importer;
-    const aiScene* scene=importer.ReadFile(path,aiProcess_Triangulate | aiProcess_FlipUVs);
+    const aiScene* scene=importer.ReadFile(path,aiProcess_Triangulate | aiProcess_FlipUVs|aiProcess_GenNormals);
 
     if(!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
@@ -138,6 +148,16 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType 
 		}
     }
     return textures;
+}
+
+const void Model::getVertNumb()
+{
+    int numberOfVerts{0};
+    for(Mesh& mesh:meshes)
+    {
+        numberOfVerts+=mesh.vertices.size();
+    }
+    std::cout<<"Number of verts:"<<numberOfVerts<<std::endl;
 }
 
 GLint TextureFromFile(const char* path, std::string directory)
