@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     QOpenGLWidget *myGLWidget=ui->openGLWidget;
+    resize(800,600);
 }
 
 MainWindow::~MainWindow()

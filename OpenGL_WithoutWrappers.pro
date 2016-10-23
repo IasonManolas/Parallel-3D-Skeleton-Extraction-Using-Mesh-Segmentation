@@ -16,7 +16,8 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
     mesh.cpp \
-    model.cpp
+    model.cpp \
+    polyhedronprocessor.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -28,7 +29,8 @@ HEADERS  += mainwindow.h \
     directionallight.h \
     light.h \
     material.h \
-    polyhedronbuilder.h
+    polyhedronbuilder.h \
+    polyhedronprocessor.h
 
 FORMS    += mainwindow.ui
 

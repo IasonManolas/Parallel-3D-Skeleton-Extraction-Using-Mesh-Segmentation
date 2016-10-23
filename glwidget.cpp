@@ -1,28 +1,6 @@
 #include "glwidget.h"
-// Include standard headers
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <QDebug>
-#include <QOpenGLContext>
-#include <QCoreApplication>
-#include <QTime>
 
-// GLM Mathematics
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-//SOIL Image Loader
-#include <SOIL.h>
-
-// Window dimensions
-#define  WIDTH GLuint(800)
-#define  HEIGHT GLuint(600)
-
-// Light attributes
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
-GLWidget::GLWidget(QWidget *parent):shaderObject(),camObject() //I have to constructors for class Shader in order
+GLWidget::GLWidget(QWidget *parent):shaderObject(),camObject(),fov(45.0f),WIDTH(800),HEIGHT(600) //I have to constructors for class Shader in order
   //to use the "real" one after the opengl context is active
 {
 
@@ -41,10 +19,8 @@ GLWidget::~GLWidget()
 {
     makeCurrent();
     delete shaderObject;
-    //delete lampShaderObject;
-//    delete camObject;
     delete ourModel;
-//    delete light;
+    disconnect(&timer,SIGNAL(timeout()),this,SLOT(update()));
 }
 void GLWidget::initializeGL()
 {
@@ -64,24 +40,37 @@ void GLWidget::initializeGL()
     //to use the "real" one after the opengl context is active
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
     shaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
-    camObject=Camera(glm::vec3(0.0f,0.0f,5.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+    light=DirectionalLight(glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f));
+    material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
 
     ourModel=new Model("../OpenGL_WithoutWrappers/Models/bunny.obj");
     PolyhedronBuilder<HalfedgeDS> builder(ourModel->meshes[0]);
-
     P.delegate(builder);
-    std::cout<<P.size_of_vertices()<<std::endl;
+    PP=PolyhedronProcessor(P);
 
-    light=DirectionalLight(glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f));
-   material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
+   bbox=PP.getBbox();
+   float desiredVol=500;
+   bboxCenter={(bbox.xmax()+bbox.xmin())/2.0,(bbox.ymax()+bbox.ymin())/2.0,(bbox.zmax()+bbox.zmin())/2.0};
+   float maxDim=std::max({bbox.xmax()-bbox.xmin(),bbox.ymax()-bbox.ymin(),bbox.zmax()-bbox.zmin()});
+   float camZ=0.5/tan(fov/2.0);
+   scaleFactor=1.0/maxDim;
+   camObject=Camera(glm::vec3(0.0f,0.0f,camZ),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
+//            glm::vec3 centerOfMass{0};
+//    for(const auto& vert:ourModel->meshes[0].vertices)
+//        centerOfMass+=vert.Position;
+//    centerOfMass/=ourModel->meshes[0].vertices.size();
 
-
+//    QVector3D cm(centerOfMass.x,centerOfMass.y,centerOfMass.z);
+//    QVector3D bboxC(bboxCenter.x(),bboxCenter.y(),bboxCenter.z());
+//    qDebug()<<"center of Mass:"<<cm;
+//    qDebug()<<"bbox center:"<<bboxC;
 }
 void GLWidget::resizeGL(int w, int h)
 {
-
+    WIDTH=w;
+    HEIGHT=h;
 }
 
 void GLWidget::paintGL()
@@ -89,7 +78,7 @@ void GLWidget::paintGL()
     //Clear the colorbuffer
     glClearColor(0.0f,0.0f,0.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     shaderObject->Use();
 
     light.setUniforms(shaderObject);
@@ -97,15 +86,20 @@ void GLWidget::paintGL()
     glUniform3f(glGetUniformLocation(shaderObject->programID, "viewPos"),camObject.getPosition().x,camObject.getPosition().y, camObject.getPosition().z);
 
    // Transformation matrices
-   glm::mat4 projection = glm::perspective(45.0f, (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f);
-   glm::mat4 view = camObject.getViewMat();
+   glm::mat4 projection = glm::perspective(fov, (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f);
    glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+   glm::mat4 view = camObject.getViewMat();
    glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-   // Draw the loaded model
+//   // Draw the loaded model
+//   QMatrix4x4 model;
+//   model.scale(scaleFactor);
+//   model.translate(bboxCenter);
    glm::mat4 model;
-   model = glm::translate(model, glm::vec3(0.0f, -1.75f, 0.0f)); // Translate it down a bit so it's at the center of the scene
-   model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// It's a bit too big for our scene, so scale it down
+   model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+   model = glm::translate(model,glm::vec3(-bboxCenter.x(),-bboxCenter.y(),-bboxCenter.z()) );
+//   model=glm::mat4(1.0f);
+//   glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "model"), 1, GL_FALSE,model.data());
    glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
    ourModel->Draw(shaderObject);

@@ -7,9 +7,9 @@
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 #include "mesh.h"
 
-typedef CGAL::Simple_cartesian<double> 	Kernel;
-typedef CGAL::Polyhedron_3<Kernel>		Polyhedron;
-typedef Polyhedron::HalfedgeDS 			HalfedgeDS;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel	Kernel;
+typedef CGAL::Polyhedron_3<Kernel>							Polyhedron;
+typedef Polyhedron::HalfedgeDS 								HalfedgeDS;
 
 template<class HDS>
 
