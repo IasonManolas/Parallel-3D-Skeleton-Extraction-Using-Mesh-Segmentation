@@ -16,7 +16,8 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
     mesh.cpp \
-    model.cpp
+    model.cpp \
+    polyhedronprocessor.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -27,10 +28,13 @@ HEADERS  += mainwindow.h \
     model.h \
     directionallight.h \
     light.h \
-    material.h
+    material.h \
+    polyhedronbuilder.h \
+    polyhedronprocessor.h
 
 FORMS    += mainwindow.ui
 
+LIBS+=-lCGAL
 unix:!macx: LIBS += -L$$PWD/../../../../../usr/lib64/ -lGLEW
 
 INCLUDEPATH += $$PWD/../../../../../usr/include/GL

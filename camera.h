@@ -35,7 +35,7 @@ public:
 
         glm::quat rot=glm::angleAxis(angle,rotationAxis);
         rotation=rot*rotation;
-        glm::mat4 rotationMatrix=glm::toMat4(rotation);
+        rotationMatrix=glm::toMat4(rotation);
 
         viewMat=glm::lookAt(position,target,up);
         viewMat=viewMat*rotationMatrix;
@@ -50,6 +50,7 @@ public:
         else
         position-=0.1f*glm::normalize(target-position);
         viewMat=glm::lookAt(position,target,up);
+        viewMat=viewMat*rotationMatrix;
     }
 
 
@@ -80,6 +81,6 @@ private:
     glm::mat4 viewMat;
 
     glm::quat rotation; //this quaternion represents the orientation of the cam?
-
+    glm::mat4 rotationMatrix;
 };
 #endif // CAMERA_H

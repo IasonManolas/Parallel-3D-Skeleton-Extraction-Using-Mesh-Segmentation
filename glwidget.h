@@ -1,9 +1,10 @@
 #ifndef GLWIDGET_H
 #define GLWIDGET_H
 
-
-// Include GLM
-#include <glm/glm.hpp>
+// Include standard headers
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
 
 //Include GLEW
 #define GLEW_STATIC
@@ -14,6 +15,22 @@
 #include <QKeyEvent>
 #include <QTimer>
 #include <QVector2D>
+#include <QDebug>
+#include <QOpenGLContext>
+#include <QCoreApplication>
+#include <QTime>
+#include <QResizeEvent>
+#include <QVector3D>
+#include <QMatrix4x4>
+
+#include <CGAL/Point_3.h>
+
+// Include GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <SOIL.h>
 
 //My headers
 #include "shader.h"
@@ -21,8 +38,8 @@
 #include "model.h"
 #include "directionallight.h"
 #include "material.h"
-
-using namespace glm;
+#include "polyhedronbuilder.h"
+#include "polyhedronprocessor.h"
 
 class GLWidget:public QOpenGLWidget
 {
@@ -49,6 +66,16 @@ private:
     Model* ourModel;
     DirectionalLight light;
     Material material;
+    Polyhedron P;
+    PolyhedronProcessor PP;
+    Kernel::Iso_cuboid_3 bbox;
+    QVector3D bboxCenter;
+   float scaleFactor;
+   float fov;
+// Window dimensions
+  int WIDTH;
+  int HEIGHT;
+
 
 };
 #endif // GLWIDGET_H
