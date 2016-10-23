@@ -17,7 +17,8 @@ SOURCES += main.cpp\
     glwidget.cpp \
     mesh.cpp \
     model.cpp \
-    polyhedronprocessor.cpp
+    polyhedronprocessor.cpp \
+    scene.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -30,7 +31,9 @@ HEADERS  += mainwindow.h \
     light.h \
     material.h \
     polyhedronbuilder.h \
-    polyhedronprocessor.h
+    polyhedronprocessor.h \
+    scene.h \
+    axes.h
 
 FORMS    += mainwindow.ui
 
@@ -47,7 +50,9 @@ DISTFILES += \
     nanosuit.obj \
     Models/default.png \
     Models/copyright.txt \
-    Models/default.mtl
+    Models/default.mtl \
+    shaders/simplefs.glsl \
+    shaders/simplevs.glsl
 
 
 #win32:config(release, debug|release): libs += -l$$pwd/../../../../../usr/local/lib/release/ -lsoil

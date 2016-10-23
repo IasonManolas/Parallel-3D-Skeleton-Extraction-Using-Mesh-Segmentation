@@ -40,6 +40,7 @@
 #include "material.h"
 #include "polyhedronbuilder.h"
 #include "polyhedronprocessor.h"
+#include "axes.h"
 
 class GLWidget:public QOpenGLWidget
 {
@@ -60,10 +61,12 @@ private:
     void wheelEvent(QWheelEvent *event);
 private:
     Shader* shaderObject;
+    Shader* axesShader;
     QTimer timer;
     Camera camObject;
     QVector2D lastMousePos;
     Model* ourModel;
+    Axes axes;
     DirectionalLight light;
     Material material;
     Polyhedron P;

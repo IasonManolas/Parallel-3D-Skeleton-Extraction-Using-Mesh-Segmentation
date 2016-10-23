@@ -19,6 +19,7 @@ GLWidget::~GLWidget()
 {
     makeCurrent();
     delete shaderObject;
+    delete axesShader;
     delete ourModel;
     disconnect(&timer,SIGNAL(timeout()),this,SLOT(update()));
 }
@@ -40,6 +41,7 @@ void GLWidget::initializeGL()
     //to use the "real" one after the opengl context is active
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
     shaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
+    axesShader=new Shader("../OpenGL_WithoutWrappers/shaders/simplevs.glsl","../OpenGL_WithoutWrappers/shaders/simplefs.glsl");
     light=DirectionalLight(glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f));
     material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
 
@@ -49,23 +51,13 @@ void GLWidget::initializeGL()
     PP=PolyhedronProcessor(P);
 
    bbox=PP.getBbox();
-   float desiredVol=500;
    bboxCenter={(bbox.xmax()+bbox.xmin())/2.0,(bbox.ymax()+bbox.ymin())/2.0,(bbox.zmax()+bbox.zmin())/2.0};
    float maxDim=std::max({bbox.xmax()-bbox.xmin(),bbox.ymax()-bbox.ymin(),bbox.zmax()-bbox.zmin()});
    float camZ=0.5/tan(fov/2.0);
    scaleFactor=1.0/maxDim;
-   camObject=Camera(glm::vec3(0.0f,0.0f,camZ),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+   camObject=Camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
-//            glm::vec3 centerOfMass{0};
-//    for(const auto& vert:ourModel->meshes[0].vertices)
-//        centerOfMass+=vert.Position;
-//    centerOfMass/=ourModel->meshes[0].vertices.size();
-
-//    QVector3D cm(centerOfMass.x,centerOfMass.y,centerOfMass.z);
-//    QVector3D bboxC(bboxCenter.x(),bboxCenter.y(),bboxCenter.z());
-//    qDebug()<<"center of Mass:"<<cm;
-//    qDebug()<<"bbox center:"<<bboxC;
 }
 void GLWidget::resizeGL(int w, int h)
 {
@@ -75,34 +67,34 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::paintGL()
 {
-    //Clear the colorbuffer
     glClearColor(0.0f,0.0f,0.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     shaderObject->Use();
 
     light.setUniforms(shaderObject);
     material.setUniforms(shaderObject);
     glUniform3f(glGetUniformLocation(shaderObject->programID, "viewPos"),camObject.getPosition().x,camObject.getPosition().y, camObject.getPosition().z);
 
-   // Transformation matrices
-   glm::mat4 projection = glm::perspective(fov, (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f);
+   glm::mat4 projection = glm::perspective(fov, (float)WIDTH/(float)HEIGHT, 0.1f, 1000.0f);
    glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
    glm::mat4 view = camObject.getViewMat();
    glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-//   // Draw the loaded model
-//   QMatrix4x4 model;
-//   model.scale(scaleFactor);
-//   model.translate(bboxCenter);
    glm::mat4 model;
    model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
    model = glm::translate(model,glm::vec3(-bboxCenter.x(),-bboxCenter.y(),-bboxCenter.z()) );
 //   model=glm::mat4(1.0f);
-//   glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "model"), 1, GL_FALSE,model.data());
    glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
    ourModel->Draw(shaderObject);
+
+  axesShader->Use();
+   glUniformMatrix4fv(glGetUniformLocation(axesShader->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+   glUniformMatrix4fv(glGetUniformLocation(axesShader->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+
+  axes.Draw(axesShader);
 }
 
 void GLWidget::keyPressEvent(QKeyEvent *event)//what does this mean?: If you reimplement this handler, it is very important that you call the base class implementation if you do not act upon the key.
