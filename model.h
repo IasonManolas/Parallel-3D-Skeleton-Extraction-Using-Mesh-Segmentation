@@ -15,20 +15,28 @@
 
 #include "mesh.h"
 #include "shader.h"
+#include "material.h"
 
 class Model
 {
 public:
+    Model(){}
     Model(GLchar* path);
-    void Draw(Shader* shader);
+    void Draw();
     std::vector<Mesh> meshes;
+    void setUniforms(Shader* shader) const
+    {
+        material.setUniforms(shader);
+    }
+
 private:
+    Material material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
     std::string directory;
 
     void loadModel(std::string path);
     void processNode(aiNode* node, const aiScene* scene);
     Mesh processMesh(aiMesh* mesh,const aiScene* scene);
-    const void getVertNumb();
+    const void printModelInformation();
 };
 
 #endif // MODEL_H

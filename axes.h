@@ -17,11 +17,9 @@ public:
         modelMat=glm::mat4(1.0f);
     }
 
-    void Draw(Shader* shader)
+    void Draw()
     {
         drawPreparation();
-
-        glUniformMatrix4fv(glGetUniformLocation(shader->programID, "model"), 1, GL_FALSE, glm::value_ptr(modelMat));
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_LINES,0,6);

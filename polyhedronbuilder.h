@@ -13,7 +13,7 @@ typedef Polyhedron::HalfedgeDS 								HalfedgeDS;
 
 template<class HDS>
 
-class PolyhedronBuilder:public CGAL::Modifier_base<HDS>
+class  PolyhedronBuilder:public CGAL::Modifier_base<HDS>
 {
 public:
     Mesh 		M;

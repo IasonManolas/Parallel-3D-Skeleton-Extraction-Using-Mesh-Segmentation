@@ -8,7 +8,7 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indic
     setupMesh();
 }
 
-void Mesh::Draw(Shader* shader)
+void Mesh::Draw()
 {
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES,indices.size(),GL_UNSIGNED_INT,0);

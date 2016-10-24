@@ -17,8 +17,7 @@ SOURCES += main.cpp\
     glwidget.cpp \
     mesh.cpp \
     model.cpp \
-    polyhedronprocessor.cpp \
-    scene.cpp
+    polyhedronprocessor.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \

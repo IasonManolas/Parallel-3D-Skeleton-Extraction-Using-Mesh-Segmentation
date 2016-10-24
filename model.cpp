@@ -1,24 +1,18 @@
 #include "model.h"
-#include <ctime>
 Model::Model(GLchar *path)
 {
-    std::clock_t start;
-        double duration;
-
-    start = std::clock();
     std::cout<<"Started Loading Model."<<std::endl;
 
     this->loadModel(path);
 
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"Model successfully loaded in "<<duration<<" seconds."<<std::endl;
-    getVertNumb();
+    std::cout<<"Model successfully loaded. "<<std::endl;
+    printModelInformation();
 }
 
-void Model::Draw(Shader* shader)
+void Model::Draw()
 {
     for(Mesh& mesh:meshes)
-        mesh.Draw(shader);
+        mesh.Draw();
 }
 
 void Model::loadModel(std::string path)
@@ -87,12 +81,16 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
     
 }
 
-const void Model::getVertNumb()
+const void Model::printModelInformation()
 {
     int numberOfVerts{0};
+    int numberOfFaces{0};
     for(Mesh& mesh:meshes)
     {
         numberOfVerts+=mesh.vertices.size();
+        numberOfFaces+=mesh.indices.size()/3;
     }
     std::cout<<"Number of verts:"<<numberOfVerts<<std::endl;
+    std::cout<<"Number of faces:"<<numberOfFaces<<std::endl;
+
 }

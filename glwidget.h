@@ -40,7 +40,7 @@
 #include "material.h"
 #include "polyhedronbuilder.h"
 #include "polyhedronprocessor.h"
-#include "axes.h"
+#include "scene.h"
 
 class GLWidget:public QOpenGLWidget
 {
@@ -60,15 +60,15 @@ private:
     void mouseMoveEvent(QMouseEvent* event);
     void wheelEvent(QWheelEvent *event);
 private:
-    Shader* shaderObject;
+    Shader* modelShader;
     Shader* axesShader;
     QTimer timer;
-    Camera camObject;
+//    Camera camObject;
     QVector2D lastMousePos;
-    Model* ourModel;
-    Axes axes;
-    DirectionalLight light;
-    Material material;
+//    Model* ourModel;
+//    Axes axes;
+//    DirectionalLight light;
+    Scene scene;
     Polyhedron P;
     PolyhedronProcessor PP;
     Kernel::Iso_cuboid_3 bbox;

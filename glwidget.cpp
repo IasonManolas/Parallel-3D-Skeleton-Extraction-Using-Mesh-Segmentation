@@ -1,6 +1,6 @@
 #include "glwidget.h"
 
-GLWidget::GLWidget(QWidget *parent):shaderObject(),camObject(),fov(45.0f),WIDTH(800),HEIGHT(600) //I have to constructors for class Shader in order
+GLWidget::GLWidget(QWidget *parent):modelShader(),fov(45.0f),WIDTH(800),HEIGHT(600) //I have to constructors for class Shader in order
   //to use the "real" one after the opengl context is active
 {
 
@@ -18,9 +18,9 @@ GLWidget::GLWidget(QWidget *parent):shaderObject(),camObject(),fov(45.0f),WIDTH(
 GLWidget::~GLWidget()
 {
     makeCurrent();
-    delete shaderObject;
+    delete modelShader;
     delete axesShader;
-    delete ourModel;
+//    delete ourModel;
     disconnect(&timer,SIGNAL(timeout()),this,SLOT(update()));
 }
 void GLWidget::initializeGL()
@@ -40,13 +40,15 @@ void GLWidget::initializeGL()
     //I have to constructors for class Shader in order
     //to use the "real" one after the opengl context is active
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
-    shaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
+    modelShader=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
     axesShader=new Shader("../OpenGL_WithoutWrappers/shaders/simplevs.glsl","../OpenGL_WithoutWrappers/shaders/simplefs.glsl");
-    light=DirectionalLight(glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f));
-    material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
+//    light=DirectionalLight(glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f));
+//    material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
+    scene=Scene(5);
+//    ourModel=new Model("../OpenGL_WithoutWrappers/Models/bunny.obj");
 
-    ourModel=new Model("../OpenGL_WithoutWrappers/Models/bunny.obj");
-    PolyhedronBuilder<HalfedgeDS> builder(ourModel->meshes[0]);
+    Model sceneModel=scene.model;
+    PolyhedronBuilder<HalfedgeDS> builder(sceneModel.meshes[0]);
     P.delegate(builder);
     PP=PolyhedronProcessor(P);
 
@@ -55,7 +57,7 @@ void GLWidget::initializeGL()
    float maxDim=std::max({bbox.xmax()-bbox.xmin(),bbox.ymax()-bbox.ymin(),bbox.zmax()-bbox.zmin()});
    float camZ=0.5/tan(fov/2.0);
    scaleFactor=1.0/maxDim;
-   camObject=Camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+//   camObject=Camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
 }
@@ -63,6 +65,7 @@ void GLWidget::resizeGL(int w, int h)
 {
     WIDTH=w;
     HEIGHT=h;
+    scene.updateProjectionMatrix(w,h);
 }
 
 void GLWidget::paintGL()
@@ -70,31 +73,38 @@ void GLWidget::paintGL()
     glClearColor(0.0f,0.0f,0.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    shaderObject->Use();
+//    modelShader->Use();
 
-    light.setUniforms(shaderObject);
-    material.setUniforms(shaderObject);
-    glUniform3f(glGetUniformLocation(shaderObject->programID, "viewPos"),camObject.getPosition().x,camObject.getPosition().y, camObject.getPosition().z);
+//    scene.light.setUniforms(modelShader);
 
-   glm::mat4 projection = glm::perspective(fov, (float)WIDTH/(float)HEIGHT, 0.1f, 1000.0f);
-   glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-   glm::mat4 view = camObject.getViewMat();
-   glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+//    Camera& camObject=scene.camera;
+//    material.setUniforms(modelShader);
+//    glUniform3f(glGetUniformLocation(modelShader->programID, "viewPos"),camObject.getPosition().x,camObject.getPosition().y, camObject.getPosition().z);
 
-   glm::mat4 model;
-   model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-   model = glm::translate(model,glm::vec3(-bboxCenter.x(),-bboxCenter.y(),-bboxCenter.z()) );
+//   glm::mat4 projection = glm::perspective(fov, (float)WIDTH/(float)HEIGHT, 0.1f, 1000.0f);
+//   glUniformMatrix4fv(glGetUniformLocation(modelShader->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+//   glm::mat4 view = camObject.getViewMat();
+//   glUniformMatrix4fv(glGetUniformLocation(modelShader->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+
+    scene.scaleFactor=scaleFactor;
+    scene.bboxCenter=bboxCenter;
+
 //   model=glm::mat4(1.0f);
-   glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "model"), 1, GL_FALSE, glm::value_ptr(model));
+//        glm::mat4 model;
+//		model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+//   		model = glm::translate(model,glm::vec3(-bboxCenter.x(),-bboxCenter.y(),-bboxCenter.z()) );
 
-   ourModel->Draw(shaderObject);
+//   glUniformMatrix4fv(glGetUniformLocation(modelShader->programID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
-  axesShader->Use();
-   glUniformMatrix4fv(glGetUniformLocation(axesShader->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-   glUniformMatrix4fv(glGetUniformLocation(axesShader->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+   scene.Draw(modelShader,axesShader);
+   //ourModel->Draw(shaderObject);
+
+//  axesShader->Use();
+//   glUniformMatrix4fv(glGetUniformLocation(axesShader->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+//   glUniformMatrix4fv(glGetUniformLocation(axesShader->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
 
-  axes.Draw(axesShader);
+  //axes.Draw(axesShader);
 }
 
 void GLWidget::keyPressEvent(QKeyEvent *event)//what does this mean?: If you reimplement this handler, it is very important that you call the base class implementation if you do not act upon the key.
@@ -125,13 +135,13 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     if(event->buttons()== Qt::LeftButton)
     {
         glm::vec2 mouseMoveOffset(mouseOffset.x(),mouseOffset.y());
-        camObject.processMouseMovement(mouseOffset);
+        scene.camera.processMouseMovement(mouseOffset);
     }
 }
 
 void GLWidget::wheelEvent(QWheelEvent *event)
 {
-   camObject.processWheelMovement(event->delta());
+  scene.camera.processWheelMovement(event->delta());
 
 }
 

@@ -27,7 +27,7 @@ public:
     std::vector<GLuint> indices;
 
     Mesh(const std::vector<Vertex>& vertices,const std::vector<GLuint>& indices);
-    void Draw(Shader *shader);
+    void Draw();
 
 private:
     GLuint VAO,VBO,EBO;
