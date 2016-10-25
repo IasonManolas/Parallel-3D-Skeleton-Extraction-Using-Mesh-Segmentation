@@ -16,18 +16,10 @@
 class Camera
 {
 public:
-    Camera(){}
-    Camera(const glm::vec3 &pos,const glm::vec3 &target,const glm::vec3 &up):fov(45.0f)
+    Camera(const glm::vec3 &pos,const glm::vec3 &target,const glm::vec3 &up):fov(45),position(pos),target(target),up(up),worldUp(up)
     {
-        this->position=pos;
-        this->target=target;
-        this->worldUp=glm::normalize(up);
-        this->up=worldUp;
 
-        right=glm::normalize(glm::cross(look,worldUp));
         viewMatrix=glm::lookAt(position,target,up);
-
-        rotationQ=glm::quat();
     }
 
     void processMouseMovement(const QVector2D& mouseDV)
@@ -69,12 +61,12 @@ public:
     }
     void setUniforms(Shader* shader) const
     {
-        GLuint viewPosLoc=glGetUniformLocation(shader->programID,"viewPos");
+        GLint viewPosLoc=glGetUniformLocation(shader->programID,"viewPos");
         if(viewPosLoc!=-1) glUniform3f(viewPosLoc,position.x,position.y,position.z);
         glUniformMatrix4fv(glGetUniformLocation(shader->programID,"view"),1,GL_FALSE,glm::value_ptr(viewMatrix));
     }
 
-    float fov;
+    float fov{45};
 private:
     void updateViewMatrix()
     {
@@ -82,17 +74,15 @@ private:
         viewMatrix=viewMatrix*rotationMatrix;
     }
 
-    glm::vec3 position;
-    glm::vec3 target;
+    glm::vec3 position{glm::vec3(0,0,5)};
+    glm::vec3 target{glm::vec3(0,0,0)};
 
-    glm::vec3 look;
-    glm::vec3 worldUp;
-    glm::vec3 up;
-    glm::vec3 right;
+    glm::vec3 up{glm::vec3(0,1,0)};
+    glm::vec3 worldUp{glm::vec3(0,1,0)};
 
-    glm::mat4 viewMatrix;
+    glm::mat4 viewMatrix{glm::mat4(1)};
 
-    glm::quat rotationQ; //this quaternion represents the orientation of the cam?
-    glm::mat4 rotationMatrix;
+    glm::quat rotationQ{glm::quat()}; //this quaternion represents the orientation of the cam?
+    glm::mat4 rotationMatrix{glm::mat4(1)};
 };
 #endif // CAMERA_H

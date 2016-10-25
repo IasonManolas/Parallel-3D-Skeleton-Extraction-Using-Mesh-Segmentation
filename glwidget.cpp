@@ -1,7 +1,6 @@
 #include "glwidget.h"
 
-GLWidget::GLWidget(QWidget *parent):modelShader(),fov(45.0f),WIDTH(800),HEIGHT(600) //I have to constructors for class Shader in order
-  //to use the "real" one after the opengl context is active
+GLWidget::GLWidget(QWidget *parent)
 {
 
     QOpenGLWidget *widget=this;
@@ -20,7 +19,6 @@ GLWidget::~GLWidget()
     makeCurrent();
     delete modelShader;
     delete axesShader;
-//    delete ourModel;
     disconnect(&timer,SIGNAL(timeout()),this,SLOT(update()));
 }
 void GLWidget::initializeGL()
@@ -42,10 +40,9 @@ void GLWidget::initializeGL()
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
     modelShader=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
     axesShader=new Shader("../OpenGL_WithoutWrappers/shaders/simplevs.glsl","../OpenGL_WithoutWrappers/shaders/simplefs.glsl");
-//    light=DirectionalLight(glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f));
-//    material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
-    scene=Scene(5);
-//    ourModel=new Model("../OpenGL_WithoutWrappers/Models/bunny.obj");
+
+    char modelDir[]={"../OpenGL_WithoutWrappers/Models/bunny.obj"};
+    scene=Scene(modelDir);
 
     Model sceneModel=scene.model;
     PolyhedronBuilder<HalfedgeDS> builder(sceneModel.meshes[0]);
@@ -55,9 +52,8 @@ void GLWidget::initializeGL()
    bbox=PP.getBbox();
    bboxCenter={(bbox.xmax()+bbox.xmin())/2.0,(bbox.ymax()+bbox.ymin())/2.0,(bbox.zmax()+bbox.zmin())/2.0};
    float maxDim=std::max({bbox.xmax()-bbox.xmin(),bbox.ymax()-bbox.ymin(),bbox.zmax()-bbox.zmin()});
-   float camZ=0.5/tan(fov/2.0);
    scaleFactor=1.0/maxDim;
-//   camObject=Camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
+
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
 }
@@ -73,58 +69,15 @@ void GLWidget::paintGL()
     glClearColor(0.0f,0.0f,0.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-//    modelShader->Use();
-
-//    scene.light.setUniforms(modelShader);
-
-//    Camera& camObject=scene.camera;
-//    material.setUniforms(modelShader);
-//    glUniform3f(glGetUniformLocation(modelShader->programID, "viewPos"),camObject.getPosition().x,camObject.getPosition().y, camObject.getPosition().z);
-
-//   glm::mat4 projection = glm::perspective(fov, (float)WIDTH/(float)HEIGHT, 0.1f, 1000.0f);
-//   glUniformMatrix4fv(glGetUniformLocation(modelShader->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-//   glm::mat4 view = camObject.getViewMat();
-//   glUniformMatrix4fv(glGetUniformLocation(modelShader->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
     scene.scaleFactor=scaleFactor;
     scene.bboxCenter=bboxCenter;
-
-//   model=glm::mat4(1.0f);
-//        glm::mat4 model;
-//		model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-//   		model = glm::translate(model,glm::vec3(-bboxCenter.x(),-bboxCenter.y(),-bboxCenter.z()) );
-
-//   glUniformMatrix4fv(glGetUniformLocation(modelShader->programID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-   scene.Draw(modelShader,axesShader);
-   //ourModel->Draw(shaderObject);
-
-//  axesShader->Use();
-//   glUniformMatrix4fv(glGetUniformLocation(axesShader->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-//   glUniformMatrix4fv(glGetUniformLocation(axesShader->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-
-  //axes.Draw(axesShader);
+    scene.Draw(modelShader,axesShader);
 }
-
-void GLWidget::keyPressEvent(QKeyEvent *event)//what does this mean?: If you reimplement this handler, it is very important that you call the base class implementation if you do not act upon the key.
-{
-
-}
-
-void GLWidget::keyReleaseEvent(QKeyEvent *event)
-{
-}
-
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
     //initialize mouse position
     lastMousePos=QVector2D(event->localPos());
-}
-
-void GLWidget::mouseReleaseEvent(QMouseEvent *event)
-{
-
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)

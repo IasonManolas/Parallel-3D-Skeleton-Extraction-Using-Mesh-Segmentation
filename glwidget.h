@@ -16,21 +16,13 @@
 #include <QTimer>
 #include <QVector2D>
 #include <QDebug>
-#include <QOpenGLContext>
-#include <QCoreApplication>
 #include <QTime>
-#include <QResizeEvent>
 #include <QVector3D>
-#include <QMatrix4x4>
-
-#include <CGAL/Point_3.h>
 
 // Include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-#include <SOIL.h>
 
 //My headers
 #include "shader.h"
@@ -46,38 +38,30 @@ class GLWidget:public QOpenGLWidget
 {
 
 public:
-    explicit GLWidget(QWidget *parent = 0);
+    explicit GLWidget(QWidget *parent);
     ~GLWidget();
     void initializeGL();
     void resizeGL(int w, int h);
     void paintGL();
 
 private:
-    void keyPressEvent(QKeyEvent* event);
-    void keyReleaseEvent(QKeyEvent* event);
     void mousePressEvent(QMouseEvent* event);
-    void mouseReleaseEvent(QMouseEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
     void wheelEvent(QWheelEvent *event);
 private:
-    Shader* modelShader;
-    Shader* axesShader;
-    QTimer timer;
-//    Camera camObject;
-    QVector2D lastMousePos;
-//    Model* ourModel;
-//    Axes axes;
-//    DirectionalLight light;
-    Scene scene;
-    Polyhedron P;
-    PolyhedronProcessor PP;
-    Kernel::Iso_cuboid_3 bbox;
-    QVector3D bboxCenter;
-   float scaleFactor;
-   float fov;
-// Window dimensions
-  int WIDTH;
-  int HEIGHT;
+    Shader* modelShader{nullptr};
+    Shader* axesShader{nullptr};
+    QTimer timer{};
+    QVector2D lastMousePos{0,0};
+    Scene scene{};
+    Polyhedron P{};
+    PolyhedronProcessor PP{};
+    Kernel::Iso_cuboid_3 bbox{};
+    QVector3D bboxCenter{};
+    float scaleFactor{1};
+    float fov{45};
+    int WIDTH{800};
+    int HEIGHT{600};
 
 
 };

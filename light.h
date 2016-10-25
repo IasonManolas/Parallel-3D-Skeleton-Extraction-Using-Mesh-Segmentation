@@ -6,13 +6,13 @@
 class Light
 {
 public:
-    Light():ambient{1.0f},diffuse{1.0f},specular{1.0f}
+    Light(glm::vec3 lightColor):ambient{lightColor},diffuse{lightColor},specular{lightColor}
     {}
 
 protected:
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
+    glm::vec3 ambient{1};
+    glm::vec3 diffuse{1};
+    glm::vec3 specular{1};
 
 };
 

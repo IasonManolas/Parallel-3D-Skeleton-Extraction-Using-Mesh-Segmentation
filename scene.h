@@ -19,12 +19,9 @@ class Scene
 {
 public:
     Scene(){}
-    //fix Scene(int)
-    Scene(int a):axes(),camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f)),
-        light(glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f)),nearPlane(0.1f),farPlane(1000.0f),
-        projectionMatrix(glm::mat4(1.0f))
+    Scene(char* path)
     {
-        model=Model("../OpenGL_WithoutWrappers/Models/bunny.obj");
+        model=Model(path);
     }
 
     void Draw(Shader* modelShader,Shader* axisShader)
@@ -43,13 +40,13 @@ public:
     float scaleFactor;
     QVector3D bboxCenter;
 
-    Model model;
-    Camera camera;
+    Model model{};
+    Camera camera{glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f)};
 
   private:
 
-    DirectionalLight light;
-    Axes axes;
+    DirectionalLight light{glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f)};
+    Axes axes{};
 
     void setProjectionMatrixUniform(Shader* shader)
     {
@@ -76,10 +73,10 @@ public:
 
     }
 
-    glm::mat4 projectionMatrix;
+    glm::mat4 projectionMatrix{glm::mat4(1.0f)};
 
-    float nearPlane;
-    float farPlane;
+    float nearPlane{0.1};
+    float farPlane{100};
 };
 
 #endif // SCENE_H

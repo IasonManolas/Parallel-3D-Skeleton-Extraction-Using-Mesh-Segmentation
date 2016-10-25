@@ -30,13 +30,13 @@ public:
     }
 
 private:
-    Material material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
-    std::string directory;
+    Material material{Material(glm::vec3(0,0,0),glm::vec3(0.5,0.5,0),glm::vec3(0.6,0.6,0.5),128*0.25)};
+    std::string directory{};
 
     void loadModel(std::string path);
     void processNode(aiNode* node, const aiScene* scene);
-    Mesh processMesh(aiMesh* mesh,const aiScene* scene);
-    const void printModelInformation();
+    Mesh processMesh(aiMesh* mesh);
+    void printModelInformation() const ;
 };
 
 #endif // MODEL_H

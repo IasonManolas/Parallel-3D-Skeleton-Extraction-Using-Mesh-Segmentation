@@ -10,15 +10,8 @@
 class DirectionalLight:public Light
 {
 public:
-    DirectionalLight():direction{0.0f,0.0f,-1.0f}
+    DirectionalLight(glm::vec3 lightColor,glm::vec3 dir):Light(lightColor),direction(dir)
     {
-    }
-    DirectionalLight(glm::vec3 lightColor,glm::vec3 dir)
-    {
-        ambient=lightColor;
-        diffuse=lightColor;
-        specular=lightColor;
-        direction=dir;
     }
 
     void setUniforms(Shader* shader) const
@@ -30,7 +23,7 @@ public:
     }
 
 private:
-    glm::vec3 direction;
+    glm::vec3 direction{0,0,-1};
     };
 
 #endif // DIRECTIONALLIGHT_H

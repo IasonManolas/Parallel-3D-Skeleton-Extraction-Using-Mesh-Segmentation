@@ -36,7 +36,7 @@ void Model::processNode(aiNode *node, const aiScene *scene)
     for(GLuint i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        this->meshes.push_back(this->processMesh(mesh, scene));
+        this->meshes.push_back(this->processMesh(mesh));
     }
     //Then do the same for each of its children
     for(GLuint i = 0; i < node->mNumChildren; i++)
@@ -45,7 +45,7 @@ void Model::processNode(aiNode *node, const aiScene *scene)
     }
 }
 
-Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
+Mesh Model::processMesh(aiMesh *mesh)
 {
     // Data to fill
     std::vector<Vertex> vertices;
@@ -81,11 +81,11 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
     
 }
 
-const void Model::printModelInformation()
+void Model::printModelInformation() const
 {
     int numberOfVerts{0};
     int numberOfFaces{0};
-    for(Mesh& mesh:meshes)
+    for(const Mesh& mesh:meshes)
     {
         numberOfVerts+=mesh.vertices.size();
         numberOfFaces+=mesh.indices.size()/3;

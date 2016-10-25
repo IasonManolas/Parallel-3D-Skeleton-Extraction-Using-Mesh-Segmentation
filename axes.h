@@ -13,10 +13,6 @@
 class Axes
 {
 public:
-    Axes(){
-        modelMat=glm::mat4(1.0f);
-    }
-
     void Draw()
     {
         drawPreparation();
@@ -56,7 +52,7 @@ private:
 
 
 
-    GLfloat vertices[36]={
+   GLfloat vertices[36]={
       0.0f,0.0f,0.0f,	1.0f,0.0f,0.0f,
       1.0f,0.0f,0.0f,	1.0f,0.0f,0.0f,
 
@@ -67,8 +63,8 @@ private:
       0.0f,0.0f,1.0f,	0.0f,0.0f,1.0f
     };
 
-    GLuint VBO,VAO;
-    glm::mat4 modelMat;
+    GLuint VBO{0},VAO{0};
+    glm::mat4 modelMat{glm::mat4(1)};
 };
 
 #endif // AXES_H

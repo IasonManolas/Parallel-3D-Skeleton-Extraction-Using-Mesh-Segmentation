@@ -33,7 +33,7 @@ public:
             B.add_vertex(Point(vert.Position.x,vert.Position.y,vert.Position.z));
 
         //add faces
-        for(int i=0;i<M.indices.size()/3;i+=3)
+        for(uint i=0;i<M.indices.size()/3;i+=3)
         {
             B.begin_facet();
             B.add_vertex_to_facet(M.indices[i]);

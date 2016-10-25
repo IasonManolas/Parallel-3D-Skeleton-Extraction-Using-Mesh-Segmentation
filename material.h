@@ -8,7 +8,6 @@
 class Material
 {
 public:
-    Material():ambient{glm::vec3(1.0f)},diffuse{glm::vec3(1.0f)},specular{glm::vec3(1.0f)},shininess{32.0}{}
     Material(glm::vec3 ambient,glm::vec3 diffuse,glm::vec3 specular,float shininess):ambient{ambient},
         diffuse{diffuse},specular{specular},shininess{shininess}{}
 
@@ -22,10 +21,10 @@ public:
 
 
 private:
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-    float shininess;
+    glm::vec3 ambient{1};
+    glm::vec3 diffuse{1};
+    glm::vec3 specular{1};
+    float shininess{32};
 };
 
 #endif // MATERIAL_H
