@@ -16,8 +16,8 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
     mesh.cpp \
-    model.cpp \
-    polyhedronprocessor.cpp
+    polyhedronprocessor.cpp \
+    deformer.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -32,7 +32,9 @@ HEADERS  += mainwindow.h \
     polyhedronbuilder.h \
     polyhedronprocessor.h \
     scene.h \
-    axes.h
+    axes.h \
+    deformer.h \
+    mypolyhedron.h
 
 FORMS    += mainwindow.ui
 

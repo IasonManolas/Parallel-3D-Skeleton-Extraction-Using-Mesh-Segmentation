@@ -10,60 +10,57 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "directionallight.h"
-#include "model.h"
+#include "mesh.h"
 #include "camera.h"
 #include "axes.h"
 #include "shader.h"
+#include "mypolyhedron.h"
 
 class Scene
 {
 public:
+    float scaleFactor;
+    QVector3D bboxCenter;
+    Mesh mesh{};
+    Camera camera{glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f)};
+    MyPolyhedron P;
+
     Scene(){}
-    Scene(char* path)
-    {
-        model=Model(path);
-    }
+    explicit Scene(char* path):mesh(path),P(mesh){}
 
     void Draw(Shader* modelShader,Shader* axisShader)
     {
         setUniforms(modelShader,axisShader);
         modelShader->Use();
-        model.Draw();
+        mesh.Draw();
+//        P.Draw();
         axisShader->Use();
-        axes.Draw();
+        sceneAxes.Draw();
     }
     void updateProjectionMatrix(int w,int h)
     {
        projectionMatrix=glm::perspective(camera.fov,float(w)/float(h),nearPlane,farPlane);
     }
 
-    float scaleFactor;
-    QVector3D bboxCenter;
-
-    Model model{};
-    Camera camera{glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f)};
-
   private:
 
     DirectionalLight light{glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f)};
-    Axes axes{};
+    Axes sceneAxes{};
+    glm::mat4 projectionMatrix{glm::mat4(1.0f)};
+    float nearPlane{0.1};
+    float farPlane{100};
 
     void setProjectionMatrixUniform(Shader* shader)
     {
         glUniformMatrix4fv(glGetUniformLocation(shader->programID,"projection"),1,GL_FALSE,glm::value_ptr(projectionMatrix));
     }
-
     void setUniforms(Shader* modelShader,Shader* axisShader)
     {
         modelShader->Use();
         light.setUniforms(modelShader);
-        model.setUniforms(modelShader);
+        mesh.setUniforms(modelShader);
         camera.setUniforms(modelShader);
         setProjectionMatrixUniform(modelShader);
-        glm::mat4 model;
-        model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-        model = glm::translate(model,glm::vec3(-bboxCenter.x(),-bboxCenter.y(),-bboxCenter.z()) );
-        glUniformMatrix4fv(glGetUniformLocation(modelShader->programID, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
         axisShader->Use();
         setProjectionMatrixUniform(axisShader);
@@ -72,11 +69,6 @@ public:
 
 
     }
-
-    glm::mat4 projectionMatrix{glm::mat4(1.0f)};
-
-    float nearPlane{0.1};
-    float farPlane{100};
 };
 
 #endif // SCENE_H

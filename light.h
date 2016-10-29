@@ -6,7 +6,7 @@
 class Light
 {
 public:
-    Light(glm::vec3 lightColor):ambient{lightColor},diffuse{lightColor},specular{lightColor}
+    explicit Light(glm::vec3 lightColor):ambient{lightColor},diffuse{lightColor},specular{lightColor}
     {}
 
 protected:

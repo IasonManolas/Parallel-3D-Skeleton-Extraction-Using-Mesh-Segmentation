@@ -44,16 +44,12 @@ void GLWidget::initializeGL()
     char modelDir[]={"../OpenGL_WithoutWrappers/Models/bunny.obj"};
     scene=Scene(modelDir);
 
-    Model sceneModel=scene.model;
-    PolyhedronBuilder<HalfedgeDS> builder(sceneModel.meshes[0]);
+    Mesh sceneMesh=scene.mesh;
+    PolyhedronBuilder<HalfedgeDS> builder(sceneMesh);
     P.delegate(builder);
     PP=PolyhedronProcessor(P);
 
-   bbox=PP.getBbox();
-   bboxCenter={(bbox.xmax()+bbox.xmin())/2.0,(bbox.ymax()+bbox.ymin())/2.0,(bbox.zmax()+bbox.zmin())/2.0};
-   float maxDim=std::max({bbox.xmax()-bbox.xmin(),bbox.ymax()-bbox.ymin(),bbox.zmax()-bbox.zmin()});
-   scaleFactor=1.0/maxDim;
-
+//   bbox=PP.getBbox();
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
 }

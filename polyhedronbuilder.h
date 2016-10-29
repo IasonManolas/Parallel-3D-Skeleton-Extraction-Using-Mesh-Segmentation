@@ -8,8 +8,8 @@
 #include "mesh.h"
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel	Kernel;
-typedef CGAL::Polyhedron_3<Kernel>							Polyhedron;
-typedef Polyhedron::HalfedgeDS 								HalfedgeDS;
+using CGALPolyhedron=CGAL::Polyhedron_3<Kernel>;
+typedef CGALPolyhedron::HalfedgeDS 								HalfedgeDS;
 
 template<class HDS>
 
@@ -19,7 +19,7 @@ public:
     Mesh 		M;
 
     PolyhedronBuilder(){}
-    PolyhedronBuilder(const Mesh& model):M{model}{}
+    explicit PolyhedronBuilder(const Mesh& model):M{model}{}
     void operator()(HDS& hds)
     {
         typedef typename HDS::Vertex	Vertex;
