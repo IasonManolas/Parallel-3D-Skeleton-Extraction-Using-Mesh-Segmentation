@@ -3,7 +3,10 @@
 
 //#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 //#include <CGAL/Polyhedron_3.h>
-//#include <CGAL/Polygon_mesh_processing/compute_normal.h>
+#include <CGAL/Polygon_mesh_processing/compute_normal.h>
+//#include <CGAL/Surface_mesh.h>
+//#include <CGAL/property_map.h>
+//#include <boost/property_map/property_map.hpp>
 
 #include <glm/vec3.hpp>
 
@@ -16,17 +19,24 @@
 //};
 
 //using Kernel=CGAL::Exact_predicates_inexact_constructions_kernel;
-
-
+using vd=boost::graph_traits<CGALPolyhedron>::vertex_descriptor;
+//using fd=boost::graph_traits<CGALPolyhedron>::face_descriptor;
+//using sm=CGAL::Surface_mesh<Kernel::Point_3>;
 class MyPolyhedron: public CGALPolyhedron
 {
 public:
     MyPolyhedron(){}
     MyPolyhedron(const Mesh& mesh)
     {
+
        PolyhedronBuilder<HalfedgeDS> builder(mesh);
        P.delegate(builder);
 
+        std::map<vd,Kernel::Vector_3> normals;
+        CGAL::Polygon_mesh_processing::compute_vertex_normals(P,boost::make_assoc_property_map(normals));
+
+       std::cout<<normals.size()<<std::endl;
+//        getDrawingVectors();
 //       setupShaderObjects();
     }
     void Draw()
@@ -44,9 +54,9 @@ public:
 
 private:
     CGALPolyhedron 			P;
-    std::vector<Vertex>		vertices;
-    std::vector<GLuint>	indices;
-    GLuint 					VAO,VBO,EBO;
+//    std::vector<MyVertex>	vertices;
+//    std::vector<GLuint>		indices;
+//    GLuint 					VAO,VBO,EBO;
 
 //    void setupShaderObjects()
 //    {
@@ -72,10 +82,21 @@ private:
 //        glBindVertexArray(0);
 //    }
 
-//    void getDrawingVectors()
-//    {
+    void getDrawingVectors()
+    {
+//        for(vd verDesc:vertices(P))
+//        BOOST_FOREACH(vd verDesc,vertices(P))
+//            std::cout<<normals[verDesc]<<std::endl;
+//        for(auto it=P.vertices_begin();it!=P.vertices_end();it++)
+//        {
+//            MyVertex point;
+//            Kernel::Point_3 p=it->point();
+//            point.Position=glm::vec3(p.x(),p.y(),p.z());
 
-//    }
+
+
+//        }
+    }
 };
 
 #endif // MYPOLYHEDRON_H

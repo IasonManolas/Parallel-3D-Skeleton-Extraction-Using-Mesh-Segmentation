@@ -12,7 +12,6 @@ Mesh::Mesh(GLchar *path)
     findCenterOfMass();
     findMaxDim();
     updateModelMatrix();
-    std::cout<<"My maxDim is:"<<maxDim<<std::endl;
     printMeshInformation();
 
     setupMesh();
@@ -57,7 +56,7 @@ void Mesh::processMeshAssimp(aiMesh *mesh)
     // Walk through each of the mesh's vertices
     for(GLuint i = 0; i < mesh->mNumVertices; i++)
     {
-        Vertex vertex;
+        MyVertex vertex;
         glm::vec3 vector; // We declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
         // Positions
         vector.x = mesh->mVertices[i].x;
@@ -117,7 +116,7 @@ glm::mat4 Mesh::getModelMatrix() const
 void Mesh::findCenterOfMass()
 {
     glm::vec3 positionSum{0};
-    for(const Vertex& vert:vertices)
+    for(const MyVertex& vert:vertices)
         positionSum+=vert.Position;
     uint n=vertices.size();
     centerOfMass={positionSum.x/n,positionSum.y/n,positionSum.z/n};
@@ -125,12 +124,12 @@ void Mesh::findCenterOfMass()
 
 void Mesh::findMaxDim()
 {
-    std::vector<Vertex>::iterator first,last;
+    std::vector<MyVertex>::iterator first,last;
     first=vertices.begin();
     last=vertices.end();
     if(first==last) maxDim=1;
 
-    std::vector<Vertex>::iterator xmin,xmax,ymin,ymax,zmin,zmax;
+    std::vector<MyVertex>::iterator xmin,xmax,ymin,ymax,zmin,zmax;
 
     xmin=first;
     xmax=first;
@@ -168,15 +167,15 @@ void Mesh::setupMesh()
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER,VBO);
-    glBufferData(GL_ARRAY_BUFFER,vertices.size()*sizeof(Vertex),&vertices[0],GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,vertices.size()*sizeof(MyVertex),&vertices[0],GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,indices.size()*sizeof(GLuint),&indices[0],GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)0);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(MyVertex),(GLvoid*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),(GLvoid*)offsetof(Vertex,Normal));
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(MyVertex),(GLvoid*)offsetof(MyVertex,Normal));
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
@@ -186,5 +185,5 @@ void Mesh::setupMesh()
 void Mesh::printMeshInformation() const
 {
     std::cout<<"Number of verts:"<<vertices.size()<<std::endl;
-    std::cout<<"Number of faces:"<<indices.size()<<std::endl;
+    std::cout<<"Number of faces:"<<indices.size()/3<<std::endl;
 }

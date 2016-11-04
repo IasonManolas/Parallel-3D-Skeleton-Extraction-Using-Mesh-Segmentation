@@ -22,7 +22,7 @@
 #include "material.h"
 #include "model.h"
 
-struct Vertex {
+struct MyVertex {
     glm::vec3 Position;
     glm::vec3 Normal;
 
@@ -31,7 +31,7 @@ struct Vertex {
 class Mesh
 {
 public:
-    std::vector<Vertex> vertices;
+    std::vector<MyVertex> vertices;
     std::vector<GLuint> indices;
 
     Mesh(){}
