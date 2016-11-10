@@ -40,15 +40,15 @@ void GLWidget::initializeGL()
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
     modelShader=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
     axesShader=new Shader("../OpenGL_WithoutWrappers/shaders/simplevs.glsl","../OpenGL_WithoutWrappers/shaders/simplefs.glsl");
+    scene.loadMesh("../OpenGL_WithoutWrappers/Models/bunny.obj");
+//    scene.loadMesh(filename);
 
-    char modelDir[]={"../OpenGL_WithoutWrappers/Models/bunny.obj"};
-    scene=Scene(modelDir);
-
-    Mesh sceneMesh=scene.mesh;
-    PolyhedronBuilder<HalfedgeDS> builder(sceneMesh);
-    P.delegate(builder);
-    PP=PolyhedronProcessor(P);
-
+//    Mesh sceneMesh=scene.mesh;
+//    PolyhedronBuilder<HalfedgeDS> builder(sceneMesh);
+//    P.delegate(builder);
+//    PP=PolyhedronProcessor(P);
+//    std::cout<<bool(P.is_valid())<<std::endl;
+    //    scene.mesh=Mesh("../OpenGL_WithoutWrappers/Models/bunny.obj");
 //   bbox=PP.getBbox();
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
@@ -62,12 +62,16 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::paintGL()
 {
-    glClearColor(0.0f,0.0f,0.0f,1.0f);
+    GLenum error;
+    if ((error = glGetError()) != GL_NO_ERROR)
+       printf("GL Error: %d\n",error);
+ glClearColor(0.0f,0.0f,0.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    if(surfaceState==dontShowTriangles)
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    else if(surfaceState==showTriangles)
+        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 
-    scene.scaleFactor=scaleFactor;
-    scene.bboxCenter=bboxCenter;
     scene.Draw(modelShader,axesShader);
 }
 void GLWidget::mousePressEvent(QMouseEvent *event)
@@ -91,6 +95,30 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 void GLWidget::wheelEvent(QWheelEvent *event)
 {
   scene.camera.processWheelMovement(event->delta());
+}
 
+void GLWidget::modelWasChosen(std::__cxx11::string filename)
+{
+    scene.loadMesh(filename);
+//    assert(glGetError()==GL_NO_ERROR);
+//    this->filename=filename;
+//    update();
+//    initializeGL();
+    //    paintGL();
+}
+
+void GLWidget::updateAxesState(bool state)
+{
+    scene.setShowAxes(state);
+}
+
+void GLWidget::updateMeshSurfaceState(bool state)
+{
+    surfaceState=static_cast<meshSurfaceVizualization>(state);
+}
+
+void GLWidget::resetCamera()
+{
+    scene.camera.resetCamera();
 }
 

@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -53,7 +53,8 @@ DISTFILES += \
     Models/copyright.txt \
     Models/default.mtl \
     shaders/simplefs.glsl \
-    shaders/simplevs.glsl
+    shaders/simplevs.glsl \
+    Icons/Open_folder.png
 
 
 #win32:config(release, debug|release): libs += -l$$pwd/../../../../../usr/local/lib/release/ -lsoil

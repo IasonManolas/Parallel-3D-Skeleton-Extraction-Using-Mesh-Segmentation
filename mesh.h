@@ -9,6 +9,8 @@
 #include <iterator>
 #include <tuple>
 
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -35,9 +37,15 @@ public:
     std::vector<GLuint> indices;
 
     Mesh(){}
-    Mesh(GLchar* path);
-    void Draw();
+    Mesh(std::string directory)
+    {
+         loadMesh(directory);
+    findMeshInformationToNormalize();
+    setupDrawingBuffers();
+    printMeshInformation() ;
 
+    }
+    void Draw();
     void setUniforms(Shader* shader) const
     {
         material.setUniforms(shader);
@@ -47,6 +55,10 @@ public:
 
     glm::mat4 getModelMatrix() const;
 
+    void loadMesh(std::string directory);
+    void findMeshInformationToNormalize();
+    void setupDrawingBuffers();
+    void printMeshInformation() const ;
 private:
     GLuint VAO,VBO,EBO;
     std::string directory{};
@@ -61,14 +73,13 @@ private:
     void findCenterOfMass();
     void findMaxDim();
 
-    void setupMesh();
-    void printMeshInformation() const ;
-
+    void clearVectors();
     void loadMeshAssimp(std::string path);
     void processNodeAssimp(aiNode* node, const aiScene* scene);
     void processMeshAssimp(aiMesh* mesh);
 
     void updateModelMatrix();
+
 };
 
 #endif // MESH_H

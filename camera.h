@@ -66,6 +66,17 @@ public:
         glUniformMatrix4fv(glGetUniformLocation(shader->programID,"view"),1,GL_FALSE,glm::value_ptr(viewMatrix));
     }
 
+    void resetCamera()
+    {
+        position=glm::vec3(0,0,3);
+        target=glm::vec3(0,0,0);
+        up=glm::vec3(0,1,0);
+        worldUp=glm::vec3(0,1,0);
+        rotationQ=glm::quat();
+        rotationMatrix=glm::mat4(1);
+        updateViewMatrix();
+    }
+
     float fov{45};
 private:
     void updateViewMatrix()

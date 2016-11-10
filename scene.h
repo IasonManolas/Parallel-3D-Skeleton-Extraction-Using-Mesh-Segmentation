@@ -25,8 +25,7 @@ public:
     Camera camera{glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f)};
     MyPolyhedron P;
 
-    Scene(){}
-    explicit Scene(char* path):mesh(path),P(mesh){}
+    explicit Scene(){}
 
     void Draw(Shader* modelShader,Shader* axisShader)
     {
@@ -34,18 +33,36 @@ public:
         modelShader->Use();
         mesh.Draw();
 //        P.Draw();
-        axisShader->Use();
-        sceneAxes.Draw();
+//        std::cout<<showAxes<<std::endl;
+        if(showAxes)
+        {
+            axisShader->Use();
+            sceneAxes.Draw();
+        }
     }
     void updateProjectionMatrix(int w,int h)
     {
        projectionMatrix=glm::perspective(camera.fov,float(w)/float(h),nearPlane,farPlane);
     }
 
-  private:
+    void loadMesh(std::string filename)
+    {
+       mesh.loadMesh(filename);
+       mesh.findMeshInformationToNormalize();
+       mesh.setupDrawingBuffers();
+       mesh.printMeshInformation();
 
+       P=MyPolyhedron(mesh);
+    }
+    void setShowAxes(bool value)
+    {
+        showAxes=value;
+    }
+
+private:
     DirectionalLight light{glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f)};
     Axes sceneAxes{};
+    bool showAxes{false};
     glm::mat4 projectionMatrix{glm::mat4(1.0f)};
     float nearPlane{0.1};
     float farPlane{100};

@@ -1,24 +1,28 @@
 #include "mesh.h"
 
-Mesh::Mesh(GLchar *path)
+void Mesh::loadMesh(std::string directory)
 {
-    std::cout<<"Started Loading Model."<<std::endl;
 
-    this->loadMeshAssimp(path);
+    clearVectors();
+    std::cout<<"Started Loading Model: "<<directory<<std::endl;
+
+    this->loadMeshAssimp(directory);
 
 
     std::cout<<"Model successfully loaded. "<<std::endl;
 
+}
+
+void Mesh::findMeshInformationToNormalize()
+{
     findCenterOfMass();
     findMaxDim();
     updateModelMatrix();
-    printMeshInformation();
-
-    setupMesh();
-
+//    std::cout<<maxDim<<std::endl;
 }
 
-void Mesh::loadMeshAssimp(std::__cxx11::string path)
+
+void Mesh::loadMeshAssimp(std::string path)
 {
       Assimp::Importer importer;
     const aiScene* scene=importer.ReadFile(path,aiProcess_Triangulate | aiProcess_FlipUVs|aiProcess_GenNormals);
@@ -158,7 +162,13 @@ void Mesh::findMaxDim()
     maxDim=std::max(std::max((*xmax).Position.x-(*xmin).Position.x,(*ymax).Position.y-(*ymin).Position.y),(*zmax).Position.z-(*zmin).Position.z);
 }
 
-void Mesh::setupMesh()
+void Mesh::clearVectors()
+{
+    vertices.clear();
+    indices.clear();
+}
+
+void Mesh::setupDrawingBuffers()
 {
     glGenVertexArrays(1,&VAO);
     glGenBuffers(1,&VBO);

@@ -2,20 +2,20 @@
 #define POLYHEDRONBUILDER_CGAL_H
 
 #include <CGAL/Polyhedron_3.h>
-//#include <CGAL/Simple_cartesian.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 #include "mesh.h"
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel	Kernel;
+using Kernel=CGAL::Exact_predicates_inexact_constructions_kernel;
 using CGALPolyhedron=CGAL::Polyhedron_3<Kernel>;
-typedef CGALPolyhedron::HalfedgeDS 								HalfedgeDS;
+using HalfedgeDS=CGALPolyhedron::HalfedgeDS;
 
 template<class HDS>
-
 class  PolyhedronBuilder:public CGAL::Modifier_base<HDS>
 {
 public:
+
+
     Mesh 		M;
 
     PolyhedronBuilder(){}
