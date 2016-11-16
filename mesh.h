@@ -39,10 +39,10 @@ public:
     Mesh(){}
     Mesh(std::string directory)
     {
-         loadMesh(directory);
-    findMeshInformationToNormalize();
-    setupDrawingBuffers();
-    printMeshInformation() ;
+        loadMesh(directory);
+        findMeshInformationToNormalize();
+        setupDrawingBuffers();
+        printMeshInformation() ;
 
     }
     void Draw();
@@ -54,11 +54,6 @@ public:
 
 
     glm::mat4 getModelMatrix() const;
-
-    void loadMesh(std::string directory);
-    void findMeshInformationToNormalize();
-    void setupDrawingBuffers();
-    void printMeshInformation() const ;
 private:
     GLuint VAO,VBO,EBO;
     std::string directory{};
@@ -67,8 +62,13 @@ private:
     float maxDim;
     glm::vec3 centerOfMass;
 
-    bool normalize{true};
-    bool moveToWorldCenter{true};
+//    bool normalize{true};
+//    bool moveToWorldCenter{true};
+
+    void loadMesh(std::string directory);
+    void findMeshInformationToNormalize();
+    void setupDrawingBuffers();
+    void printMeshInformation() const ;
 
     void findCenterOfMass();
     void findMaxDim();

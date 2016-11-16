@@ -6,7 +6,7 @@ void Mesh::loadMesh(std::string directory)
     clearVectors();
     std::cout<<"Started Loading Model: "<<directory<<std::endl;
 
-    this->loadMeshAssimp(directory);
+    loadMeshAssimp(directory);
 
 
     std::cout<<"Model successfully loaded. "<<std::endl;
@@ -86,16 +86,17 @@ void Mesh::processMeshAssimp(aiMesh *mesh)
 
 void Mesh::updateModelMatrix()
 {
-    if(normalize)
-    {
+    modelMatrix=glm::mat4(1);
+//    if(normalize)
+//    {
        float scaleFactor=1.0/maxDim;
         modelMatrix=glm::scale(modelMatrix,glm::vec3(scaleFactor));
-    }
-    if(moveToWorldCenter)
-    {
+//    }
+//    if(moveToWorldCenter)
+//    {
         glm::vec3 translationVector(-centerOfMass);
         modelMatrix=glm::translate(modelMatrix,translationVector);
-    }
+//    }
 }
 //Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices)
 //{
@@ -107,9 +108,14 @@ void Mesh::updateModelMatrix()
 
 void Mesh::Draw()
 {
+    setupDrawingBuffers();
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES,indices.size(),GL_UNSIGNED_INT,0);
     glBindVertexArray(0);
+    GLenum error =  glGetError();
+   if(error)
+       std::cout << error << std::endl;
+
 }
 
 glm::mat4 Mesh::getModelMatrix() const

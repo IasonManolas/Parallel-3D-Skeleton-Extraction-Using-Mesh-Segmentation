@@ -34,7 +34,7 @@ void MainWindow::on_actionOpenFile_triggered()
     {
         std::string filenameString=filename.toUtf8().constData();
         emit modelLoaded(filenameString);
-//       ui->openGLWidget->modelWasChosen(filenameString);
+//       ui->openGLWidget->scene.mesh.setupDrawingBuffers();
     }
 }
 

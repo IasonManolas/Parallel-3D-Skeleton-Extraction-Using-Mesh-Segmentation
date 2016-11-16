@@ -40,16 +40,11 @@ void GLWidget::initializeGL()
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
     modelShader=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
     axesShader=new Shader("../OpenGL_WithoutWrappers/shaders/simplevs.glsl","../OpenGL_WithoutWrappers/shaders/simplefs.glsl");
-    scene.loadMesh("../OpenGL_WithoutWrappers/Models/bunny.obj");
-//    scene.loadMesh(filename);
 
-//    Mesh sceneMesh=scene.mesh;
-//    PolyhedronBuilder<HalfedgeDS> builder(sceneMesh);
-//    P.delegate(builder);
-//    PP=PolyhedronProcessor(P);
-//    std::cout<<bool(P.is_valid())<<std::endl;
-    //    scene.mesh=Mesh("../OpenGL_WithoutWrappers/Models/bunny.obj");
-//   bbox=PP.getBbox();
+//    scene.loadMesh("../OpenGL_WithoutWrappers/Models/Alien Bust.obj");
+//    scene.loadMesh("../OpenGL_WithoutWrappers/Models/bunny.obj");
+//    scene.loadMesh("../OpenGL_WithoutWrappers/Models/bunny_low.obj");
+
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
 }
@@ -62,10 +57,9 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::paintGL()
 {
-    GLenum error;
-    if ((error = glGetError()) != GL_NO_ERROR)
-       printf("GL Error: %d\n",error);
- glClearColor(0.0f,0.0f,0.0f,1.0f);
+
+
+       glClearColor(0.0f,0.0f,0.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(surfaceState==dontShowTriangles)
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
@@ -100,11 +94,6 @@ void GLWidget::wheelEvent(QWheelEvent *event)
 void GLWidget::modelWasChosen(std::__cxx11::string filename)
 {
     scene.loadMesh(filename);
-//    assert(glGetError()==GL_NO_ERROR);
-//    this->filename=filename;
-//    update();
-//    initializeGL();
-    //    paintGL();
 }
 
 void GLWidget::updateAxesState(bool state)

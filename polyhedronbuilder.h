@@ -6,10 +6,6 @@
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 #include "mesh.h"
 
-using Kernel=CGAL::Exact_predicates_inexact_constructions_kernel;
-using CGALPolyhedron=CGAL::Polyhedron_3<Kernel>;
-using HalfedgeDS=CGALPolyhedron::HalfedgeDS;
-
 template<class HDS>
 class  PolyhedronBuilder:public CGAL::Modifier_base<HDS>
 {

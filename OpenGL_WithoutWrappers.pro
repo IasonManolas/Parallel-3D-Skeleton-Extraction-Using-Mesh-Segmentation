@@ -34,7 +34,8 @@ HEADERS  += mainwindow.h \
     scene.h \
     axes.h \
     deformer.h \
-    mypolyhedron.h
+    mypolyhedron.h \
+    meshloader.h
 
 FORMS    += mainwindow.ui
 

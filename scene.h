@@ -10,7 +10,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "directionallight.h"
-#include "mesh.h"
 #include "camera.h"
 #include "axes.h"
 #include "shader.h"
@@ -20,8 +19,6 @@ class Scene
 {
 public:
     float scaleFactor;
-    QVector3D bboxCenter;
-    Mesh mesh{};
     Camera camera{glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f)};
     MyPolyhedron P;
 
@@ -31,9 +28,7 @@ public:
     {
         setUniforms(modelShader,axisShader);
         modelShader->Use();
-        mesh.Draw();
-//        P.Draw();
-//        std::cout<<showAxes<<std::endl;
+        P.Draw();
         if(showAxes)
         {
             axisShader->Use();
@@ -47,12 +42,7 @@ public:
 
     void loadMesh(std::string filename)
     {
-       mesh.loadMesh(filename);
-       mesh.findMeshInformationToNormalize();
-       mesh.setupDrawingBuffers();
-       mesh.printMeshInformation();
-
-       P=MyPolyhedron(mesh);
+       P=MyPolyhedron(filename);
     }
     void setShowAxes(bool value)
     {
@@ -75,7 +65,7 @@ private:
     {
         modelShader->Use();
         light.setUniforms(modelShader);
-        mesh.setUniforms(modelShader);
+        P.setUniforms(modelShader);
         camera.setUniforms(modelShader);
         setProjectionMatrixUniform(modelShader);
 
