@@ -14,7 +14,7 @@ class PolyhedronProcessor
 {
 public:
     PolyhedronProcessor(){}
-    PolyhedronProcessor(Polyhedron P):P{P}
+    explicit PolyhedronProcessor(Polyhedron P):P{P}
     {
         computeBBox();
     }

@@ -1,7 +1,6 @@
 #include "glwidget.h"
 
-GLWidget::GLWidget(QWidget *parent):shaderObject(),camObject(),fov(45.0f),WIDTH(800),HEIGHT(600) //I have to constructors for class Shader in order
-  //to use the "real" one after the opengl context is active
+GLWidget::GLWidget(QWidget *parent)
 {
 
     QOpenGLWidget *widget=this;
@@ -18,8 +17,8 @@ GLWidget::GLWidget(QWidget *parent):shaderObject(),camObject(),fov(45.0f),WIDTH(
 GLWidget::~GLWidget()
 {
     makeCurrent();
-    delete shaderObject;
-    delete ourModel;
+    delete modelShader;
+    delete axesShader;
     disconnect(&timer,SIGNAL(timeout()),this,SLOT(update()));
 }
 void GLWidget::initializeGL()
@@ -36,93 +35,50 @@ void GLWidget::initializeGL()
 
     glEnable(GL_DEPTH_TEST);
 
+    char *renderer=(char*)glGetString(GL_RENDERER);
+    char *version = (char*)glGetString(GL_VERSION);
+    char *vendor= (char*)glGetString(GL_VENDOR);
+
+    std::cout <<"version:"<<version<<std::endl ;
+    std::cout <<"renderer:"<<renderer<<std::endl ;
+    std::cout <<"vendor:"<<vendor<<std::endl ;
     //I have to constructors for class Shader in order
     //to use the "real" one after the opengl context is active
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
-    shaderObject=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
-    light=DirectionalLight(glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f));
-    material=Material(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.5f,0.5f,0.0f),glm::vec3(0.6f,0.6f,0.5f),128*0.25);
+    modelShader=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
+    axesShader=new Shader("../OpenGL_WithoutWrappers/shaders/simplevs.glsl","../OpenGL_WithoutWrappers/shaders/simplefs.glsl");
 
-    ourModel=new Model("../OpenGL_WithoutWrappers/Models/bunny.obj");
-    PolyhedronBuilder<HalfedgeDS> builder(ourModel->meshes[0]);
-    P.delegate(builder);
-    PP=PolyhedronProcessor(P);
+//    scene.loadMesh("../OpenGL_WithoutWrappers/Models/Alien Bust.obj");
+//    scene.loadMesh("../OpenGL_WithoutWrappers/Models/bunny.obj");
+//    scene.loadMesh("../OpenGL_WithoutWrappers/Models/bunny_low.obj");
 
-   bbox=PP.getBbox();
-   float desiredVol=500;
-   bboxCenter={(bbox.xmax()+bbox.xmin())/2.0,(bbox.ymax()+bbox.ymin())/2.0,(bbox.zmax()+bbox.zmin())/2.0};
-   float maxDim=std::max({bbox.xmax()-bbox.xmin(),bbox.ymax()-bbox.ymin(),bbox.zmax()-bbox.zmin()});
-   float camZ=0.5/tan(fov/2.0);
-   scaleFactor=1.0/maxDim;
-   camObject=Camera(glm::vec3(0.0f,0.0f,camZ),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f));
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
-//            glm::vec3 centerOfMass{0};
-//    for(const auto& vert:ourModel->meshes[0].vertices)
-//        centerOfMass+=vert.Position;
-//    centerOfMass/=ourModel->meshes[0].vertices.size();
-
-//    QVector3D cm(centerOfMass.x,centerOfMass.y,centerOfMass.z);
-//    QVector3D bboxC(bboxCenter.x(),bboxCenter.y(),bboxCenter.z());
-//    qDebug()<<"center of Mass:"<<cm;
-//    qDebug()<<"bbox center:"<<bboxC;
 }
 void GLWidget::resizeGL(int w, int h)
 {
     WIDTH=w;
     HEIGHT=h;
+    scene.updateProjectionMatrix(w,h);
 }
 
 void GLWidget::paintGL()
 {
-    //Clear the colorbuffer
-    glClearColor(0.0f,0.0f,0.0f,1.0f);
+
+
+       glClearColor(0.0f,0.0f,0.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    shaderObject->Use();
+    if(surfaceState==dontShowTriangles)
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    else if(surfaceState==showTriangles)
+        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 
-    light.setUniforms(shaderObject);
-    material.setUniforms(shaderObject);
-    glUniform3f(glGetUniformLocation(shaderObject->programID, "viewPos"),camObject.getPosition().x,camObject.getPosition().y, camObject.getPosition().z);
-
-   // Transformation matrices
-   glm::mat4 projection = glm::perspective(fov, (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f);
-   glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-   glm::mat4 view = camObject.getViewMat();
-   glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "view"), 1, GL_FALSE, glm::value_ptr(view));
-
-//   // Draw the loaded model
-//   QMatrix4x4 model;
-//   model.scale(scaleFactor);
-//   model.translate(bboxCenter);
-   glm::mat4 model;
-   model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-   model = glm::translate(model,glm::vec3(-bboxCenter.x(),-bboxCenter.y(),-bboxCenter.z()) );
-//   model=glm::mat4(1.0f);
-//   glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "model"), 1, GL_FALSE,model.data());
-   glUniformMatrix4fv(glGetUniformLocation(shaderObject->programID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-
-   ourModel->Draw(shaderObject);
+    scene.Draw(modelShader,axesShader);
 }
-
-void GLWidget::keyPressEvent(QKeyEvent *event)//what does this mean?: If you reimplement this handler, it is very important that you call the base class implementation if you do not act upon the key.
-{
-
-}
-
-void GLWidget::keyReleaseEvent(QKeyEvent *event)
-{
-}
-
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
     //initialize mouse position
     lastMousePos=QVector2D(event->localPos());
-}
-
-void GLWidget::mouseReleaseEvent(QMouseEvent *event)
-{
-
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
@@ -133,13 +89,32 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     if(event->buttons()== Qt::LeftButton)
     {
         glm::vec2 mouseMoveOffset(mouseOffset.x(),mouseOffset.y());
-        camObject.processMouseMovement(mouseOffset);
+        scene.camera.processMouseMovement(mouseOffset);
     }
 }
 
 void GLWidget::wheelEvent(QWheelEvent *event)
 {
-   camObject.processWheelMovement(event->delta());
+  scene.camera.processWheelMovement(event->delta());
+}
 
+void GLWidget::modelWasChosen(std::__cxx11::string filename)
+{
+    scene.loadMesh(filename);
+}
+
+void GLWidget::updateAxesState(bool state)
+{
+    scene.setShowAxes(state);
+}
+
+void GLWidget::updateMeshSurfaceState(bool state)
+{
+    surfaceState=static_cast<meshSurfaceVizualization>(state);
+}
+
+void GLWidget::resetCamera()
+{
+    scene.camera.resetCamera();
 }
 

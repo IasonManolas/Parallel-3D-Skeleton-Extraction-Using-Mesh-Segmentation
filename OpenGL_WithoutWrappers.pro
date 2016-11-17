@@ -4,20 +4,20 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = OpenGL_WithoutWrappers
 TEMPLATE = app
-CONFIG+=c++11
+CONFIG+=c++14
 
 SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
     mesh.cpp \
-    model.cpp \
-    polyhedronprocessor.cpp
+    polyhedronprocessor.cpp \
+    deformer.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -30,7 +30,12 @@ HEADERS  += mainwindow.h \
     light.h \
     material.h \
     polyhedronbuilder.h \
-    polyhedronprocessor.h
+    polyhedronprocessor.h \
+    scene.h \
+    axes.h \
+    deformer.h \
+    mypolyhedron.h \
+    meshloader.h
 
 FORMS    += mainwindow.ui
 
@@ -47,7 +52,10 @@ DISTFILES += \
     nanosuit.obj \
     Models/default.png \
     Models/copyright.txt \
-    Models/default.mtl
+    Models/default.mtl \
+    shaders/simplefs.glsl \
+    shaders/simplevs.glsl \
+    Icons/Open_folder.png
 
 
 #win32:config(release, debug|release): libs += -l$$pwd/../../../../../usr/local/lib/release/ -lsoil
