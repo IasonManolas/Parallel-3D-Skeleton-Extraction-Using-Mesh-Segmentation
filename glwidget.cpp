@@ -35,6 +35,13 @@ void GLWidget::initializeGL()
 
     glEnable(GL_DEPTH_TEST);
 
+    char *renderer=(char*)glGetString(GL_RENDERER);
+    char *version = (char*)glGetString(GL_VERSION);
+    char *vendor= (char*)glGetString(GL_VENDOR);
+
+    std::cout <<"version:"<<version<<std::endl ;
+    std::cout <<"renderer:"<<renderer<<std::endl ;
+    std::cout <<"vendor:"<<vendor<<std::endl ;
     //I have to constructors for class Shader in order
     //to use the "real" one after the opengl context is active
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
