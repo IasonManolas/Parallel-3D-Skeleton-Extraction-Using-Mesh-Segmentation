@@ -39,7 +39,8 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-LIBS+=-lCGAL
+LIBS+=-lCGAL\
+        -lboost_system
 unix:!macx: LIBS += -L$$PWD/../../../../../usr/lib64/ -lGLEW
 
 INCLUDEPATH += $$PWD/../../../../../usr/include/GL
@@ -75,3 +76,10 @@ PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/libSOIL.a
 
 #unix:!macx:
 LIBS += -L$$PWD/../../../../../usr/local/lib/ -lassimp
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../../usr/local/lib/release/ -lgmp
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../../usr/local/lib/debug/ -lgmp
+else:unix: LIBS += -L$$PWD/../../../../../usr/local/lib/ -lgmp
+
+INCLUDEPATH += $$PWD/../../../../../usr/local/include
+DEPENDPATH += $$PWD/../../../../../usr/local/include

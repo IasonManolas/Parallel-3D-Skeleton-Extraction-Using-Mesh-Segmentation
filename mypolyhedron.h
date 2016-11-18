@@ -6,6 +6,11 @@
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
 #include <CGAL/Polygon_mesh_processing/orient_polygon_soup.h>
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
+//segmentation
+#include <CGAL/mesh_segmentation.h>
+#include <CGAL/property_map.h>
+#include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
+#include <CGAL/IO/Polyhedron_iostream.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -31,12 +36,14 @@ public:
         setupDrawingBuffers();
         //construct Polyhedron
         buildPolyhedron();
-
         //Find the model matrix that normalizes the mesh
+
         findCenterOfMass();
         findMaxDimensionOfMesh();
         updateModelMatrix();
 
+        std::cout<<"Polyhedron valid:"<<P.is_valid()<<std::endl;
+        meshSegmentation();
         printMeshInformation();
     }
     void setUniforms(Shader* shader)const
@@ -64,10 +71,23 @@ private:
     glm::mat4 modelMatrix{1.0};
     Material material{Material(glm::vec3(0,0,0),glm::vec3(0.5,0.5,0),glm::vec3(0.6,0.6,0.5),128*0.25)};
 
+    void meshSegmentation()
+    {
+        std::cout<<"Segmenting Mesh.."<<std::endl;
+        using Facet_int_map=std::map<CGALPolyhedron::Facet_const_handle,std::size_t>;
+        Facet_int_map internal_segment_map;
+        boost::associative_property_map<Facet_int_map> segment_property_map(internal_segment_map);
+        std::size_t number_of_segments=CGAL::segmentation_via_sdf_values(P,segment_property_map);
+        std::cout<<"Number of segments: "<<number_of_segments<<std::endl;
+        std::cout<<"Segmentation finished."<<std::endl;
+    }
+
     void buildPolyhedron()
     {
+        std::cout<<"Building Polyhedron.."<<std::endl;
        std::vector<Kernel::Point_3> points;
        std::vector<std::vector<std::size_t>> polygons;
+
        for(auto const& vert:vertices)
        {
        points.push_back(Kernel::Point_3(vert.Position.x,vert.Position.y,vert.Position.z));
@@ -82,18 +102,22 @@ private:
        CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points,polygons,P);
 //        std::map<vd,Kernel::Vector_3> normalsMap;
 //        CGAL::Polygon_mesh_processing::compute_vertex_normals(P,boost::make_assoc_property_map(normalsMap));
+        std::cout<<"Finished building Polyhedron."<<std::endl;
     }
     void findCenterOfMass()
     {
+        std::cout<<"Computing center of mass.."<<std::endl;
         glm::vec3 sum{0,0,0};
         for(const MyVertex& vertex:vertices)
             sum+=vertex.Position;
         uint n=vertices.size();
         centerOfMass={sum.x/n,sum.y/n,sum.z/n};
+        std::cout<<"Finished computing center of mass"<<std::endl;
     }
 
     void findMaxDimensionOfMesh()
     {
+        std::cout<<"Normalizing mesh.."<<std::endl;
         std::vector<MyVertex>::iterator first,last;
         first=vertices.begin();
         last=vertices.end();
@@ -126,6 +150,7 @@ private:
             zmax=first;
         }
         maxDim=std::max(std::max((*xmax).Position.x-(*xmin).Position.x,(*ymax).Position.y-(*ymin).Position.y),(*zmax).Position.z-(*zmin).Position.z);
+        std::cout<<"finished mesh normalization."<<std::endl;
     }
 
     void updateModelMatrix()
