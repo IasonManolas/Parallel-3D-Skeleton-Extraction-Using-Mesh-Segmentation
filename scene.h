@@ -5,6 +5,9 @@
 
 #include <QVector3D>
 
+#include <CGAL/Ray_3.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -14,6 +17,7 @@
 #include "axes.h"
 #include "shader.h"
 #include "mypolyhedron.h"
+#include "ray_cast_picking.h"
 
 class Scene
 {
@@ -42,11 +46,32 @@ public:
 
     void loadMesh(std::string filename)
     {
-       P=MyPolyhedron(filename);
+       P.load(filename);
+//        std::cout<<"printDebugInformation was called in :"<<__func__<<std::endl;
+//        P.printDebugInformation();
     }
     void setShowAxes(bool value)
     {
         showAxes=value;
+    }
+    bool rayIntersectsPolyhedron(const int& mouseX,const int& mouseY,int width,int height)
+    {
+        using Kernel=CGAL::Simple_cartesian<double>;
+        glm::vec3 camPos=camera.getPosition();
+        glm::vec3 ndcs(getNormalisedDeviceCoordinates(mouseX,mouseY,width,height));
+        glm::vec4 ray_clip(ndcs.x,ndcs.y,ndcs.z,1.0);
+
+        glm::vec4 ray_eye=glm::inverse(projectionMatrix)*ray_clip;
+        ray_eye=glm::vec4(ray_eye.x,ray_eye.y,-1.0,0.0);
+        glm::vec4 ray_wor4=glm::inverse(camera.getViewMat())*ray_eye;
+        glm::vec3 ray_wor(ray_wor4.x,ray_wor4.y,ray_wor4.z);
+        ray_wor=glm::normalize(ray_wor);
+//        std::cout<<"X="<<ray_wor.x<<" Y="<<ray_wor.y<<" Z="<<ray_wor.z<<std::endl;
+
+
+        CGAL::Ray_3<Kernel> ray(Kernel::Point_3(camPos.x,camPos.y,camPos.z),Kernel::Direction_3(ray_wor.x,ray_wor.y,ray_wor.z));
+
+        return P.intersects(ray);
     }
 
 private:

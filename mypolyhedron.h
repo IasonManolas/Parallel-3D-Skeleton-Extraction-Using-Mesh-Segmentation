@@ -6,45 +6,87 @@
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
 #include <CGAL/Polygon_mesh_processing/orient_polygon_soup.h>
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
+#include <CGAL/Polygon_mesh_processing/orientation.h>
 //segmentation
 #include <CGAL/mesh_segmentation.h>
 #include <CGAL/property_map.h>
 #include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 #include <CGAL/IO/Polyhedron_iostream.h>
 
+//ray shooting
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/bounding_box.h>
+#include <CGAL/AABB_tree.h>
+#include <CGAL/AABB_traits.h>
+#include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
+#include <CGAL/AABB_face_graph_triangle_primitive.h>
+
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+//#include <QOpenGLContext>
+
+struct MyVertex {
+    glm::vec3 Position;
+    glm::vec3 Normal;
+
+};
+
 #include "meshloader.h"
+//#include "meshmeasuring.h"
 #include "shader.h"
 #include "material.h"
 
-using Kernel=CGAL::Exact_predicates_inexact_constructions_kernel;
+using Kernel=CGAL::Simple_cartesian<double>;
 using CGALPolyhedron=CGAL::Polyhedron_3<Kernel>;
 using HalfedgeDS=CGALPolyhedron::HalfedgeDS;
 
-class MyPolyhedron: public CGALPolyhedron
+class MyPolyhedron
 {
 public:
     using vd=boost::graph_traits<CGALPolyhedron>::vertex_descriptor;
     MyPolyhedron(){}
-    MyPolyhedron(const std::string filename)
+    void load(std::string filename)
     {
-        //load mesh
+        indices.clear();
+        vertices.clear();
+        centerOfMass=glm::vec3(1.0);
+        modelMatrix=glm::mat4();
+        maxDim=1;
         std::tie(indices,vertices)=meshLoader::load(filename);
 
         setupDrawingBuffers();
-        //construct Polyhedron
-        buildPolyhedron();
         //Find the model matrix that normalizes the mesh
-
-        findCenterOfMass();
-        findMaxDimensionOfMesh();
+        centerOfMass=meshMeasuring::findCenterOfMass(vertices);
+        maxDim=meshMeasuring::findMaxDimension(vertices);
         updateModelMatrix();
 
-        std::cout<<"Polyhedron valid:"<<P.is_valid()<<std::endl;
-        meshSegmentation();
+        buildPolyhedron();
+//        meshSegmentation();
+
         printMeshInformation();
+     }
+
+    void printDebugInformation() const
+    {
+        glBindVertexArray(VAO);
+        for ( int i = 0; i <= 1; i++ )
+        {
+            GLint   ival;
+            GLvoid *pval;
+
+            glGetVertexAttribiv       ( i, GL_VERTEX_ATTRIB_ARRAY_ENABLED       , &ival );printf( "Attr %d: ENABLED    		= %d\n", i, ival );
+            glGetVertexAttribiv       ( i, GL_VERTEX_ATTRIB_ARRAY_SIZE          , &ival );printf( "Attr %d: SIZE		= %d\n", i, ival );
+            glGetVertexAttribiv       ( i, GL_VERTEX_ATTRIB_ARRAY_STRIDE        , &ival );printf( "Attr %d: STRIDE		= %d\n", i, ival );
+            glGetVertexAttribiv       ( i, GL_VERTEX_ATTRIB_ARRAY_TYPE          , &ival );printf( "Attr %d: TYPE		= 0x%x\n",i, ival );
+            glGetVertexAttribiv       ( i, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED    , &ival );printf( "Attr %d: NORMALIZED		= %d\n", i, ival );
+            glGetVertexAttribiv       ( i, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &ival );printf( "Attr %d: BUFFER		= %d\n", i, ival );
+            glGetVertexAttribPointerv ( i, GL_VERTEX_ATTRIB_ARRAY_POINTER       , &pval );printf( "Attr %d: POINTER		= %p\n", i, ival );
+        }
+        // Also print the numeric handle of the VAO:
+        printf( "VAO = %ld\n", long( VAO ) );
+
     }
     void setUniforms(Shader* shader)const
     {
@@ -54,43 +96,69 @@ public:
 
     void Draw()
     {
-        setupDrawingBuffers();
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES,indices.size(),GL_UNSIGNED_INT,0);
         glBindVertexArray(0);
+    }
+
+        typedef CGAL::Simple_cartesian<double> K;
+    bool intersects(K::Ray_3 ray)
+    {
+//        Kernel::Iso_cuboid_3 bbox=CGAL::bounding_box(P.points_begin(),P.points_end());
+        typedef CGAL::Polyhedron_3<K> Polyhedron;
+                typedef CGAL::AABB_face_graph_triangle_primitive<Polyhedron> Primitive;
+                typedef CGAL::AABB_traits<K, Primitive> Traits;
+                typedef CGAL::AABB_tree<Traits> Tree;
+        Tree tree(faces(P).first, faces(P).second,P);
+        if(tree.do_intersect(ray))
+        {
+            std::cout<<"Intersection(s) found!"<<std::endl;
+            return true;
+        }
+        std::cout<<"No Intersection found."<<std::endl;
+        return false;
+
     }
 
 private:
     CGALPolyhedron 			P;
     std::vector<MyVertex> 	vertices;
     std::vector<GLuint> 	indices;
-    std::vector<Kernel::Vector_3> normals;
+//    std::vector<Kernel::Vector_3> normals;
     GLuint VAO,VBO,EBO;
     glm::vec3 centerOfMass{0,0,0};
     float maxDim{1.0};
     glm::mat4 modelMatrix{1.0};
     Material material{Material(glm::vec3(0,0,0),glm::vec3(0.5,0.5,0),glm::vec3(0.6,0.6,0.5),128*0.25)};
 
-    void meshSegmentation()
+    int meshSegmentation()
     {
+//        CGALPolyhedron mesh;
+//        std::ifstream input("../../cgal-demos/examples/Surface_mesh_segmentation/data/cactus.off");
+//        if ( !input || !(input >> mesh) || mesh.empty() ) {
+//            std::cerr << "Not a valid off file." << std::endl;
+//            return EXIT_FAILURE;
+//        }
         std::cout<<"Segmenting Mesh.."<<std::endl;
         using Facet_int_map=std::map<CGALPolyhedron::Facet_const_handle,std::size_t>;
         Facet_int_map internal_segment_map;
         boost::associative_property_map<Facet_int_map> segment_property_map(internal_segment_map);
-        std::size_t number_of_segments=CGAL::segmentation_via_sdf_values(P,segment_property_map);
+        std::size_t number_of_segments=CGAL::segmentation_via_sdf_values(P
+                                                                         ,segment_property_map);
         std::cout<<"Number of segments: "<<number_of_segments<<std::endl;
         std::cout<<"Segmentation finished."<<std::endl;
     }
 
     void buildPolyhedron()
     {
+        P.clear();
         std::cout<<"Building Polyhedron.."<<std::endl;
        std::vector<Kernel::Point_3> points;
        std::vector<std::vector<std::size_t>> polygons;
 
        for(auto const& vert:vertices)
        {
-       points.push_back(Kernel::Point_3(vert.Position.x,vert.Position.y,vert.Position.z));
+       points.push_back(Kernel::Point_3((vert.Position.x-centerOfMass.x)/maxDim,(vert.Position.y-centerOfMass.y)/maxDim,(vert.Position.z-centerOfMass.z)/maxDim));
 
        }
        for(int i=0;i<indices.size();i+=3)
@@ -99,58 +167,15 @@ private:
        polygons.push_back(tri);
        }
        CGAL::Polygon_mesh_processing::orient_polygon_soup(points,polygons);
+       std::cout<<"is polygon soup polygon mesh:"<<CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(polygons)<<std::endl;
        CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points,polygons,P);
+       if (CGAL::is_closed(P) && (!CGAL::Polygon_mesh_processing::is_outward_oriented(P)))
+         CGAL::Polygon_mesh_processing::reverse_face_orientations(P);
+
+
 //        std::map<vd,Kernel::Vector_3> normalsMap;
 //        CGAL::Polygon_mesh_processing::compute_vertex_normals(P,boost::make_assoc_property_map(normalsMap));
         std::cout<<"Finished building Polyhedron."<<std::endl;
-    }
-    void findCenterOfMass()
-    {
-        std::cout<<"Computing center of mass.."<<std::endl;
-        glm::vec3 sum{0,0,0};
-        for(const MyVertex& vertex:vertices)
-            sum+=vertex.Position;
-        uint n=vertices.size();
-        centerOfMass={sum.x/n,sum.y/n,sum.z/n};
-        std::cout<<"Finished computing center of mass"<<std::endl;
-    }
-
-    void findMaxDimensionOfMesh()
-    {
-        std::cout<<"Normalizing mesh.."<<std::endl;
-        std::vector<MyVertex>::iterator first,last;
-        first=vertices.begin();
-        last=vertices.end();
-        if(first==last) maxDim=1;
-
-        std::vector<MyVertex>::iterator xmin,xmax,ymin,ymax,zmin,zmax;
-
-        xmin=first;
-        xmax=first;
-        ymin=first;
-        ymax=first;
-        zmin=first;
-        zmax=first;
-
-        while(++first!=last)
-        {
-        if((*first).Position.x<(*xmin).Position.x)
-            xmin=first;
-        else if((*first).Position.x>(*xmax).Position.x)
-            xmax=first;
-
-        if((*first).Position.y<(*ymin).Position.y)
-            ymin=first;
-        else if((*first).Position.y>(*ymax).Position.y)
-            ymax=first;
-
-        if((*first).Position.z<(*zmin).Position.z)
-            zmin=first;
-        else if((*first).Position.z>(*zmax).Position.z)
-            zmax=first;
-        }
-        maxDim=std::max(std::max((*xmax).Position.x-(*xmin).Position.x,(*ymax).Position.y-(*ymin).Position.y),(*zmax).Position.z-(*zmin).Position.z);
-        std::cout<<"finished mesh normalization."<<std::endl;
     }
 
     void updateModelMatrix()
@@ -172,8 +197,11 @@ private:
         std::cout<<"Number of vertices:"<<vertices.size()<<std::endl;
         std::cout<<"Number of faces:"<<indices.size()/3<<std::endl;
     }
+
     void setupDrawingBuffers()
     {
+        std::cout<<"Entering setupDrawingBuffers().."<<std::endl;
+
         glGenVertexArrays(1,&VAO);
         glGenBuffers(1,&VBO);
         glGenBuffers(1,&EBO);
@@ -192,8 +220,11 @@ private:
         glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(MyVertex),(GLvoid*)offsetof(MyVertex,Normal));
         glEnableVertexAttribArray(1);
 
-        glBindVertexArray(0);
+         glBindVertexArray(0);
+//   std::cout<<"printDebugInformation was called in :"<<__func__<<std::endl;
+//        printDebugInformation();
 
+        std::cout<<"Exiting setupDrawingBuffers().."<<std::endl;
     }
 };
 

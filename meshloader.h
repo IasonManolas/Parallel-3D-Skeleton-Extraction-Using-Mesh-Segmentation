@@ -3,13 +3,12 @@
 #include <vector>
 #include <tuple>
 
-//struct MyVertex {
-//    glm::vec3 Position;
-//    glm::vec3 Normal;
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
-//};
+#include <glm/vec3.hpp>
 namespace meshLoader{
-
 inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vector<MyVertex>& vertices)
 {
 
@@ -87,6 +86,61 @@ inline std::tuple<std::vector<uint>,std::vector<MyVertex>> load(std::string file
    return std::make_tuple(indices,vertices);
 
 }
+
+}
+namespace meshMeasuring {
+
+inline float findMaxDimension(std::vector<MyVertex> vertices)
+    {
+        float maxDim;
+        std::cout<<"Normalizing mesh.."<<std::endl;
+        std::vector<MyVertex>::iterator first,last;
+        first=vertices.begin();
+        last=vertices.end();
+        if(first==last) maxDim=1;
+
+        std::vector<MyVertex>::iterator xmin,xmax,ymin,ymax,zmin,zmax;
+
+        xmin=first;
+        xmax=first;
+        ymin=first;
+        ymax=first;
+        zmin=first;
+        zmax=first;
+
+        while(++first!=last)
+        {
+        if((*first).Position.x<(*xmin).Position.x)
+            xmin=first;
+        else if((*first).Position.x>(*xmax).Position.x)
+            xmax=first;
+
+        if((*first).Position.y<(*ymin).Position.y)
+            ymin=first;
+        else if((*first).Position.y>(*ymax).Position.y)
+            ymax=first;
+
+        if((*first).Position.z<(*zmin).Position.z)
+            zmin=first;
+        else if((*first).Position.z>(*zmax).Position.z)
+            zmax=first;
+        }
+        maxDim=std::max(std::max((*xmax).Position.x-(*xmin).Position.x,(*ymax).Position.y-(*ymin).Position.y),(*zmax).Position.z-(*zmin).Position.z);
+        std::cout<<"finished mesh normalization."<<std::endl;
+        return maxDim;
+    }
+inline glm::vec3 findCenterOfMass(std::vector<MyVertex> vertices)
+    {
+        glm::vec3 centerOfMass;
+        std::cout<<"Computing center of mass.."<<std::endl;
+        glm::vec3 sum{0,0,0};
+        for(const MyVertex& vertex:vertices)
+            sum+=vertex.Position;
+        uint n=vertices.size();
+        centerOfMass={sum.x/n,sum.y/n,sum.z/n};
+        std::cout<<"Finished computing center of mass"<<std::endl;
+        return centerOfMass;
+    }
 
 }
 #endif // MESHLOADER_H

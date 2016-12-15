@@ -1,5 +1,7 @@
 #include "glwidget.h"
 
+#include <GL/glx.h>
+#include <QOpenGLContext>
 GLWidget::GLWidget(QWidget *parent)
 {
 
@@ -9,7 +11,10 @@ GLWidget::GLWidget(QWidget *parent)
     format.setStencilBufferSize(8);
     format.setVersion(4, 1);
     format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setOption(QSurfaceFormat::DebugContext);
+
     widget->setFormat(format);
+
 
     setFocusPolicy(Qt::StrongFocus);
 }
@@ -31,6 +36,7 @@ void GLWidget::initializeGL()
     if( GLEW_OK != err ){
     qDebug() << "[Error] GLEW failed to initialize. " << (const char*)glewGetErrorString(err);
     }
+
     glViewport(0,0,WIDTH,HEIGHT);
 
     glEnable(GL_DEPTH_TEST);
@@ -46,11 +52,9 @@ void GLWidget::initializeGL()
     //to use the "real" one after the opengl context is active
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
     modelShader=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
-    axesShader=new Shader("../OpenGL_WithoutWrappers/shaders/simplevs.glsl","../OpenGL_WithoutWrappers/shaders/simplefs.glsl");
+    axesShader=new Shader("../OpenGL_WithoutWrappers/shaders/axesvs.glsl","../OpenGL_WithoutWrappers/shaders/axesfs.glsl");
 
-//    scene.loadMesh("../OpenGL_WithoutWrappers/Models/Alien Bust.obj");
 //    scene.loadMesh("../OpenGL_WithoutWrappers/Models/bunny.obj");
-//    scene.loadMesh("../OpenGL_WithoutWrappers/Models/bunny_low.obj");
 
     connect(&timer,SIGNAL(timeout()),this,SLOT(update()));
             timer.start(30);
@@ -64,9 +68,7 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::paintGL()
 {
-
-
-       glClearColor(0.0f,0.0f,0.0f,1.0f);
+    glClearColor(0.0f,0.0f,0.0f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(surfaceState==dontShowTriangles)
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
@@ -79,6 +81,8 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 {
     //initialize mouse position
     lastMousePos=QVector2D(event->localPos());
+    if(mode==pick) scene.rayIntersectsPolyhedron(lastMousePos.x(),lastMousePos.y(),WIDTH,HEIGHT);
+
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
@@ -88,18 +92,49 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
     if(event->buttons()== Qt::LeftButton)
     {
-        glm::vec2 mouseMoveOffset(mouseOffset.x(),mouseOffset.y());
-        scene.camera.processMouseMovement(mouseOffset);
+        if(mode==view)
+        {
+            glm::vec2 mouseMoveOffset(mouseOffset.x(),mouseOffset.y());
+            scene.camera.processMouseMovement(mouseOffset);
+        }
+        else if(mode==pick)
+        {
+            scene.rayIntersectsPolyhedron(lastMousePos.x(),lastMousePos.y(),WIDTH,HEIGHT);
+        }
     }
 }
 
 void GLWidget::wheelEvent(QWheelEvent *event)
 {
-  scene.camera.processWheelMovement(event->delta());
+    scene.camera.processWheelMovement(event->delta());
+}
+
+void GLWidget::keyPressEvent(QKeyEvent *event)
+{
+    switch(event->key()){
+
+        case Qt::Key_M:
+            mode=static_cast<Mode>(mode^1);
+            break;
+
+    }
+}
+
+void GLWidget::keyReleaseEvent(QKeyEvent *event)
+{
+//    switch(event->key()){
+
+//        case Qt::Key_M:
+//            break;
+
+//    }
+
+
 }
 
 void GLWidget::modelWasChosen(std::__cxx11::string filename)
 {
+    makeCurrent();
     scene.loadMesh(filename);
 }
 
@@ -118,3 +153,7 @@ void GLWidget::resetCamera()
     scene.camera.resetCamera();
 }
 
+void GLWidget::handleLoggedMessage(QOpenGLDebugMessage message)
+{
+        qDebug()<<message;
+}

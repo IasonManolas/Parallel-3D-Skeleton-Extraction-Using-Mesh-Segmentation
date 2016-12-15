@@ -15,27 +15,21 @@ CONFIG+=c++14
 SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
-    mesh.cpp \
-    polyhedronprocessor.cpp \
-    deformer.cpp
+    polyhedronprocessor.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
     shader.h \
     ui_mainwindow.h \
     camera.h \
-    mesh.h \
-    model.h \
     directionallight.h \
     light.h \
     material.h \
-    polyhedronbuilder.h \
-    polyhedronprocessor.h \
     scene.h \
     axes.h \
-    deformer.h \
     mypolyhedron.h \
-    meshloader.h
+    meshloader.h \
+    ray_cast_picking.h
 
 FORMS    += mainwindow.ui
 
@@ -54,9 +48,10 @@ DISTFILES += \
     Models/default.png \
     Models/copyright.txt \
     Models/default.mtl \
-    shaders/simplefs.glsl \
-    shaders/simplevs.glsl \
-    Icons/Open_folder.png
+    Icons/Open_folder.png \
+    ../../cgal-demos/examples/Surface_mesh_segmentation/data/cactus.off \
+    shaders/axesfs.glsl \
+    shaders/axesvs.glsl
 
 
 #win32:config(release, debug|release): libs += -l$$pwd/../../../../../usr/local/lib/release/ -lsoil
