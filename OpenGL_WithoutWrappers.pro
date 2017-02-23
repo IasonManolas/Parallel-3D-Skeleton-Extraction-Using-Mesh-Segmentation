@@ -14,8 +14,7 @@ CONFIG+=c++14
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    glwidget.cpp \
-    polyhedronprocessor.cpp
+    glwidget.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \

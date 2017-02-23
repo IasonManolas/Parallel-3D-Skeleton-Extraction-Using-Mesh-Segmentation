@@ -30,7 +30,8 @@
 struct MyVertex {
     glm::vec3 Position;
     glm::vec3 Normal;
-
+//    int Colored{0};
+    glm::vec3 Color{glm::vec3(0,0,0)};
 };
 
 #include "meshloader.h"
@@ -52,10 +53,14 @@ public:
         indices.clear();
         vertices.clear();
         centerOfMass=glm::vec3(1.0);
-        modelMatrix=glm::mat4();
+        modelMatrix=glm::mat4(1.0);
         maxDim=1;
         std::tie(indices,vertices)=meshLoader::load(filename);
-
+//        std::cout<<vertices[0].Colored<<endl;
+        vertices[0].Color=glm::vec3(1,0,0);
+//        std::cout<<vertices[0].Colored<<endl;
+        vertices[1].Color=glm::vec3(1,0,0);
+        vertices[2].Color=glm::vec3(1,0,0);
         setupDrawingBuffers();
         //Find the model matrix that normalizes the mesh
         centerOfMass=meshMeasuring::findCenterOfMass(vertices);
@@ -110,6 +115,7 @@ public:
                 typedef CGAL::AABB_traits<K, Primitive> Traits;
                 typedef CGAL::AABB_tree<Traits> Tree;
         Tree tree(faces(P).first, faces(P).second,P);
+        
         if(tree.do_intersect(ray))
         {
             std::cout<<"Intersection(s) found!"<<std::endl;
@@ -219,6 +225,9 @@ private:
 
         glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(MyVertex),(GLvoid*)offsetof(MyVertex,Normal));
         glEnableVertexAttribArray(1);
+
+        glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(MyVertex),(GLvoid*)offsetof(MyVertex,Color));
+        glEnableVertexAttribArray(2);
 
          glBindVertexArray(0);
 //   std::cout<<"printDebugInformation was called in :"<<__func__<<std::endl;

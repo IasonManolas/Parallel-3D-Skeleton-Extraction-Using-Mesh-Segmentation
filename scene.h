@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <QVector2D>
 #include <QVector3D>
 
 #include <CGAL/Ray_3.h>
@@ -24,6 +25,7 @@ class Scene
 public:
     float scaleFactor;
     Camera camera{glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f)};
+    DirectionalLight light{glm::vec3(1.0f),camera.getPosition(),glm::normalize(-camera.getPosition())};
     MyPolyhedron P;
 
     explicit Scene(){}
@@ -47,8 +49,6 @@ public:
     void loadMesh(std::string filename)
     {
        P.load(filename);
-//        std::cout<<"printDebugInformation was called in :"<<__func__<<std::endl;
-//        P.printDebugInformation();
     }
     void setShowAxes(bool value)
     {
@@ -58,24 +58,34 @@ public:
     {
         using Kernel=CGAL::Simple_cartesian<double>;
         glm::vec3 camPos=camera.getPosition();
-        glm::vec3 ndcs(getNormalisedDeviceCoordinates(mouseX,mouseY,width,height));
+        float x=2.0*mouseX/width-1;
+        float y=1-(2.0*mouseY)/height;
+        float z=-1; //we want the ray to point into the screen
+        glm::vec3 ndcs(x,y,z);
         glm::vec4 ray_clip(ndcs.x,ndcs.y,ndcs.z,1.0);
 
         glm::vec4 ray_eye=glm::inverse(projectionMatrix)*ray_clip;
         ray_eye=glm::vec4(ray_eye.x,ray_eye.y,-1.0,0.0);
         glm::vec4 ray_wor4=glm::inverse(camera.getViewMat())*ray_eye;
+
         glm::vec3 ray_wor(ray_wor4.x,ray_wor4.y,ray_wor4.z);
         ray_wor=glm::normalize(ray_wor);
-//        std::cout<<"X="<<ray_wor.x<<" Y="<<ray_wor.y<<" Z="<<ray_wor.z<<std::endl;
 
 
         CGAL::Ray_3<Kernel> ray(Kernel::Point_3(camPos.x,camPos.y,camPos.z),Kernel::Direction_3(ray_wor.x,ray_wor.y,ray_wor.z));
 
+
         return P.intersects(ray);
     }
 
+    void processMouseMovement(const QVector2D& mouseDV)
+    {
+        camera.processMouseMovement(mouseDV);
+        light.changeLightDirection(camera.getPosition());
+    }
+
 private:
-    DirectionalLight light{glm::vec3(1.0f),glm::vec3(0.0f,0.0f,-1.0f)};
+//    DirectionalLight light{glm::vec3(1.0f),camera.getPosition(),glm::normalize(-camera.getPosition())};
     Axes sceneAxes{};
     bool showAxes{false};
     glm::mat4 projectionMatrix{glm::mat4(1.0f)};

@@ -95,7 +95,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
         if(mode==view)
         {
             glm::vec2 mouseMoveOffset(mouseOffset.x(),mouseOffset.y());
-            scene.camera.processMouseMovement(mouseOffset);
+            scene.processMouseMovement(mouseOffset);
         }
         else if(mode==pick)
         {
@@ -151,6 +151,7 @@ void GLWidget::updateMeshSurfaceState(bool state)
 void GLWidget::resetCamera()
 {
     scene.camera.resetCamera();
+    scene.light.changeLightDirection(scene.camera.getPosition());
 }
 
 void GLWidget::handleLoggedMessage(QOpenGLDebugMessage message)

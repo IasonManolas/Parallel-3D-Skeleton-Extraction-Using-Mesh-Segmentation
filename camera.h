@@ -7,6 +7,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "glm/ext.hpp"
 
 #include <QVector2D>
 #include <QVector3D>
@@ -22,30 +23,52 @@ public:
         viewMatrix=glm::lookAt(position,target,up);
     }
 
+
+    void calculateRotationMatrix(const QVector2D& mouseDV)
+    {
+        glm::vec3 rotationAxis(-mouseDV.y(),-mouseDV.x(),0.0);//prepei na peristrefetai ws pros to peristrammeno systhma syntetagmenwn kai oxi ws pros to arxiko
+        float angle=rotationAxis.length()/100.0;
+        rotationAxis=glm::normalize(rotationAxis);
+        glm::quat rot=glm::angleAxis(angle,rotationAxis);
+        rotationQ=rotationQ*rot;
+        std::cout<<glm::to_string(rotationQ)<<std::endl;
+        rotationMatrix=glm::toMat4(rotationQ);
+    }
+
+    void updateViewMatrix()
+    {
+        viewMatrix=glm::lookAt(position,target,up);
+    }
+
+    void updateVectors()
+    {
+        glm::vec3 initialPosition=glm::vec3(0,0,distance);
+        position=glm::vec3(rotationMatrix*glm::vec4(initialPosition,0));
+
+//        look=glm::normalize(target-position);
+//        up=glm::vec3(rotationMatrix*glm::vec4(up,0));
+        up=glm::vec3(rotationMatrix*glm::vec4(0,1,0,0));
+//        right=glm::cross(look,up);
+        std::cout<<"CAM POS:X="<<position.x<<" Y="<<position.y<<" Z="<<position.z<<std::endl;
+    }
+
     void processMouseMovement(const QVector2D& mouseDV)
     {
-        glm::vec3 rotationAxis(mouseDV.y(),mouseDV.x(),0.0);
-        float angle=rotationAxis.length()/200.0;
-        rotationAxis=glm::normalize(rotationAxis);
-
-        glm::quat rot=glm::angleAxis(angle,rotationAxis);
-        rotationQ=rot*rotationQ;
-        rotationMatrix=glm::toMat4(rotationQ);
-
+        calculateRotationMatrix(mouseDV);
+        updateVectors();
         updateViewMatrix();
-     }
+    }
 
 
     void processWheelMovement(const int& wheelDelta)
     {
         if(wheelDelta>0)
-        position+=0.1f*glm::normalize(target-position);
+            distance-=0.1;
         else
-        position-=0.1f*glm::normalize(target-position);
-
+            distance+=0.1;
+        updateVectors();
         updateViewMatrix();
     }
-
     glm::vec3 getPosition() const
     {
         return position;
@@ -68,28 +91,22 @@ public:
 
     void resetCamera()
     {
-        position=glm::vec3(0,0,3);
-        target=glm::vec3(0,0,0);
-        up=glm::vec3(0,1,0);
-        worldUp=glm::vec3(0,1,0);
         rotationQ=glm::quat();
         rotationMatrix=glm::mat4(1);
+        updateVectors();
         updateViewMatrix();
     }
 
     float fov{45};
 private:
-    void updateViewMatrix()
-    {
-        viewMatrix=glm::lookAt(position,target,up);
-        viewMatrix=viewMatrix*rotationMatrix;
-    }
 
-    glm::vec3 position{glm::vec3(0,0,5)};
+    float distance{3};
+    glm::vec3 position{glm::vec3(0,0,distance)};
     glm::vec3 target{glm::vec3(0,0,0)};
-
+    glm::vec3 look{glm::normalize(target-position)};
     glm::vec3 up{glm::vec3(0,1,0)};
     glm::vec3 worldUp{glm::vec3(0,1,0)};
+    glm::vec3 right{glm::cross(look,up)};
 
     glm::mat4 viewMatrix{glm::mat4(1)};
 
