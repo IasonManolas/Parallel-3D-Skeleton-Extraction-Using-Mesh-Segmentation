@@ -2,6 +2,7 @@
 #define MYPOLYHEDRON_H
 
 #include <CGAL/Polyhedron_3.h>
+#include <CGAL/Surface_mesh.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
 #include <CGAL/Polygon_mesh_processing/orient_polygon_soup.h>
@@ -16,21 +17,20 @@
 //ray shooting
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/bounding_box.h>
-#include <CGAL/AABB_tree.h>
+//#include <CGAL/AABB_tree.h>
 #include <CGAL/AABB_traits.h>
 #include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 #include <CGAL/AABB_face_graph_triangle_primitive.h>
 
-
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <boost/optional/optional_io.hpp>
 //#include <QOpenGLContext>
 
 struct MyVertex {
     glm::vec3 Position;
     glm::vec3 Normal;
-//    int Colored{0};
     glm::vec3 Color{glm::vec3(0,0,0)};
 };
 
@@ -41,6 +41,7 @@ struct MyVertex {
 
 using Kernel=CGAL::Simple_cartesian<double>;
 using CGALPolyhedron=CGAL::Polyhedron_3<Kernel>;
+using CGALSurfaceMesh=CGAL::Surface_mesh<Kernel::Point_3>;
 using HalfedgeDS=CGALPolyhedron::HalfedgeDS;
 
 class MyPolyhedron
@@ -55,8 +56,8 @@ public:
         centerOfMass=glm::vec3(1.0);
         modelMatrix=glm::mat4(1.0);
         maxDim=1;
-        std::tie(indices,vertices)=meshLoader::load(filename);
-//        std::cout<<vertices[0].Colored<<endl;
+        bool hasNormals;
+        std::tie(indices,vertices,hasNormals)=meshLoader::load(filename); //vertices contains coords & normals
         vertices[0].Color=glm::vec3(1,0,0);
 //        std::cout<<vertices[0].Colored<<endl;
         vertices[1].Color=glm::vec3(1,0,0);
@@ -67,7 +68,8 @@ public:
         maxDim=meshMeasuring::findMaxDimension(vertices);
         updateModelMatrix();
 
-        buildPolyhedron();
+//        buildPolyhedron();
+        buildPolygonMesh();
 //        meshSegmentation();
 
         printMeshInformation();
@@ -106,19 +108,26 @@ public:
         glBindVertexArray(0);
     }
 
-        typedef CGAL::Simple_cartesian<double> K;
-    bool intersects(K::Ray_3 ray)
+    bool intersects(Kernel::Ray_3 ray)
     {
-//        Kernel::Iso_cuboid_3 bbox=CGAL::bounding_box(P.points_begin(),P.points_end());
-        typedef CGAL::Polyhedron_3<K> Polyhedron;
-                typedef CGAL::AABB_face_graph_triangle_primitive<Polyhedron> Primitive;
-                typedef CGAL::AABB_traits<K, Primitive> Traits;
-                typedef CGAL::AABB_tree<Traits> Tree;
-        Tree tree(faces(P).first, faces(P).second,P);
-        
+
+        typedef CGAL::AABB_face_graph_triangle_primitive<CGALSurfaceMesh> Primitive;
+        typedef CGAL::AABB_traits<Kernel, Primitive> Traits;
+        typedef CGAL::AABB_tree<Traits> Tree;
+
+        Tree tree(faces(M).first, faces(M).second,M);
         if(tree.do_intersect(ray))
         {
             std::cout<<"Intersection(s) found!"<<std::endl;
+
+
+
+            boost::optional<Tree::Intersection_and_primitive_id<Kernel::Ray_3>> bo_p_id=tree.first_intersection(ray);
+            if(bo_p_id) std::cout<<"INTERSECTS"<<std::endl;
+//            std::cout<<bo_p_id<<std::endl;
+//            Tree::Primitive_id p_id=bo_p_id.get();
+//            std::cout<<p_id<<std::endl;
+
             return true;
         }
         std::cout<<"No Intersection found."<<std::endl;
@@ -128,6 +137,7 @@ public:
 
 private:
     CGALPolyhedron 			P;
+    CGALSurfaceMesh			M;
     std::vector<MyVertex> 	vertices;
     std::vector<GLuint> 	indices;
 //    std::vector<Kernel::Vector_3> normals;
@@ -155,6 +165,35 @@ private:
         std::cout<<"Segmentation finished."<<std::endl;
     }
 
+
+    void buildPolygonMesh()
+    {
+        M.clear();
+        std::cout<<"Building Polyhedron.."<<std::endl;
+       std::vector<Kernel::Point_3> points;
+       std::vector<std::vector<std::size_t>> polygons;
+
+       for(auto const& vert:vertices)
+       {
+       points.push_back(Kernel::Point_3((vert.Position.x-centerOfMass.x)/maxDim,(vert.Position.y-centerOfMass.y)/maxDim,(vert.Position.z-centerOfMass.z)/maxDim));
+
+       }
+       for(int i=0;i<indices.size();i+=3)
+       {
+       std::vector<std::size_t> tri{indices[i],indices[i+1],indices[i+2]};
+       polygons.push_back(tri);
+       }
+       CGAL::Polygon_mesh_processing::orient_polygon_soup(points,polygons);
+       std::cout<<"is polygon soup polygon mesh:"<<CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(polygons)<<std::endl;
+       CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points,polygons,M);
+       if (CGAL::is_closed(M) && (!CGAL::Polygon_mesh_processing::is_outward_oriented(M)))
+         CGAL::Polygon_mesh_processing::reverse_face_orientations(M);
+
+
+//        std::map<vd,Kernel::Vector_3> normalsMap;
+//        CGAL::Polygon_mesh_processing::compute_vertex_normals(P,boost::make_assoc_property_map(normalsMap));
+        std::cout<<"Finished building Polygon Mesh."<<std::endl;
+    }
     void buildPolyhedron()
     {
         P.clear();

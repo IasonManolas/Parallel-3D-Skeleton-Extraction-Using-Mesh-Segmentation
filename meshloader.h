@@ -9,9 +9,11 @@
 
 #include <glm/vec3.hpp>
 namespace meshLoader{
-inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vector<MyVertex>& vertices)
+inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vector<MyVertex>& vertices,bool& hasNormals)
 {
 
+    hasNormals=mesh->HasNormals();
+    std::cout<<"Has Normals:"<<mesh->HasNormals()<<std::endl;
     // Walk through each of the mesh's vertices
     for(GLuint i = 0; i < mesh->mNumVertices; i++)
     {
@@ -40,26 +42,26 @@ inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vecto
 }
 
 
-inline void processNodeAssimp(aiNode *node, const aiScene *scene,std::vector<uint>& indices,std::vector<MyVertex>& vertices)
+inline void processNodeAssimp(aiNode *node, const aiScene *scene,std::vector<uint>& indices,std::vector<MyVertex>& vertices,bool& hasNormals)
 {
         // Process all the node's meshes (if any)
     for(GLuint i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        processMeshAssimp(mesh,indices,vertices);
+        processMeshAssimp(mesh,indices,vertices,hasNormals);
     }
     //Then do the same for each of its children
     for(GLuint i = 0; i < node->mNumChildren; i++)
     {
-        processNodeAssimp(node->mChildren[i], scene, indices, vertices);
+        processNodeAssimp(node->mChildren[i], scene, indices, vertices,hasNormals);
     }
 
 }
 
-inline void loadMeshAssimp(std::string path,std::vector<uint>& indices,std::vector<MyVertex>& vertices )
+inline void loadMeshAssimp(std::string path,std::vector<uint>& indices,std::vector<MyVertex>& vertices,bool& hasNormals )
 {
       Assimp::Importer importer;
-    const aiScene* scene=importer.ReadFile(path,aiProcess_Triangulate | aiProcess_FlipUVs|aiProcess_GenNormals);
+    const aiScene* scene=importer.ReadFile(path,aiProcess_Triangulate | aiProcess_FlipUVs|aiProcess_GenSmoothNormals);
 
     if(!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
@@ -68,22 +70,23 @@ inline void loadMeshAssimp(std::string path,std::vector<uint>& indices,std::vect
         }
 //    this->directory = path.substr(0, path.find_last_of('/'));
 
-    processNodeAssimp(scene->mRootNode, scene,indices,vertices);
+    processNodeAssimp(scene->mRootNode, scene,indices,vertices,hasNormals);
 
 }
 
 
-inline std::tuple<std::vector<uint>,std::vector<MyVertex>> load(std::string filename)
+inline std::tuple<std::vector<uint>,std::vector<MyVertex>,bool> load(std::string filename)
 {
     std::cout <<"Loading "<<filename<<" using Assimp library."<<std::endl;
    std::vector<uint> 		indices;
    std::vector<MyVertex> 	vertices;
-   loadMeshAssimp(filename,indices,vertices);
+   bool 					hasNormals;
+   loadMeshAssimp(filename,indices,vertices,hasNormals);
 
    if(indices.size()!=0 && vertices.size()!=0)
        std::cout<<"Loading was successfull."<<std::endl;
 
-   return std::make_tuple(indices,vertices);
+   return std::make_tuple(indices,vertices,hasNormals);
 
 }
 

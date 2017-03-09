@@ -32,8 +32,8 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui
 
-LIBS+=-lCGAL\
-        -lboost_system
+LIBS+=-lboost_system
+#LIBS+=-lCGAL
 unix:!macx: LIBS += -L$$PWD/../../../../../usr/lib64/ -lGLEW
 
 INCLUDEPATH += $$PWD/../../../../../usr/include/GL
@@ -58,8 +58,8 @@ DISTFILES += \
 #else:unix:
  LIBS += -L$$PWD/../../../../../usr/local/lib/ -lSOIL
 
-INCLUDEPATH += $$PWD/../../../../../usr/local/include
-DEPENDPATH += $$PWD/../../../../../usr/local/include
+#INCLUDEPATH += $$PWD/../../../../../usr/local/include
+#DEPENDPATH += $$PWD/../../../../../usr/local/include
 
 #win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/release/libSOIL.a
 #else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/debug/libSOIL.a
@@ -75,5 +75,10 @@ win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../../usr/local/l
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../../usr/local/lib/debug/ -lgmp
 else:unix: LIBS += -L$$PWD/../../../../../usr/local/lib/ -lgmp
 
-INCLUDEPATH += $$PWD/../../../../../usr/local/include
-DEPENDPATH += $$PWD/../../../../../usr/local/include
+#INCLUDEPATH += $$PWD/../../../../../usr/local/include
+#DEPENDPATH += $$PWD/../../../../../usr/local/include
+
+unix:!macx: LIBS += -L$$PWD/'../../CGAL build/build/debug/lib/' -lCGAL
+
+INCLUDEPATH += $$PWD/'../../CGAL build'
+#DEPENDPATH += $$PWD/'../../CGAL build'
