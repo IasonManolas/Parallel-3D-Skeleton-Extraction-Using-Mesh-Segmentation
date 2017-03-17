@@ -3,16 +3,17 @@
 #include <vector>
 #include <tuple>
 
-//struct MyVertex {
-//    glm::vec3 Position;
-//    glm::vec3 Normal;
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
-//};
+#include <glm/vec3.hpp>
 namespace meshLoader{
-
-inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vector<MyVertex>& vertices)
+inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vector<MyVertex>& vertices,bool& hasNormals)
 {
 
+    hasNormals=mesh->HasNormals();
+    std::cout<<"Has Normals:"<<mesh->HasNormals()<<std::endl;
     // Walk through each of the mesh's vertices
     for(GLuint i = 0; i < mesh->mNumVertices; i++)
     {
@@ -41,26 +42,26 @@ inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vecto
 }
 
 
-inline void processNodeAssimp(aiNode *node, const aiScene *scene,std::vector<uint>& indices,std::vector<MyVertex>& vertices)
+inline void processNodeAssimp(aiNode *node, const aiScene *scene,std::vector<uint>& indices,std::vector<MyVertex>& vertices,bool& hasNormals)
 {
         // Process all the node's meshes (if any)
     for(GLuint i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        processMeshAssimp(mesh,indices,vertices);
+        processMeshAssimp(mesh,indices,vertices,hasNormals);
     }
     //Then do the same for each of its children
     for(GLuint i = 0; i < node->mNumChildren; i++)
     {
-        processNodeAssimp(node->mChildren[i], scene, indices, vertices);
+        processNodeAssimp(node->mChildren[i], scene, indices, vertices,hasNormals);
     }
 
 }
 
-inline void loadMeshAssimp(std::string path,std::vector<uint>& indices,std::vector<MyVertex>& vertices )
+inline void loadMeshAssimp(std::string path,std::vector<uint>& indices,std::vector<MyVertex>& vertices,bool& hasNormals )
 {
       Assimp::Importer importer;
-    const aiScene* scene=importer.ReadFile(path,aiProcess_Triangulate | aiProcess_FlipUVs|aiProcess_GenNormals);
+    const aiScene* scene=importer.ReadFile(path,aiProcess_Triangulate | aiProcess_FlipUVs|aiProcess_GenSmoothNormals);
 
     if(!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
@@ -69,24 +70,80 @@ inline void loadMeshAssimp(std::string path,std::vector<uint>& indices,std::vect
         }
 //    this->directory = path.substr(0, path.find_last_of('/'));
 
-    processNodeAssimp(scene->mRootNode, scene,indices,vertices);
+    processNodeAssimp(scene->mRootNode, scene,indices,vertices,hasNormals);
 
 }
 
 
-inline std::tuple<std::vector<uint>,std::vector<MyVertex>> load(std::string filename)
+inline std::tuple<std::vector<uint>,std::vector<MyVertex>,bool> load(std::string filename)
 {
     std::cout <<"Loading "<<filename<<" using Assimp library."<<std::endl;
    std::vector<uint> 		indices;
    std::vector<MyVertex> 	vertices;
-   loadMeshAssimp(filename,indices,vertices);
+   bool 					hasNormals;
+   loadMeshAssimp(filename,indices,vertices,hasNormals);
 
    if(indices.size()!=0 && vertices.size()!=0)
        std::cout<<"Loading was successfull."<<std::endl;
 
-   return std::make_tuple(indices,vertices);
+   return std::make_tuple(indices,vertices,hasNormals);
 
 }
+
+}
+namespace meshMeasuring {
+
+inline float findMaxDimension(std::vector<MyVertex> vertices)
+    {
+        float maxDim;
+        std::cout<<"Normalizing mesh.."<<std::endl;
+        std::vector<MyVertex>::iterator first,last;
+        first=vertices.begin();
+        last=vertices.end();
+        if(first==last) maxDim=1;
+
+        std::vector<MyVertex>::iterator xmin,xmax,ymin,ymax,zmin,zmax;
+
+        xmin=first;
+        xmax=first;
+        ymin=first;
+        ymax=first;
+        zmin=first;
+        zmax=first;
+
+        while(++first!=last)
+        {
+        if((*first).Position.x<(*xmin).Position.x)
+            xmin=first;
+        else if((*first).Position.x>(*xmax).Position.x)
+            xmax=first;
+
+        if((*first).Position.y<(*ymin).Position.y)
+            ymin=first;
+        else if((*first).Position.y>(*ymax).Position.y)
+            ymax=first;
+
+        if((*first).Position.z<(*zmin).Position.z)
+            zmin=first;
+        else if((*first).Position.z>(*zmax).Position.z)
+            zmax=first;
+        }
+        maxDim=std::max(std::max((*xmax).Position.x-(*xmin).Position.x,(*ymax).Position.y-(*ymin).Position.y),(*zmax).Position.z-(*zmin).Position.z);
+        std::cout<<"finished mesh normalization."<<std::endl;
+        return maxDim;
+    }
+inline glm::vec3 findCenterOfMass(std::vector<MyVertex> vertices)
+    {
+        glm::vec3 centerOfMass;
+        std::cout<<"Computing center of mass.."<<std::endl;
+        glm::vec3 sum{0,0,0};
+        for(const MyVertex& vertex:vertices)
+            sum+=vertex.Position;
+        uint n=vertices.size();
+        centerOfMass={sum.x/n,sum.y/n,sum.z/n};
+        std::cout<<"Finished computing center of mass"<<std::endl;
+        return centerOfMass;
+    }
 
 }
 #endif // MESHLOADER_H
