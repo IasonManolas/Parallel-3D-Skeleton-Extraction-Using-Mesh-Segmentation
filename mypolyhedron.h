@@ -116,14 +116,21 @@ public:
         typedef CGAL::AABB_tree<Traits> Tree;
 
         Tree tree(faces(M).first, faces(M).second,M);
-        if(tree.do_intersect(ray))
+        typedef boost::optional<Tree::Intersection_and_primitive_id<Kernel::Ray_3>::Type> Ray_intersection;
+        boost::optional<int> a=3;
+
+        Ray_intersection intersection=tree.first_intersection(ray);
+//		if(tree.do_intersect(ray))
+        if(intersection)
         {
             std::cout<<"Intersection(s) found!"<<std::endl;
+            if(boost::get<CGAL::SM_Face_index>(&(intersection->second))){
+              const CGAL::SM_Face_index* p =  boost::get<CGAL::SM_Face_index>(&(intersection->second) );
 
-
-
-            boost::optional<Tree::Intersection_and_primitive_id<Kernel::Ray_3>> bo_p_id=tree.first_intersection(ray);
-            if(bo_p_id) std::cout<<"INTERSECTS"<<std::endl;
+              std::cout <<  *p << std::endl;
+            }
+//            boost::optional<Primitive> bo_p=tree.first_intersected_primitive(ray);
+//            if(bo_p_id) std::cout<<"INTERSECTS"<<std::endl;
 //            std::cout<<bo_p_id<<std::endl;
 //            Tree::Primitive_id p_id=bo_p_id.get();
 //            std::cout<<p_id<<std::endl;
@@ -169,7 +176,7 @@ private:
     void buildPolygonMesh()
     {
         M.clear();
-        std::cout<<"Building Polyhedron.."<<std::endl;
+        std::cout<<"Building CGALPolygonMesh.."<<std::endl;
        std::vector<Kernel::Point_3> points;
        std::vector<std::vector<std::size_t>> polygons;
 
@@ -183,11 +190,11 @@ private:
        std::vector<std::size_t> tri{indices[i],indices[i+1],indices[i+2]};
        polygons.push_back(tri);
        }
-       CGAL::Polygon_mesh_processing::orient_polygon_soup(points,polygons);
+//       CGAL::Polygon_mesh_processing::orient_polygon_soup(points,polygons);
        std::cout<<"is polygon soup polygon mesh:"<<CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(polygons)<<std::endl;
        CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points,polygons,M);
-       if (CGAL::is_closed(M) && (!CGAL::Polygon_mesh_processing::is_outward_oriented(M)))
-         CGAL::Polygon_mesh_processing::reverse_face_orientations(M);
+//       if (CGAL::is_closed(M) && (!CGAL::Polygon_mesh_processing::is_outward_oriented(M)))
+//         CGAL::Polygon_mesh_processing::reverse_face_orientations(M);
 
 
 //        std::map<vd,Kernel::Vector_3> normalsMap;
