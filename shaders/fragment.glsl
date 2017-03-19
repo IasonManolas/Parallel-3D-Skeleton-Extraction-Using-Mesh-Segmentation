@@ -7,7 +7,7 @@ struct Material {
 };
 
 struct Light {
-    //vec3 position;
+//    vec3 position;
     vec3 direction;
 
     vec3 ambient;
@@ -17,6 +17,7 @@ struct Light {
 
 in vec3 FragPos;
 in vec3 Normal;
+in vec3 Color;
 
 out vec4 color;
 
@@ -26,21 +27,26 @@ uniform Light light;
 
 void main()
 {
-    // Ambient
-    vec3 ambient = light.ambient*material.ambient ;
+    if(gl_PrimitiveID==1)
+        color=vec4(1.0f,0.0f,0.0f,1.0f);
+    else
+    {
+        // Ambient
+        vec3 ambient = light.ambient*material.ambient ;
+        // Diffuse
+        vec3 norm = normalize(Normal);
+        vec3 lightDir = normalize(-light.direction);
+        float diff = max(dot(norm, lightDir), 0.0);
+        vec3 diffuse = light.diffuse * diff * material.diffuse;
 
-    // Diffuse
-    vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(-light.direction);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff * material.diffuse;
+        // Specular
+        vec3 viewDir = normalize(viewPos - FragPos); //mallon to viewPos einai se allo systhma syntetagmenwn ap oti to light.direction
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+        vec3 specular = light.specular * spec *material.specular;
 
-    // Specular
-    vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 specular = light.specular * spec *material.specular;
+        vec3 result = ambient+diffuse+specular;
 
-    vec3 result = ambient + diffuse + specular;
-    color = vec4(result, 1.0f);
+        color = vec4(result, 1.0f);
+    }
 }

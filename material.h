@@ -13,10 +13,10 @@ public:
 
     void setUniforms(Shader* shader) const
     {
-        glUniform3f(glGetUniformLocation(shader->programID, "material.ambient"),0.0f, 0.0f, 0.0f);
-        glUniform3f(glGetUniformLocation(shader->programID, "material.diffuse"),  0.5f,0.5f,0.0f);
-        glUniform3f(glGetUniformLocation(shader->programID, "material.specular"), 0.6f,0.6f,0.5f); // Specular doesn't have full effect on this object's material
-        glUniform1f(glGetUniformLocation(shader->programID, "material.shininess"), 128*0.25);
+        glUniform3f(glGetUniformLocation(shader->programID, "material.ambient"),ambient.x,ambient.y,ambient.z);
+        glUniform3f(glGetUniformLocation(shader->programID, "material.diffuse"),  diffuse.x,diffuse.y,diffuse.z);
+        glUniform3f(glGetUniformLocation(shader->programID, "material.specular"),specular.x,specular.y,specular.z); // Specular doesn't have full effect on this object's material
+        glUniform1f(glGetUniformLocation(shader->programID, "material.shininess"), shininess);
     }
 
 
