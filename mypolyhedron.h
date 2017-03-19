@@ -124,11 +124,11 @@ public:
         if(intersection)
         {
             std::cout<<"Intersection(s) found!"<<std::endl;
-            if(boost::get<CGAL::SM_Face_index>(&(intersection->second))){
-              const CGAL::SM_Face_index* p =  boost::get<CGAL::SM_Face_index>(&(intersection->second) );
+//            if(boost::get<CGAL::SM_Face_index>(&(intersection->second))){
+//              const CGAL::SM_Face_index* p =  boost::get<CGAL::SM_Face_index>(&(intersection->second) );
 
-              std::cout <<  *p << std::endl;
-            }
+//              std::cout <<  *p << std::endl;
+//            }
 //            boost::optional<Primitive> bo_p=tree.first_intersected_primitive(ray);
 //            if(bo_p_id) std::cout<<"INTERSECTS"<<std::endl;
 //            std::cout<<bo_p_id<<std::endl;
