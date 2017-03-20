@@ -51,8 +51,8 @@ void GLWidget::initializeGL()
     //I have to constructors for class Shader in order
     //to use the "real" one after the opengl context is active
     //IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka Projects) as the sources(aka OpenGL_WithoutWrappers)
-    modelShader=new Shader("../OpenGL_WithoutWrappers/shaders/vertex.glsl","../OpenGL_WithoutWrappers/shaders/fragment.glsl");
-    axesShader=new Shader("../OpenGL_WithoutWrappers/shaders/axesvs.glsl","../OpenGL_WithoutWrappers/shaders/axesfs.glsl");
+    modelShader=new Shader("shaders/vertex.glsl","shaders/fragment.glsl");
+    axesShader=new Shader("shaders/axesvs.glsl","shaders/axesfs.glsl");
 
 //    scene.loadMesh("../OpenGL_WithoutWrappers/Models/bunny.obj");
 
@@ -150,6 +150,7 @@ void GLWidget::updateMeshSurfaceState(bool state)
 
 void GLWidget::resetCamera()
 {
+    std::cout<<"camera reseted"<<std::endl;
     scene.camera.resetCamera();
     scene.light.changeLightDirection(scene.camera.getPosition());
 }

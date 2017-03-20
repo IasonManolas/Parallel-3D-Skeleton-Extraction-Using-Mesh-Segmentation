@@ -93,6 +93,7 @@ public:
     {
         rotationQ=glm::quat();
         rotationMatrix=glm::mat4(1);
+        distance=3;
         updateVectors();
         updateViewMatrix();
     }

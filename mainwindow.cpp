@@ -45,5 +45,6 @@ void MainWindow::on_checkBoxMeshSurface_clicked(bool state)
 
 void MainWindow::on_pushButtonResetCamera_clicked()
 {
+    std::cout<<"camera reseted"<<std::endl;
     emit buttonResetCameraClicked();
 }
