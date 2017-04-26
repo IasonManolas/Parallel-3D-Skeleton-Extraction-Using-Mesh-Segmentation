@@ -29,12 +29,11 @@ void MainWindow::on_checkBoxAxis_clicked(bool state)
 
 void MainWindow::on_actionOpenFile_triggered()
 {
-    QString filename=QFileDialog::getOpenFileName(this,tr("Load Model"),"../OpenGL_WithoutWrappers/Models/",tr("All Files (*)"));
+    QString filename=QFileDialog::getOpenFileName(this,tr("Load Model"),"../Models/",tr("All Files (*)"));
     if(filename!=NULL)
     {
         std::string filenameString=filename.toUtf8().constData();
         emit modelLoaded(filenameString);
-//       ui->openGLWidget->scene.mesh.setupDrawingBuffers();
     }
 }
 

@@ -2,18 +2,26 @@
 #define MESHLOADER_H
 #include <vector>
 #include <tuple>
+#include <random>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
 #include <glm/vec3.hpp>
+
+#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Surface_mesh.h>
+#include <CGAL/Point_3.h>
+
+using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+using Point=Kernel::Point_3;
+using CGALSurfaceMesh=CGAL::Surface_mesh<Point>;
+
 namespace meshLoader{
-inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vector<MyVertex>& vertices,bool& hasNormals)
+inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vector<MyVertex>& vertices)
 {
 
-    hasNormals=mesh->HasNormals();
-    std::cout<<"Has Normals:"<<mesh->HasNormals()<<std::endl;
     // Walk through each of the mesh's vertices
     for(GLuint i = 0; i < mesh->mNumVertices; i++)
     {
@@ -42,23 +50,23 @@ inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vecto
 }
 
 
-inline void processNodeAssimp(aiNode *node, const aiScene *scene,std::vector<uint>& indices,std::vector<MyVertex>& vertices,bool& hasNormals)
+inline void processNodeAssimp(aiNode *node, const aiScene *scene,std::vector<uint>& indices,std::vector<MyVertex>& vertices)
 {
         // Process all the node's meshes (if any)
     for(GLuint i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        processMeshAssimp(mesh,indices,vertices,hasNormals);
+        processMeshAssimp(mesh,indices,vertices);
     }
     //Then do the same for each of its children
     for(GLuint i = 0; i < node->mNumChildren; i++)
     {
-        processNodeAssimp(node->mChildren[i], scene, indices, vertices,hasNormals);
+        processNodeAssimp(node->mChildren[i], scene, indices, vertices);
     }
 
 }
 
-inline void loadMeshAssimp(std::string path,std::vector<uint>& indices,std::vector<MyVertex>& vertices,bool& hasNormals )
+inline void loadMeshAssimp(std::string path,std::vector<uint>& indices,std::vector<MyVertex>& vertices )
 {
       Assimp::Importer importer;
     const aiScene* scene=importer.ReadFile(path,aiProcess_Triangulate | aiProcess_FlipUVs|aiProcess_GenSmoothNormals);
@@ -66,34 +74,34 @@ inline void loadMeshAssimp(std::string path,std::vector<uint>& indices,std::vect
     if(!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
             std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+//            std::cout << "ERROR::ASSIMP::" << importer.GetImporterInfo(GetImporterCount() << std::endl;
             return;
         }
 //    this->directory = path.substr(0, path.find_last_of('/'));
 
-    processNodeAssimp(scene->mRootNode, scene,indices,vertices,hasNormals);
+    processNodeAssimp(scene->mRootNode, scene,indices,vertices);
 
 }
 
 
-inline std::tuple<std::vector<uint>,std::vector<MyVertex>,bool> load(std::string filename)
+inline std::tuple<std::vector<uint>,std::vector<MyVertex>> load(std::string filename)
 {
     std::cout <<"Loading "<<filename<<" using Assimp library."<<std::endl;
    std::vector<uint> 		indices;
    std::vector<MyVertex> 	vertices;
-   bool 					hasNormals;
-   loadMeshAssimp(filename,indices,vertices,hasNormals);
+   loadMeshAssimp(filename,indices,vertices);
 
    if(indices.size()!=0 && vertices.size()!=0)
        std::cout<<"Loading was successfull."<<std::endl;
 
-   return std::make_tuple(indices,vertices,hasNormals);
+   return std::make_tuple(indices,vertices);
 
 }
 
 }
 namespace meshMeasuring {
 
-inline float findMaxDimension(std::vector<MyVertex> vertices)
+ inline float findMaxDimension(std::vector<MyVertex> vertices)
     {
         float maxDim;
         std::cout<<"Normalizing mesh.."<<std::endl;
@@ -145,5 +153,24 @@ inline glm::vec3 findCenterOfMass(std::vector<MyVertex> vertices)
         return centerOfMass;
     }
 
+inline float findAverageEdgeLength(const CGALSurfaceMesh& M)
+{
+        std::cout<<"Computing average edge length.."<<std::endl;
+    CGALSurfaceMesh::vertex_iterator vi=M.vertices_begin();
+
+    int numOfSamples=100;
+    double sum=0;
+    for(int i=0;i<numOfSamples;i++){
+        int vertexIndex=rand()%M.number_of_vertices();
+
+        CGALSurfaceMesh::Halfedge_index hIndex=M.halfedge(vertexIndex);
+        CGALSurfaceMesh::Halfedge_index prevHIndex=M.prev(hIndex);
+        const Point& a=M.point(M.source(prevHIndex));
+        const Point& b=M.point(M.source(hIndex));
+        sum+=CGAL::sqrt(CGAL::squared_distance(a,b));
+    }
+    double meanEdgeLength=sum/numOfSamples;
+    return meanEdgeLength;
+}
 }
 #endif // MESHLOADER_H

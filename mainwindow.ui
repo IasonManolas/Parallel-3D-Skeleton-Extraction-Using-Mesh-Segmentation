@@ -24,8 +24,14 @@
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QCheckBox" name="checkBoxMeshSurface">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
           <property name="text">
            <string>Show Grid</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -60,7 +66,7 @@
     <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
-    <bool>true</bool>
+    <bool>false</bool>
    </attribute>
    <addaction name="separator"/>
    <addaction name="actionOpenFile"/>
