@@ -18,7 +18,7 @@ public:
     {
         position=newPosition;
         direction=glm::normalize(-position);
-        std::cout<<"LIGHT:X="<<position.x<<" Y="<<position.y<<" Z="<<position.z<<std::endl;
+//        std::cout<<"LIGHT:X="<<position.x<<" Y="<<position.y<<" Z="<<position.z<<std::endl;
     }
     void setUniforms(Shader* shader) const
     {

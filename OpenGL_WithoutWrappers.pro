@@ -12,6 +12,9 @@ TARGET = OpenGL_WithoutWrappers
 TEMPLATE = app
 CONFIG+=c++14
 
+QMAKE_CC=clang
+QMAKE_CXX=clang
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp
@@ -28,7 +31,9 @@ HEADERS  += mainwindow.h \
     axes.h \
     mypolyhedron.h \
     meshloader.h \
-    ray_cast_picking.h
+    ray_cast_picking.h \
+    pointSphere.h \
+    pointsphere.h
 
 FORMS    += mainwindow.ui
 
@@ -52,21 +57,8 @@ DISTFILES += \
     shaders/axesfs.glsl \
     shaders/axesvs.glsl
 
-
-#win32:config(release, debug|release): libs += -l$$pwd/../../../../../usr/local/lib/release/ -lsoil
-#else:win32:config(debug, debug|release): libs += -l$$pwd/../../../../../usr/local/lib/debug/ -lsoil
-#else:unix:
- LIBS += -L$$PWD/../../../../../usr/local/lib/ -lSOIL
-
 #INCLUDEPATH += $$PWD/../../../../../usr/local/include
 #DEPENDPATH += $$PWD/../../../../../usr/local/include
-
-#win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/release/libSOIL.a
-#else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/debug/libSOIL.a
-#else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/release/SOIL.lib
-#else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/debug/SOIL.lib
-#else:unix:
-PRE_TARGETDEPS += $$PWD/../../../../../usr/local/lib/libSOIL.a
 
 #unix:!macx:
 LIBS += -L$$PWD/../../../../../usr/local/lib/ -lassimp

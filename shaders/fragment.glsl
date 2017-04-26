@@ -21,16 +21,17 @@ in vec3 Color;
 
 out vec4 color;
 
+uniform int intersectingFace;
 uniform vec3 viewPos;
 uniform Material material;
 uniform Light light;
 
 void main()
 {
-    if(gl_PrimitiveID==1)
-        color=vec4(1.0f,0.0f,0.0f,1.0f);
-    else
-    {
+//    if(gl_PrimitiveID==intersectingFace)
+//        color=vec4(1.0f,0.0f,0.0f,1.0f);
+//    else
+//    {
         // Ambient
         vec3 ambient = light.ambient*material.ambient ;
         // Diffuse
@@ -48,5 +49,5 @@ void main()
         vec3 result = ambient+diffuse+specular;
 
         color = vec4(result, 1.0f);
-    }
+//    }
 }

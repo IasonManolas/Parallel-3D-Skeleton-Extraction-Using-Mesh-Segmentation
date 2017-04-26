@@ -52,7 +52,7 @@ private:
     void mouseMoveEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
-    void keyReleaseEvent(QKeyEvent *event) override;
+//    void keyReleaseEvent(QKeyEvent *event) override;
 private:
 //    std::string filename{"../OpenGL_WithoutWrappers/Models/bunny.obj"};
     meshSurfaceVizualization surfaceState{dontShowTriangles};

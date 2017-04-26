@@ -18,6 +18,7 @@
 #include "axes.h"
 #include "shader.h"
 #include "mypolyhedron.h"
+#include "pointsphere.h"
 #include "ray_cast_picking.h"
 
 class Scene
@@ -27,18 +28,25 @@ public:
     Camera camera{glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f)};
     DirectionalLight light{glm::vec3(1.0f),camera.getPosition(),glm::normalize(-camera.getPosition())};
     MyPolyhedron P;
+    PointSphere intersectionSphere;
+    bool showIntersection{false};
 
-    explicit Scene(){}
+    Scene(){
+    }
 
     void Draw(Shader* modelShader,Shader* axisShader)
     {
-        setUniforms(modelShader,axisShader);
+        setMeshUniforms(modelShader,axisShader);
         modelShader->Use();
         P.Draw();
         if(showAxes)
         {
             axisShader->Use();
             sceneAxes.Draw();
+        }
+        if(showIntersection){
+            setIntersectionSphereUniforms(modelShader);
+            intersectionSphere.Draw();
         }
     }
     void updateProjectionMatrix(int w,int h)
@@ -48,15 +56,21 @@ public:
 
     void loadMesh(std::string filename)
     {
+       camera.resetCamera();
+       light.changeLightDirection(camera.getPosition());
+
        P.load(filename);
+       
     }
     void setShowAxes(bool value)
     {
         showAxes=value;
     }
+
     bool rayIntersectsPolyhedron(const int& mouseX,const int& mouseY,int width,int height)
     {
-        using Kernel=CGAL::Simple_cartesian<double>;
+
+        using Kernel=CGAL::Exact_predicates_inexact_constructions_kernel;
         glm::vec3 camPos=camera.getPosition();
         float x=2.0*mouseX/width-1;
         float y=1-(2.0*mouseY)/height;
@@ -73,9 +87,17 @@ public:
 
 
         CGAL::Ray_3<Kernel> ray(Kernel::Point_3(camPos.x,camPos.y,camPos.z),Kernel::Direction_3(ray_wor.x,ray_wor.y,ray_wor.z));
-
-
-        return P.intersects(ray);
+        
+        CGAL::Point_3<Kernel> intersectionPosition;
+	int vertexIndex;
+        bool intersectionFound=P.intersects(ray,vertexIndex,intersectionPosition);
+        if(intersectionFound) {
+		intersectionSphere.setIntersectingVertexIndex(vertexIndex);
+		std::cout<<"intersecting index is:"<<vertexIndex<<std::endl;
+		intersectionSphere.setPosition(intersectionPosition);
+	}
+        showIntersection=intersectionFound;
+        return intersectionFound;
     }
 
     void processMouseMovement(const QVector2D& mouseDV)
@@ -96,7 +118,7 @@ private:
     {
         glUniformMatrix4fv(glGetUniformLocation(shader->programID,"projection"),1,GL_FALSE,glm::value_ptr(projectionMatrix));
     }
-    void setUniforms(Shader* modelShader,Shader* axisShader)
+    void setMeshUniforms(Shader* modelShader,Shader* axisShader)
     {
         modelShader->Use();
         light.setUniforms(modelShader);
@@ -110,6 +132,10 @@ private:
         camera.setUniforms(axisShader);
 
 
+    }
+    void setIntersectionSphereUniforms(Shader* shader){
+        shader->Use();
+        intersectionSphere.setUniforms(shader);
     }
 };
 
