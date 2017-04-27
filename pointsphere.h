@@ -21,7 +21,7 @@ public:
 	updateModelMatrix();
 	buildPolygonMesh();
 
-	averageEdgeLength = meshMeasuring::findAverageEdgeLength(M);
+    averageEdgeLength = meshMeasuring::findAverageEdgeLength(M);
 
 	printMeshInformation();
     }
