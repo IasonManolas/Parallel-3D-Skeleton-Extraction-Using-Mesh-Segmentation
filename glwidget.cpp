@@ -51,11 +51,11 @@ void GLWidget::initializeGL() {
   // IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka
   // Projects) as the sources(aka OpenGL_WithoutWrappers)
   modelShader =
-      new Shader("../shaders/vertex.glsl", "../shaders/fragment.glsl");
-  axesShader = new Shader("../shaders/axesvs.glsl", "../shaders/axesfs.glsl");
+      new Shader("../Thesis/shaders/vertex.glsl", "../Thesis/shaders/fragment.glsl");
+  axesShader = new Shader("../Thesis/shaders/axesvs.glsl", "../Thesis/shaders/axesfs.glsl");
 
-  scene.loadMesh("../Models/teapot.obj");
-  scene.intersectionSphere.load("../Models/icosahedron.obj",
+  scene.loadMesh("../Thesis/Models/test.obj");
+  scene.intersectionSphere.load("../Thesis/Models/icosahedron.obj",
                                 scene.P.averageEdgeLength / 5);
 
   connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -93,10 +93,11 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
     if (mode == view) {
       glm::vec2 mouseMoveOffset(mouseOffset.x(), mouseOffset.y());
       scene.processMouseMovement(mouseOffset);
-    } else if (mode == pick) {
-      scene.rayIntersectsPolyhedron(lastMousePos.x(), lastMousePos.y(), WIDTH,
-                                    HEIGHT);
     }
+//    else if (mode == pick) {
+//      scene.rayIntersectsPolyhedron(lastMousePos.x(), lastMousePos.y(), WIDTH,
+//                                    HEIGHT);
+//    }
   }
 }
 
@@ -112,8 +113,8 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
 
     break;
   }
-  case Qt::Key_C:{
-	scene.P.computeOneRingNeighbours(scene.intersectionSphere.getIntersectionIndex());
+  case Qt::Key_S:{
+    scene.P.segmentMesh();
 	break;
   }
 }
