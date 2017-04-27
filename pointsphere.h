@@ -18,12 +18,12 @@ public:
 	//Find the model matrix that normalizes the mesh
 	centerOfMass = meshMeasuring::findCenterOfMass(vertices);
 	maxDim = meshMeasuring::findMaxDimension(vertices);
-	updateModelMatrix();
+
 	buildPolygonMesh();
 
     averageEdgeLength = meshMeasuring::findAverageEdgeLength(M);
-
-	printMeshInformation();
+updateModelMatrix();
+    // printMeshInformation();
     }
     void setIntersectingVertexIndex(int vertexIndex)
     {
@@ -64,7 +64,7 @@ private:
 	glm::vec3 translationVector(-centerOfMass + glm::vec3(position.x(), position.y(), position.z()));
 	modelMatrix = glm::translate(modelMatrix, translationVector);
 
-	float scaleFactor = radius / averageEdgeLength;
+    float scaleFactor = radius / (2*averageEdgeLength);
 	modelMatrix = glm::scale(modelMatrix, glm::vec3(scaleFactor));
     }
 };
