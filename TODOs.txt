@@ -1,0 +1,1 @@
+1.pointSphere's size should adjust when zoom in/out.

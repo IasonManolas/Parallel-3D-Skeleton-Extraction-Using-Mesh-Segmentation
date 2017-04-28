@@ -10,13 +10,8 @@
 
 #include <glm/vec3.hpp>
 
-#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
-#include <CGAL/Surface_mesh.h>
-#include <CGAL/Point_3.h>
+#include "cgaltypedefs.h"
 
-using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
-using Point=Kernel::Point_3;
-using CGALSurfaceMesh=CGAL::Surface_mesh<Point>;
 
 namespace meshLoader{
 inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vector<MyVertex>& vertices)
