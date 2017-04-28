@@ -33,7 +33,9 @@ HEADERS  += mainwindow.h \
     meshloader.h \
     ray_cast_picking.h \
     pointSphere.h \
-    pointsphere.h
+    pointsphere.h \
+    cgaltypedefs.h \
+    meshintersection.h
 
 FORMS    += mainwindow.ui
 

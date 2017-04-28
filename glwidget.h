@@ -36,7 +36,7 @@
 #include "scene.h"
 
 enum meshSurfaceVizualization{dontShowTriangles,showTriangles};
-enum Mode{view,pick};
+enum Mode{view,pickVertex,pickSegment};
 class GLWidget:public QOpenGLWidget
 {
 Q_OBJECT

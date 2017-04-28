@@ -50,11 +50,12 @@ void GLWidget::initializeGL() {
   // to use the "real" one after the opengl context is active
   // IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka
   // Projects) as the sources(aka OpenGL_WithoutWrappers)
-  modelShader =
-      new Shader("../Thesis/shaders/vertex.glsl", "../Thesis/shaders/fragment.glsl");
-  axesShader = new Shader("../Thesis/shaders/axesvs.glsl", "../Thesis/shaders/axesfs.glsl");
+  modelShader = new Shader("../Thesis/shaders/vertex.glsl",
+                           "../Thesis/shaders/fragment.glsl");
+  axesShader = new Shader("../Thesis/shaders/axesvs.glsl",
+                          "../Thesis/shaders/axesfs.glsl");
 
-  scene.loadMesh("../Thesis/Models/test.obj");
+  scene.loadMesh("../Thesis/Models/bunny.obj");
   scene.intersectionSphere.load("../Thesis/Models/icosahedron.obj",
                                 scene.P.averageEdgeLength / 5);
 
@@ -80,9 +81,15 @@ void GLWidget::paintGL() {
 void GLWidget::mousePressEvent(QMouseEvent *event) {
   // initialize mouse position
   lastMousePos = QVector2D(event->localPos());
-  if (mode == pick)
-    scene.rayIntersectsPolyhedron(lastMousePos.x(), lastMousePos.y(), WIDTH,
-                                  HEIGHT);
+  if (mode == pickVertex &&
+      scene.rayIntersectsPolyhedron(lastMousePos.x(), lastMousePos.y(), WIDTH,
+                                    HEIGHT)) {
+    scene.showIntersection = true;
+  } else if (mode == pickSegment &&
+             scene.rayIntersectsPolyhedron(lastMousePos.x(), lastMousePos.y(),
+                                           WIDTH, HEIGHT)) {
+    scene.showIntersection = false;
+  }
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
@@ -94,10 +101,11 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
       glm::vec2 mouseMoveOffset(mouseOffset.x(), mouseOffset.y());
       scene.processMouseMovement(mouseOffset);
     }
-//    else if (mode == pick) {
-//      scene.rayIntersectsPolyhedron(lastMousePos.x(), lastMousePos.y(), WIDTH,
-//                                    HEIGHT);
-//    }
+    //    else if (mode == pick) {
+    //      scene.rayIntersectsPolyhedron(lastMousePos.x(), lastMousePos.y(),
+    //      WIDTH,
+    //                                    HEIGHT);
+    //    }
   }
 }
 
@@ -105,6 +113,7 @@ void GLWidget::wheelEvent(QWheelEvent *event) {
   scene.camera.processWheelMovement(event->delta());
 }
 
+#include <thread>
 void GLWidget::keyPressEvent(QKeyEvent *event) {
   switch (event->key()) {
 
@@ -113,11 +122,12 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
 
     break;
   }
-  case Qt::Key_S:{
-    scene.P.segmentMesh();
-	break;
+  case Qt::Key_S: {
+    std::thread t(&MyPolyhedron::segmentMesh, scene.P);
+    t.join();
+    break;
   }
-}
+  }
 }
 // void GLWidget::keyReleaseEvent(QKeyEvent *event)
 //{

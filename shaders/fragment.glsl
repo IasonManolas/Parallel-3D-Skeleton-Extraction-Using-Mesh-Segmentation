@@ -21,7 +21,6 @@ in vec3 Color;
 
 out vec4 color;
 
-uniform int intersectingFace;
 uniform vec3 viewPos;
 uniform Material material;
 uniform Light light;
