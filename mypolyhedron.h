@@ -27,7 +27,7 @@
 struct MyVertex {
   glm::vec3 Position;
   glm::vec3 Normal;
-  glm::vec3 Color{glm::vec3(0, 0, 0)};
+  glm::vec3 Color{glm::vec3(0.0f, 0.0f, 0.0f)};
 };
 
 #include "meshloader.h"
@@ -50,8 +50,13 @@ public:
     resetMeshAttributes();
     std::tie(indices, vertices) =
         meshLoader::load(filename); // vertices contains coords & normals
-    setupDrawingBuffers();
 
+    for(int i=0;i<vertices.size();++i){
+        if (vertices[i].Position == vertices[0].Position) {
+//            vertices[i].Color=glm::vec3(0,0,1);
+        }
+    }
+    setupDrawingBuffers();
     // Find the model matrix that normalizes the mesh
     centerOfMass = meshMeasuring::findCenterOfMass(vertices);
     maxDim = meshMeasuring::findMaxDimension(vertices);
@@ -162,12 +167,12 @@ public:
     return false;
   }
 
-protected:
+  std::vector<MyVertex> vertices;
+public:
   Shader *modelShader;
   CGALSurfaceMesh::Face_index intersectingTriangleIndex{0};
   //    CGALPolyhedron P;
   CGALSurfaceMesh M;
-  std::vector<MyVertex> vertices;
   std::vector<GLuint> indices;
   //    std::vector<Kernel::Vector_3> normals;
   GLuint VAO, VBO, EBO;
@@ -286,7 +291,6 @@ protected:
   }
 
   void setupDrawingBuffers() {
-    std::cout << "Entering setupDrawingBuffers().." << std::endl;
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -296,11 +300,11 @@ protected:
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(MyVertex),
-                 &vertices[0], GL_STATIC_DRAW);
+                 &vertices[0], GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint),
-                 &indices[0], GL_STATIC_DRAW);
+                 &indices[0], GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex),
                           (GLvoid *)0);
@@ -319,7 +323,9 @@ protected:
     //   :"<<__func__<<std::endl;
     //        printDebugInformation();
 
-    std::cout << "Exiting setupDrawingBuffers().." << std::endl;
+  }
+  void updateVertexBuffer(){
+  setupDrawingBuffers();
   }
 };
 

@@ -27,26 +27,21 @@ uniform Light light;
 
 void main()
 {
-//    if(gl_PrimitiveID==intersectingFace)
-//        color=vec4(1.0f,0.0f,0.0f,1.0f);
-//    else
-//    {
-        // Ambient
-        vec3 ambient = light.ambient*material.ambient ;
-        // Diffuse
-        vec3 norm = normalize(Normal);
-        vec3 lightDir = normalize(-light.direction);
-        float diff = max(dot(norm, lightDir), 0.0);
-        vec3 diffuse = light.diffuse * diff * material.diffuse;
+//    color=vec4(Color,1.0f);
+    vec3 ambient = light.ambient*material.ambient ;
+            // Diffuse
+            vec3 norm = normalize(Normal);
+            vec3 lightDir = normalize(-light.direction);
+            float diff = max(dot(norm, lightDir), 0.0);
+            vec3 diffuse = light.diffuse * diff * material.diffuse;
 
-        // Specular
-        vec3 viewDir = normalize(viewPos - FragPos); //mallon to viewPos einai se allo systhma syntetagmenwn ap oti to light.direction
-        vec3 reflectDir = reflect(-lightDir, norm);
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-        vec3 specular = light.specular * spec *material.specular;
+            // Specular
+            vec3 viewDir = normalize(viewPos - FragPos); //mallon to viewPos einai se allo systhma syntetagmenwn ap oti to light.direction
+            vec3 reflectDir = reflect(-lightDir, norm);
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+            vec3 specular = light.specular * spec *material.specular;
 
-        vec3 result = ambient+diffuse+specular;
+            vec3 result = ambient+diffuse+specular+Color;
 
-        color = vec4(result, 1.0f);
-//    }
+    color = vec4(result, 1.0f);
 }

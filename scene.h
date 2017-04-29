@@ -87,9 +87,17 @@ public:
     bool intersectionFound =
         P.intersects(ray, vertexIndex, intersectionPosition);
     if (intersectionFound) {
-      intersectionSphere.setIntersectingVertexIndex(vertexIndex);
-      std::cout << "intersecting index is:" << vertexIndex << std::endl;
-      intersectionSphere.setPosition(intersectionPosition);
+//      intersectionSphere.setIntersectingVertexIndex(vertexIndex);
+//      intersectionSphere.setPosition(intersectionPosition);
+      for (int i = 0; i < P.vertices.size(); ++i) {
+          P.vertices[i].Color=glm::vec3(0,0,0);
+          if (P.vertices[i].Position == P.vertices[vertexIndex].Position) {
+              P.vertices[i].Color = glm::vec3(1, 0, 0);
+              std::cout << "intersecting index is:" << i << std::endl;
+
+          }
+
+      }
     }
     showIntersection = intersectionFound;
     return intersectionFound;

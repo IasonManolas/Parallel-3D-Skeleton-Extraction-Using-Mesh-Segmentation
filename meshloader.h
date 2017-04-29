@@ -13,7 +13,8 @@
 #include "cgaltypedefs.h"
 
 
-namespace meshLoader{
+namespace meshLoader
+{
 inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vector<MyVertex>& vertices)
 {
 
@@ -40,7 +41,11 @@ inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vecto
         aiFace face = mesh->mFaces[i];
         // Retrieve all indices of the face and store them in the indices vector
         for(GLuint j = 0; j < face.mNumIndices; j++)
+        {
             indices.push_back(face.mIndices[j]);
+            std::cout<<face.mIndices[j]<<std::endl;
+        }
+
     }
 }
 
