@@ -50,13 +50,13 @@ void GLWidget::initializeGL() {
   // to use the "real" one after the opengl context is active
   // IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka
   // Projects) as the sources(aka OpenGL_WithoutWrappers)
-  modelShader = new Shader("../Thesis/shaders/vertex.glsl",
-                           "../Thesis/shaders/fragment.glsl");
-  axesShader = new Shader("../Thesis/shaders/axesvs.glsl",
-                          "../Thesis/shaders/axesfs.glsl");
+  modelShader = new Shader("/home/dimitrisd/Thesis/shaders/vertex.glsl",
+                           "/home/dimitrisd/Thesis/shaders/fragment.glsl");
+  axesShader = new Shader("/home/dimitrisd/Thesis/shaders/axesvs.glsl",
+                          "/home/dimitrisd/Thesis/shaders/axesfs.glsl");
 
-  scene.loadMesh("../Thesis/Models/bunny.obj");
-  scene.intersectionSphere.load("../Thesis/Models/icosahedron.obj",
+  scene.loadMesh("/home/dimitrisd/Thesis/Models/test.obj");
+  scene.intersectionSphere.load("/home/dimitrisd/Thesis/Models/icosahedron.obj",
                                 scene.P.averageEdgeLength / 5);
 
   connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -71,11 +71,12 @@ void GLWidget::resizeGL(int w, int h) {
 void GLWidget::paintGL() {
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glShadeModel(GL_SMOOTH);
   if (surfaceState == dontShowTriangles)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   else if (surfaceState == showTriangles)
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
+scene.P.updateVertexBuffer();
   scene.Draw(modelShader, axesShader);
 }
 void GLWidget::mousePressEvent(QMouseEvent *event) {
@@ -85,10 +86,6 @@ void GLWidget::mousePressEvent(QMouseEvent *event) {
       scene.rayIntersectsPolyhedron(lastMousePos.x(), lastMousePos.y(), WIDTH,
                                     HEIGHT)) {
     scene.showIntersection = true;
-  } else if (mode == pickSegment &&
-             scene.rayIntersectsPolyhedron(lastMousePos.x(), lastMousePos.y(),
-                                           WIDTH, HEIGHT)) {
-    scene.showIntersection = false;
   }
 }
 
