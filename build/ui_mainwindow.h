@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 5.5.1
+** Created by: Qt User Interface Compiler version 4.8.7
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -10,17 +10,17 @@
 #define UI_MAINWINDOW_H
 
 #include <QtCore/QVariant>
-#include <QtWidgets/QAction>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QButtonGroup>
-#include <QtWidgets/QCheckBox>
-#include <QtWidgets/QHBoxLayout>
-#include <QtWidgets/QHeaderView>
-#include <QtWidgets/QMainWindow>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QToolBar>
-#include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QWidget>
+#include <QtGui/QAction>
+#include <QtGui/QApplication>
+#include <QtGui/QButtonGroup>
+#include <QtGui/QCheckBox>
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QHeaderView>
+#include <QtGui/QMainWindow>
+#include <QtGui/QPushButton>
+#include <QtGui/QToolBar>
+#include <QtGui/QVBoxLayout>
+#include <QtGui/QWidget>
 #include <glwidget.h>
 
 QT_BEGIN_NAMESPACE
@@ -42,44 +42,44 @@ public:
     void setupUi(QMainWindow *MainWindow)
     {
         if (MainWindow->objectName().isEmpty())
-            MainWindow->setObjectName(QStringLiteral("MainWindow"));
+            MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
         MainWindow->resize(416, 310);
         actionOpenFile = new QAction(MainWindow);
-        actionOpenFile->setObjectName(QStringLiteral("actionOpenFile"));
+        actionOpenFile->setObjectName(QString::fromUtf8("actionOpenFile"));
         QIcon icon;
-        icon.addFile(QStringLiteral("Icons/Open_folder.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QString::fromUtf8("Icons/Open_folder.png"), QSize(), QIcon::Normal, QIcon::Off);
         actionOpenFile->setIcon(icon);
         centralWidget = new QWidget(MainWindow);
-        centralWidget->setObjectName(QStringLiteral("centralWidget"));
+        centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         verticalLayout_2 = new QVBoxLayout(centralWidget);
         verticalLayout_2->setSpacing(6);
         verticalLayout_2->setContentsMargins(11, 11, 11, 11);
-        verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
+        verticalLayout_2->setObjectName(QString::fromUtf8("verticalLayout_2"));
         verticalLayout = new QVBoxLayout();
         verticalLayout->setSpacing(6);
-        verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
+        verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
         openGLWidget = new GLWidget(centralWidget);
-        openGLWidget->setObjectName(QStringLiteral("openGLWidget"));
+        openGLWidget->setObjectName(QString::fromUtf8("openGLWidget"));
 
         verticalLayout->addWidget(openGLWidget);
 
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setSpacing(6);
-        horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
+        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
         checkBoxMeshSurface = new QCheckBox(centralWidget);
-        checkBoxMeshSurface->setObjectName(QStringLiteral("checkBoxMeshSurface"));
+        checkBoxMeshSurface->setObjectName(QString::fromUtf8("checkBoxMeshSurface"));
         checkBoxMeshSurface->setEnabled(true);
         checkBoxMeshSurface->setChecked(false);
 
         horizontalLayout->addWidget(checkBoxMeshSurface);
 
         checkBoxAxis = new QCheckBox(centralWidget);
-        checkBoxAxis->setObjectName(QStringLiteral("checkBoxAxis"));
+        checkBoxAxis->setObjectName(QString::fromUtf8("checkBoxAxis"));
 
         horizontalLayout->addWidget(checkBoxAxis);
 
         pushButtonResetCamera = new QPushButton(centralWidget);
-        pushButtonResetCamera->setObjectName(QStringLiteral("pushButtonResetCamera"));
+        pushButtonResetCamera->setObjectName(QString::fromUtf8("pushButtonResetCamera"));
         pushButtonResetCamera->setMaximumSize(QSize(149, 16777215));
 
         horizontalLayout->addWidget(pushButtonResetCamera);
@@ -92,7 +92,7 @@ public:
 
         MainWindow->setCentralWidget(centralWidget);
         mainToolBar = new QToolBar(MainWindow);
-        mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
+        mainToolBar->setObjectName(QString::fromUtf8("mainToolBar"));
         MainWindow->addToolBar(Qt::TopToolBarArea, mainToolBar);
 
         mainToolBar->addSeparator();
@@ -105,14 +105,14 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", 0));
-        actionOpenFile->setText(QApplication::translate("MainWindow", "OpenFile", 0));
+        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", 0, QApplication::UnicodeUTF8));
+        actionOpenFile->setText(QApplication::translate("MainWindow", "OpenFile", 0, QApplication::UnicodeUTF8));
 #ifndef QT_NO_TOOLTIP
-        actionOpenFile->setToolTip(QApplication::translate("MainWindow", "Open File..", 0));
+        actionOpenFile->setToolTip(QApplication::translate("MainWindow", "Open File..", 0, QApplication::UnicodeUTF8));
 #endif // QT_NO_TOOLTIP
-        checkBoxMeshSurface->setText(QApplication::translate("MainWindow", "Show Grid", 0));
-        checkBoxAxis->setText(QApplication::translate("MainWindow", "Axis", 0));
-        pushButtonResetCamera->setText(QApplication::translate("MainWindow", "Reset Camera", 0));
+        checkBoxMeshSurface->setText(QApplication::translate("MainWindow", "Show Grid", 0, QApplication::UnicodeUTF8));
+        checkBoxAxis->setText(QApplication::translate("MainWindow", "Axis", 0, QApplication::UnicodeUTF8));
+        pushButtonResetCamera->setText(QApplication::translate("MainWindow", "Reset Camera", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

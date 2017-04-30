@@ -39,6 +39,7 @@ struct MyVertex {
 class MyPolyhedron {
 public:
   double averageEdgeLength{1};
+	
   MyPolyhedron() {}
   void resetMeshAttributes() {
     indices.clear();
@@ -48,8 +49,8 @@ public:
   }
   void load(std::string filename) {
     resetMeshAttributes();
-    std::tie(indices, vertices) =
-        meshLoader::load(filename); // vertices contains coords & normals
+//    std::tie(indices, vertices) =
+        tinyObjLoaderWrapper::readObj(filename); // vertices contains coords & normals
 
     for(int i=0;i<vertices.size();++i){
         if (vertices[i].Position == vertices[0].Position) {

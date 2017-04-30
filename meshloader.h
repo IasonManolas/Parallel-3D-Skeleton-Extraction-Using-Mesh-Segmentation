@@ -11,10 +11,24 @@
 #include <glm/vec3.hpp>
 
 #include "cgaltypedefs.h"
+#include "tiny_obj_loader.h"
 
 
-namespace meshLoader
-{
+namespace tinyObjLoaderWrapper{
+
+	inline void readObj(std::string filename){
+		std::cout<<"tinyobjloader reading.."<<std::endl;
+        tinyobj::attrib_t at;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+		std::string err;
+        const char* c_filename=filename.c_str();
+
+        std::cout<<"tinyobjloader reading.."<<tinyobj::LoadObj(&at,&shapes,&materials,&err,c_filename)<<std::endl;
+
+	}
+}
+namespace meshLoader{
 inline void processMeshAssimp(aiMesh *mesh,std::vector<uint>& indices,std::vector<MyVertex>& vertices)
 {
 

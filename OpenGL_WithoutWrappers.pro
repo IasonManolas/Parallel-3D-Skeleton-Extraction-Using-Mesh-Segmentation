@@ -12,8 +12,8 @@ TARGET = OpenGL_WithoutWrappers
 TEMPLATE = app
 CONFIG+=c++14
 
-#QMAKE_CC=clang
-#QMAKE_CXX=clang
+QMAKE_CC=clang
+QMAKE_CXX=clang
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -36,6 +36,7 @@ HEADERS  += mainwindow.h \
     pointsphere.h \
     cgaltypedefs.h \
     meshintersection.h
+    #tinyObjLoader/tiny_obj_loader.h
 
 FORMS    += mainwindow.ui
 
