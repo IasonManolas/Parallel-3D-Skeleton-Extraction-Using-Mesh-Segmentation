@@ -82,8 +82,8 @@ public:
     CGAL::sdf_values(M, sdf_property_map, 2.0 / 3.0 * CGAL_PI, 25, true);
     // create a property-map ean are you sure the edge sean are you sure the
     // edge shared by two triangles is not duplicatehared by two triangles is
-    // not duplicatefor segment-ids
-    Facet_int_map segment_property_map =
+    // not duplicatefor segment-id
+     segment_property_map =
         M.add_property_map<face_descriptor, std::size_t>("f:sid").first;
     ;
 
@@ -166,9 +166,8 @@ public:
     std::cout << "No Intersection found." << std::endl;
     return false;
   }
-
+Facet_int_map segment_property_map;
   std::vector<MyVertex> vertices;
-public:
   Shader *modelShader;
   CGALSurfaceMesh::Face_index intersectingTriangleIndex{0};
   //    CGALPolyhedron P;
