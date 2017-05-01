@@ -50,13 +50,13 @@ void GLWidget::initializeGL() {
   // to use the "real" one after the opengl context is active
   // IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka
   // Projects) as the sources(aka OpenGL_WithoutWrappers)
-  modelShader = new Shader("/home/dimitrisd/Thesis/shaders/vertex.glsl",
-                           "/home/dimitrisd/Thesis/shaders/fragment.glsl");
-  axesShader = new Shader("/home/dimitrisd/Thesis/shaders/axesvs.glsl",
-                          "/home/dimitrisd/Thesis/shaders/axesfs.glsl");
+  modelShader = new Shader("../Thesis/shaders/vertex.glsl",
+                           "../Thesis/shaders/fragment.glsl");
+  axesShader = new Shader("../Thesis/shaders/axesvs.glsl",
+                          "../Thesis/shaders/axesfs.glsl");
 
-  scene.loadMesh("/home/dimitrisd/Thesis/Models/test.obj");
-  scene.intersectionSphere.load("/home/dimitrisd/Thesis/Models/icosahedron.obj",
+  scene.loadMesh("../Thesis/Models/test.obj");
+  scene.intersectionSphere.load("../Thesis/Models/icosahedron.obj",
                                 scene.P.averageEdgeLength / 5);
 
   connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -76,7 +76,7 @@ void GLWidget::paintGL() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   else if (surfaceState == showTriangles)
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-scene.P.updateVertexBuffer();
+  scene.P.updateVertexBuffer();
   scene.Draw(modelShader, axesShader);
 }
 void GLWidget::mousePressEvent(QMouseEvent *event) {
