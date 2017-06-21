@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 5.5.1
+** Created by: Qt User Interface Compiler version 5.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -47,7 +47,7 @@ public:
         actionOpenFile = new QAction(MainWindow);
         actionOpenFile->setObjectName(QStringLiteral("actionOpenFile"));
         QIcon icon;
-        icon.addFile(QStringLiteral("Icons/Open_folder.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QStringLiteral("../Icons/Open_folder.png"), QSize(), QIcon::Normal, QIcon::Off);
         actionOpenFile->setIcon(icon);
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
