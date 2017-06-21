@@ -43,10 +43,10 @@ public:
       axisShader->Use();
       sceneAxes.Draw();
     }
-    if (showIntersection) {
-      setIntersectionSphereUniforms(modelShader);
-      intersectionSphere.Draw();
-    }
+    //	if (showIntersection) {
+    //	    setIntersectionSphereUniforms(modelShader);
+    //	    intersectionSphere.Draw();
+    //	}
   }
   void updateProjectionMatrix(int w, int h) {
     projectionMatrix =
@@ -57,13 +57,37 @@ public:
     camera.resetCamera();
     light.changeLightDirection(camera.getPosition());
 
+    P = MyPolyhedron{};
     P.load(filename);
   }
   void setShowAxes(bool value) { showAxes = value; }
 
-  bool rayIntersectsPolyhedron(const int &mouseX, const int &mouseY, int width,
-                               int height) {
+  boost::optional<std::size_t> getIntersectingSegmentIndex(const int &mouseX,
+                                                           const int &mouseY,
+                                                           const int width,
+                                                           const int height) {
+    Ray_intersection intersection;
+    bool intersectionFound =
+        rayIntersectsPolyhedron(mouseX, mouseY, width, height, intersection);
+    if (intersectionFound) {
+      CGALSurfaceMesh::Face_index intersectingTriangleIndex;
+      intersectingTriangleIndex = intersection->second;
+      return P.getSegmentIndex(intersectingTriangleIndex);
+      // Point *p = boost::get<Point>(&(intersection->first));
+      // intersectionIndex = findClosestVertex(
+      //    *p, intersectingTriangleIndex); // returns vertices[someIndex]
+      // glm::vec3 intersectionPos = glm::vec3(
+      //    modelMatrix * glm::vec4(vertices[intersectionIndex].Position, 1.0));
+      // intersectionPosition =
+      //    Point(intersectionPos.x, intersectionPos.y, intersectionPos.z);
+    } else {
+      return boost::none;
+    }
+  }
 
+  bool rayIntersectsPolyhedron(const int &mouseX, const int &mouseY,
+                               const int width, const int height,
+                               Ray_intersection &intersection) {
     glm::vec3 camPos = camera.getPosition();
     float x = 2.0 * mouseX / width - 1;
     float y = 1 - (2.0 * mouseY) / height;
@@ -83,24 +107,22 @@ public:
         Kernel::Direction_3(ray_wor.x, ray_wor.y, ray_wor.z));
 
     CGAL::Point_3<Kernel> intersectionPosition;
-    int vertexIndex;
-    bool intersectionFound =
-        P.intersects(ray, vertexIndex, intersectionPosition);
-    if (intersectionFound) {
-//      intersectionSphere.setIntersectingVertexIndex(vertexIndex);
-//      intersectionSphere.setPosition(intersectionPosition);
-      for (int i = 0; i < P.vertices.size(); ++i) {
-          P.vertices[i].Color=glm::vec3(0,0,0);
-          if (P.vertices[i].Position == P.vertices[vertexIndex].Position) {
-              P.vertices[i].Color = glm::vec3(1, 0, 0);
-              std::cout << "intersecting index is:" << i << std::endl;
+    intersection = P.intersects(ray);
+    if (intersection) {
 
-          }
-
-      }
+      //      intersectionSphere.setIntersectingVertexIndex(vertexIndex);
+      //      intersectionSphere.setPosition(intersectionPosition);
+      // for (int i = 0; i < P.vertices.size(); ++i) {
+      //    P.vertices[i].Color = glm::vec3(0, 0, 0);
+      //    if (P.vertices[i].Position == P.vertices[vertexIndex].Position) {
+      //        P.vertices[i].Color = glm::vec3(1, 0, 0);
+      //        std::cout << "intersecting index is:" << i << std::endl;
+      //    }
+      //}
+      return true;
     }
-    showIntersection = intersectionFound;
-    return intersectionFound;
+    return false;
+    // showIntersection = intersectionFound;
   }
 
   void processMouseMovement(const QVector2D &mouseDV) {

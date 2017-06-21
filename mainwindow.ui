@@ -1,97 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>416</width>
-    <height>310</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>MainWindow</string>
-  </property>
-  <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout_2">
-    <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <widget class="GLWidget" name="openGLWidget"/>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QCheckBox" name="checkBoxMeshSurface">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="text">
-           <string>Show Grid</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="checkBoxAxis">
-          <property name="text">
-           <string>Axis</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButtonResetCamera">
-          <property name="maximumSize">
-           <size>
-            <width>149</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Reset Camera</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QToolBar" name="mainToolBar">
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="separator"/>
-   <addaction name="actionOpenFile"/>
-  </widget>
-  <action name="actionOpenFile">
-   <property name="icon">
-    <iconset>
-     <normaloff>Icons/Open_folder.png</normaloff>Icons/Open_folder.png</iconset>
-   </property>
-   <property name="text">
-    <string>OpenFile</string>
-   </property>
-   <property name="toolTip">
-    <string>Open File..</string>
-   </property>
-  </action>
- </widget>
- <layoutdefault spacing="6" margin="11"/>
- <customwidgets>
-  <customwidget>
-   <class>GLWidget</class>
-   <extends>QOpenGLWidget</extends>
-   <header location="global">glwidget.h</header>
-  </customwidget>
- </customwidgets>
- <resources/>
- <connections/>
+	<class>MainWindow</class>
+	<widget class="QMainWindow" name="MainWindow">
+		<property name="geometry">
+			<rect>
+				<x>0</x>
+				<y>0</y>
+				<width>416</width>
+				<height>310</height>
+			</rect>
+		</property>
+		<property name="windowTitle">
+			<string>MainWindow</string>
+		</property>
+		<widget class="QWidget" name="centralWidget">
+			<layout class="QVBoxLayout" name="verticalLayout_2">
+				<item>
+					<layout class="QVBoxLayout" name="verticalLayout">
+						<item>
+							<widget class="GLWidget" name="openGLWidget"/>
+						</item>
+						<item>
+							<layout class="QHBoxLayout" name="horizontalLayout">
+								<item>
+									<widget class="QCheckBox" name="checkBoxMeshSurface">
+										<property name="enabled">
+											<bool>true</bool>
+										</property>
+										<property name="text">
+											<string>Show Grid</string>
+										</property>
+										<property name="checked">
+											<bool>false</bool>
+										</property>
+									</widget>
+								</item>
+								<item>
+									<widget class="QCheckBox" name="checkBoxAxis">
+										<property name="text">
+											<string>Axis</string>
+										</property>
+									</widget>
+								</item>
+								<item>
+									<widget class="QPushButton" name="pushButtonResetCamera">
+										<property name="maximumSize">
+											<size>
+												<width>149</width>
+												<height>16777215</height>
+											</size>
+										</property>
+										<property name="text">
+											<string>Reset Camera</string>
+										</property>
+									</widget>
+								</item>
+							</layout>
+						</item>
+					</layout>
+				</item>
+			</layout>
+		</widget>
+		<widget class="QToolBar" name="mainToolBar">
+			<attribute name="toolBarArea">
+				<enum>TopToolBarArea</enum>
+			</attribute>
+			<attribute name="toolBarBreak">
+				<bool>false</bool>
+			</attribute>
+			<addaction name="separator"/>
+			<addaction name="actionOpenFile"/>
+		</widget>
+		<action name="actionOpenFile">
+			<property name="icon">
+				<iconset>
+					<normaloff>../Icons/Open_folder.png</normaloff>../Icons/Open_folder.png</iconset>
+			</property>
+			<property name="text">
+				<string>OpenFile</string>
+			</property>
+			<property name="toolTip">
+				<string>Open File..</string>
+			</property>
+		</action>
+	</widget>
+	<layoutdefault spacing="6" margin="11"/>
+	<customwidgets>
+		<customwidget>
+			<class>GLWidget</class>
+			<extends>QOpenGLWidget</extends>
+			<header location="global">glwidget.h</header>
+		</customwidget>
+	</customwidgets>
+	<resources/>
+	<connections/>
 </ui>

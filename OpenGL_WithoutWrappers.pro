@@ -78,9 +78,3 @@ unix:!macx: LIBS += -L$$PWD/'../../CGAL build/build/debug/lib/' -lCGAL
 INCLUDEPATH += $$PWD/'../../CGAL build'
 #DEPENDPATH += $$PWD/'../../CGAL build'
 
-unix:!macx: LIBS += -L$$PWD/tinyObjLoader/ -ltinyobjloader
-
-INCLUDEPATH += $$PWD/tinyObjLoader
-DEPENDPATH += $$PWD/tinyObjLoader
-
-unix:!macx: PRE_TARGETDEPS += $$PWD/tinyObjLoader/libtinyobjloader.a
