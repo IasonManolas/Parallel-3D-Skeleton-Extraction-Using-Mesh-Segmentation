@@ -1,171 +1,171 @@
-#include "segmentcontractor.h"
+#include "meshcontractor.h"
 
-void SegmentContractor::calculateSkeleton(){
-    while(CGAL::Polygon_mesh_processing::volume(M)/originalVolume>volumeThreshold){
-     contractMesh();
- }
-}
-
-void SegmentContractor::contractMesh(){
-
-}
- /*void SegmentContractor::computeLaplaceOperator(int segmentIndex) {
-
-  Eigen::MatrixXd laplaceOperator(m_P.M.number_of_vertices(),
-                                m_P.M.number_of_vertices());
-
- CGALSurfaceMesh::Edge_range er = m_P.M.edges();
-
- for (auto eit = er.begin(); eit != er.end(); eit++) {
-  CGALSurfaceMesh::Vertex_index edgeVertex0 = m_P.M.vertex(*eit, 0);
-  CGALSurfaceMesh::Point P0 = m_P.M.point(edgeVertex0);
-
-  CGALSurfaceMesh::Vertex_index edgeVertex1 = m_P.M.vertex(*eit, 1);
-  CGALSurfaceMesh::Point P1 = m_P.M.point(edgeVertex1);
-
-  // compute aij
-  CGALSurfaceMesh::Halfedge_index halfedge0 = m_P.M.halfedge(*eit, 0);
-  CGALSurfaceMesh::Halfedge_index nextHalfedge0 = m_P.M.next(halfedge0);
-  CGALSurfaceMesh::Vertex_index firstVertexOppositeToEdge =
-      m_P.M.target(nextHalfedge0);
-  CGALSurfaceMesh::Point Pa = m_P.M.point(firstVertexOppositeToEdge);
-  CGAL::Vector_3<Kernel> v1 = P0 - Pa;
-  CGAL::Vector_3<Kernel> v2 = P1 - Pa;
-  double cosine = v1 * v2 / CGAL::sqrt(v1 * v1) / CGAL::sqrt(v2 * v2);
-  double a = std::acos(cosine); // IN RADIANS
-
-  // compute bij
-  CGALSurfaceMesh::Halfedge_index halfedge1 = m_P.M.halfedge(*eit, 1);
-  CGALSurfaceMesh::Halfedge_index nextHalfedge1 = m_P.M.next(halfedge1);
-  CGALSurfaceMesh::Vertex_index secondVertexOppositeToEdge =
-      m_P.M.target(nextHalfedge1);
-  CGALSurfaceMesh::Point Pb = m_P.M.point(secondVertexOppositeToEdge);
-  v1 = P0 - Pb;
-  v2 = P1 - Pb;
-  cosine = v1 * v2 / CGAL::sqrt(v1 * v1) / CGAL::sqrt(v2 * v2);
-  double b = std::acos(cosine); // IN RADIANS
-
-  size_t i = size_t(edgeVertex0);
-  size_t j = size_t(edgeVertex1);
-  double Wij = std::cos(a) / std::sin(a) + std::cos(b) / std::sin(b);
-  laplaceOperator(i, j) = Wij;
-}
-
- for (int row = 0; row < m_P.M.number_of_vertices(); row++) {
-  double rowSum = 0;
-  for (int col = 0; col < m_P.M.number_of_vertices(); col++) {
-    rowSum -= laplaceOperator(row, col);
+MeshContractor::MeshContractor(CGALSurfaceMesh meshToContract)
+    : m_M(meshToContract) {
+  m_M.collect_garbage();
+  if (!CGAL::is_closed(m_M)) {
+    using Halfedge_handle =
+        boost::graph_traits<CGALSurfaceMesh>::halfedge_descriptor;
+    using Facet_handle = boost::graph_traits<CGALSurfaceMesh>::face_descriptor;
+    BOOST_FOREACH (Halfedge_handle h, halfedges(m_M)) {
+      if (m_M.is_border(h)) {
+        std::vector<Facet_handle> patch_facets;
+        CGAL::Polygon_mesh_processing::triangulate_hole(
+            m_M, h, std::back_inserter(patch_facets));
+        // if (!success)
+        //  std::cerr << "ERROR:Model is not closed and hole filling failed."
+        //            << std::endl;
+      }
+    }
   }
-  laplaceOperator(row, row) = rowSum;
-}
- L = laplaceOperator;
+  // NOTE teapot
+  m_originalVolume = CGAL::Polygon_mesh_processing::volume(m_M);
+  m_Wh = Matrix::Identity(m_M.number_of_vertices(),
+                          m_M.number_of_vertices()); // ok
+  double averageFaceArea =
+      CGAL::Polygon_mesh_processing::area(m_M) / m_M.number_of_faces(); // ok
+  m_Wl = Matrix::Identity(m_M.number_of_vertices(),
+                          m_M.number_of_vertices()) *
+         0.001 * std::sqrt(averageFaceArea); // ok
+  m_L = Matrix::Zero(m_M.number_of_vertices(), m_M.number_of_vertices());
+  computeLaplaceOperator();
+  m_A = Vector::Zero(m_M.number_of_vertices());
+  computeOneRingAreaVector();
+  m_A0 = m_A;
+  // calculateSkeleton();
 }
 
- void SegmentContractor::updateSurfaceMeshPositions() {
-  CGALSurfaceMesh::Vertex_range vr = m_P.M.vertices();
-  for (auto vit = vr.begin(); vit != vr.end(); vit++) {
-    size_t vertexIndex = size_t(*vit);
-    CGALSurfaceMesh::Point newPosition(currentVertices(vertexIndex, 0),
-                                       currentVertices(vertexIndex, 1),
-                                       currentVertices(vertexIndex, 2));
-    std::cout << "Before:" << m_P.M.point(*vit) << std::endl;
-    m_P.M.point(*vit) = newPosition;
-    std::cout << "After:" << m_P.M.point(*vit) << std::endl;
-    //    vertices[vertexIndex].Position =
-    //        glm::vec3(newPosition.x(), newPosition.y(), newPosition.z());
+void MeshContractor::calculateSkeleton() {
+  while (CGAL::Polygon_mesh_processing::volume(m_M) / m_originalVolume >
+         m_volumeThreshold /*&&
+         numberOfIterations < maxNumOfIterations*/) {
+    std::cout << "contracting mesh.." << std::endl;
+    contractMesh();
   }
 }
 
- Matrix SegmentContractor::getPositionsFromSurfaceMesh() {
-  size_t numberOfVertices = m_P.M.number_of_vertices();
-  Matrix V(numberOfVertices, 3);
+void MeshContractor::contractMesh() {
+  std::cout << "Contracting Mesh.." << std::endl;
+  // std::cout << "constructing vertex matrix.." << std::endl;
+  Matrix V = constructVertexMatrix();
+  // std::cout << "Solving system.." << std::endl;
+  V = solveForNewVertexPositions(V);
+  // std::cout << "Updating mesh positions.." << std::endl;
+  updateMeshPositions(V);
+  // std::cout << "Updating Wl matrix.." << std::endl;
+  updateWl();
+  // std::cout << "Computing one ring area vector.." << std::endl;
+  computeOneRingAreaVector();
+  // std::cout << "Updating Wh matrix.." << std::endl;
+  updateWh();
+  // std::cout << "Computing laplace operator.." << std::endl;
+  computeLaplaceOperator();
 
-  CGALSurfaceMesh::Vertex_range vr = m_P.M.vertices();
-  for (auto vit = vr.begin(); vit != vr.end(); vit++) {
-    auto p = m_P.M.point(*vit);
-    size_t vertexIndex = size_t(*vit);
-    V(vertexIndex, 0) = p.x();
-    V(vertexIndex, 1) = p.y();
-    V(vertexIndex, 2) = p.z();
+  m_iterationsCompleted++;
+  std::cout << "Number of iterations completed:" << m_iterationsCompleted
+            << std::endl;
+  std::cout << "current volume/original volume="
+            << CGAL::Polygon_mesh_processing::volume(m_M) / m_originalVolume
+            << std::endl;
+}
+
+Matrix MeshContractor::constructVertexMatrix() const {
+  Matrix V(m_M.number_of_vertices(), 3);
+  for (auto v : m_M.vertices()) {
+    const CGALSurfaceMesh::Point p = m_M.point(v);
+    V(size_t(v), 0) = p.x();
+    V(size_t(v), 1) = p.y();
+    V(size_t(v), 2) = p.z();
   }
   return V;
 }
 
- void SegmentContractor::solveForNewVertexPositions() {
-  Matrix WlL = Wl * L;
-  Matrix A(WlL.rows() + Wh.rows(), WlL.cols());
-  A << WlL, Wh;
-  Matrix Bupper(WlL.rows(), 3);
-  Matrix Blower = Wh * currentVertices;
+Matrix MeshContractor::solveForNewVertexPositions(
+    Matrix currentVertexPositions) const {
+  Matrix WlL = m_Wl * m_L;
+  Matrix A(WlL.rows() + m_Wh.rows(), WlL.cols());
+  A << WlL, m_Wh;
+  Matrix Bupper = Matrix::Zero(WlL.rows(), 3);
+  Matrix Blower = m_Wh * currentVertexPositions;
   Matrix B(Bupper.rows() + Blower.rows(), 3);
   B << Bupper, Blower;
-  currentVertices =
-      A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(B);
+  Matrix newVertexPositions =
+      //   A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(B);
+      // A.colPivHouseholderQr().solve(B);
+      (A.transpose() * A).ldlt().solve(A.transpose() * B);
 
-  updatem_P.MPositions();
-}
- void SegmentContractor::contract(int segmentIndex) {
-  std::cout << "Contracting segment:" << segmentIndex << std::endl;
-
-  computeLaplaceOperator(segmentIndex);
-  // Wh = Matrix::Identity(numberOfVertices, numberOfVertices);
-  // Wl = Matrix::Identity(numberOfVertices, numberOfVertices);
-  // double averageFaceArea = computeAverageFaceArea();
-  // Wl *= 0.001 * std::sqrt(averageFaceArea);
-
-  // solveForNewVertexPositions();
-  // updateMeshBuffers();
-  // prepareNextContraction();
+  return newVertexPositions;
 }
 
- double SegmentContractor::computeAverageFaceArea() {
-  CGALSurfaceMesh::Face_range frange = m_P.M.faces();
-  double sumArea = 0;
-  for (auto fit = frange.begin(); fit != frange.end(); fit++) {
-    sumArea += CGAL::Polygon_mesh_processing::face_area(*fit, m_P.M);
+void MeshContractor::updateMeshPositions(Matrix Vnew) {
+  int i = 0;
+  for (auto v : m_M.vertices()) {
+    // std::cout << "coords before updating:" << M.point(v) << std::endl;
+    m_M.point(v) = CGALSurfaceMesh::Point(Vnew(i, 0), Vnew(i, 1), Vnew(i, 2));
+    // std::cout << "coords after updating:" << M.point(v) << std::endl;
+    i++;
   }
-  return sumArea / m_P.M.number_of_faces();
 }
 
- std::vector<double> SegmentContractor::computeOneRingAreas() {
-  std::vector<double> oneRingAreas;
-  CGALSurfaceMesh::Vertex_range vr = m_P.M.vertices();
-  for (auto vit = vr.begin(); vit != vr.end(); vit++) {
-    CGALSurfaceMesh::Face_around_target_range oneRingRange =
-        m_P.M.faces_around_target(Skeleton.halfedge(*vit));
-    double oneRingArea = 0;
-    for (auto fit = oneRingRange.begin(); fit != oneRingRange.end(); fit++) {
-      oneRingArea += CGAL::Polygon_mesh_processing::face_area(*fit, m_P.M);
+void MeshContractor::updateWl() { m_Wl *= m_Sl; }
+
+void MeshContractor::updateWh() {
+  for (size_t i = 0; i < m_M.number_of_vertices(); i++) {
+    m_Wh(i, i) = std::sqrt(m_A0(i) / m_A(i));
+    // Wh(i, i) = Wh(i, i) * std::sqrt(A0(i) / A(i));
+  }
+}
+
+void MeshContractor::computeOneRingAreaVector() {
+  for (auto v : m_M.vertices()) {
+    m_A(size_t(v)) = computeOneRingAreaAroundVertex(v);
+  }
+}
+
+double MeshContractor::computeOneRingAreaAroundVertex(
+    CGALSurfaceMesh::Vertex_index v) const {
+  return CGAL::Polygon_mesh_processing::area(
+      m_M.faces_around_target(m_M.halfedge(v)), m_M);
+}
+
+void MeshContractor::computeLaplaceOperator() {
+
+  m_L = Matrix::Zero(m_M.number_of_vertices(), m_M.number_of_vertices());
+  Weight_calculator m_weight_calculator(m_M);
+
+  BOOST_FOREACH (halfedge_descriptor hd, halfedges(m_M)) {
+    double weight = m_weight_calculator(hd);
+    size_t i = size_t(m_M.source(hd));
+    size_t j = size_t(m_M.target(hd));
+    m_L(i, j) = 2 * weight; // multiplied with 2 because m_weight_calculator's
+                            // operator() returns cota/2+cotb/2
+  }
+
+  // populate diagonal elements
+  for (size_t row = 0; row < m_M.number_of_vertices(); row++) {
+    double rowSum = 0;
+    for (size_t col = 0; col < m_M.number_of_vertices(); col++) {
+      rowSum -= m_L(row, col);
     }
-    oneRingAreas.push_back(oneRingArea);
-    // auto oneRingArea =
-    // CGAL::Polygon_mesh_processing::area(oneRingRange, m_P.M);
-    // std::cout << "Area around vertex " << *vit << " is:" << oneRingArea
-    //           << std::endl;
-    // std::cout << "Area around vertex " << *vit << " is:"
-    //           << CGAL::Polygon_mesh_processing::area(oneRingRange, m_P.M)
-    //           << std::endl;
-  }
-  return oneRingAreas;
-}
-
- void SegmentContractor::updateWh() {
-  currentOneRingAreas = computeOneRingAreas();
-  for (int i = 0; i < m_P.M.number_of_vertices(); i++) {
-    Wh(i, i) = std::sqrt(initialOneRingAreas[i] / currentOneRingAreas[i]);
+    m_L(row, row) = rowSum;
   }
 }
+// double MeshContractor::computeAngleOppositeToEdge(CGALSurfaceMesh::Edge_index
+// e,
+//                                                  size_t edgeSide) const {
+//  CGALSurfaceMesh::Halfedge_index halfedge = M.halfedge(e, edgeSide);
+//  CGALSurfaceMesh::Halfedge_index nextHalfedge = M.next(halfedge);
+//  CGALSurfaceMesh::Vertex_index vertexOppositeToEdge = M.target(nextHalfedge);
+//  CGALSurfaceMesh::Point Pa = M.point(vertexOppositeToEdge);
+//  CGALSurfaceMesh::Vertex_index edgeVertex0 = M.vertex(e, 0);
+//  CGALSurfaceMesh::Point P0 = M.point(edgeVertex0);
+//
+//  CGALSurfaceMesh::Vertex_index edgeVertex1 = M.vertex(e, 1);
+//  CGALSurfaceMesh::Point P1 = M.point(edgeVertex1);
+//  CGAL::Vector_3<Kernel> v1 = P0 - Pa;
+//  CGAL::Vector_3<Kernel> v2 = P1 - Pa;
+//  double cosine = v1 * v2 / CGAL::sqrt(v1 * v1) / CGAL::sqrt(v2 * v2);
+//  return std::acos(cosine); // IN RADIANS
+//}
 
- void SegmentContractor::updateWl() { Wl *= Sl; }
-
- void SegmentContractor::updateWeightingMatrices() {
-  updateWh();
-  updateWl();
-}
-
- void SegmentContractor::prepareNextContraction() {
-  updateWeightingMatrices();
-  computeLaplaceOperator();
-}
-
-*/
+CGALSurfaceMesh MeshContractor::getContractedMesh() const { return m_M; }

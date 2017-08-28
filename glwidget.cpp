@@ -1,8 +1,10 @@
 #include "glwidget.h"
 
 #include <GL/glx.h>
-#include <QOpenGLContext>
-#include <ctime>
+//#include <QOpenGLContext>
+
+// parent needs to be there as an argument although it is not being used since
+// in the .ui file there must exist a hierarchy between the objects
 GLWidget::GLWidget(QWidget *parent) {
   QOpenGLWidget *widget = this;
   QSurfaceFormat format;
@@ -19,10 +21,10 @@ GLWidget::GLWidget(QWidget *parent) {
 
 GLWidget::~GLWidget() {
   makeCurrent();
-  delete defaultMeshFS;
-  delete axesFS;
-  delete segmentMeshFS;
-  delete activeMeshFS;
+  delete defaultShader;
+  delete axesShader;
+  delete segmentShader;
+  delete activeShader;
   disconnect(&timer, SIGNAL(timeout()), this, SLOT(update()));
 }
 void GLWidget::initializeGL() {
@@ -48,20 +50,10 @@ void GLWidget::initializeGL() {
   std::cout << "version:" << version << std::endl;
   std::cout << "renderer:" << renderer << std::endl;
   std::cout << "vendor:" << vendor << std::endl;
-  // I have to constructors for class Shader in order
-  // to use the "real" one after the opengl context is active
-  // IS THIS SYNTAX OS dependant? build dir must be in the same folder(aka
-  // Projects) as the sources(aka OpenGL_WithoutWrappers)
-  defaultMeshFS =
-      new Shader("../shaders/vertex.glsl", "../shaders/fragment.glsl");
-  axesFS = new Shader("../shaders/axesvs.glsl", "../shaders/axesfs.glsl");
-  segmentMeshFS =
-      new Shader("../shaders/vertex.glsl", "../shaders/segmfragment.glsl");
-  activeMeshFS = defaultMeshFS;
 
-  scene.loadMesh("../Models/test.obj");
-  scene.intersectionSphere.load("../Models/icosahedron.obj",
-                                scene.P.averageEdgeLength / 5);
+  initializeShaders();
+  scene.initializeScene(); // has to be done here since glew needs to have been
+                           // initialized
 
   connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
   timer.start(30);
@@ -80,8 +72,7 @@ void GLWidget::paintGL() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   else if (surfaceState == showTriangles)
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  // scene.P.updateVertexBuffer();
-  scene.Draw(activeMeshFS, axesFS);
+  scene.Draw(activeShader, axesShader);
 }
 void GLWidget::mousePressEvent(QMouseEvent *event) {
   // initialize mouse position
@@ -93,18 +84,46 @@ void GLWidget::mousePressEvent(QMouseEvent *event) {
   //  if (intersectionFound)
   //    scene.showIntersection = true;
   //}
-
-  if (mode == pickSegment) {
-    boost::optional<std::size_t> intersectionIndex =
-        scene.getIntersectingSegmentIndex(lastMousePos.x(), lastMousePos.y(),
-                                          WIDTH, HEIGHT);
-
-    if (intersectionIndex) {
-      intersectionSegmentIndex = *intersectionIndex;
-    } else {
-      std::cout << "No intersection found." << std::endl;
+  if (mode == segmentsView) {
+    if (event->button() == Qt::RightButton) {
+      segmentSelection_signal(lastMousePos.x(), lastMousePos.y());
     }
   }
+}
+
+void GLWidget::showMeshSegments_signal() { scene.handle_ShowSegments(); }
+
+void GLWidget::segmentSelection_signal(float mousePosX, float mousePosY) {
+  scene.handle_SegmentSelection(mousePosX, mousePosY, WIDTH, HEIGHT);
+}
+
+void GLWidget::segmentDeformation_signal(bool inflation) {
+  if (inflation)
+    scene.handle_MeshInflation();
+  else
+    scene.handle_MeshDeflation();
+}
+
+void GLWidget::cameraZoomChange_signal(float delta) {
+  scene.handle_CameraZoomChange(delta);
+}
+
+void GLWidget::cameraReset_signal() { scene.handle_CameraReset(); }
+
+void GLWidget::initializeShaders() {
+  defaultShader =
+      new Shader("../shaders/vertex.glsl", "../shaders/fragment.glsl");
+  axesShader = new Shader("../shaders/axesvs.glsl", "../shaders/axesfs.glsl");
+  segmentShader =
+      new Shader("../shaders/vertex.glsl", "../shaders/segmfragment.glsl");
+  activeShader = defaultShader;
+}
+
+void GLWidget::contraction_signal() {
+  if (mode == defaultView)
+    scene.handle_MeshContraction();
+  else if (mode == segmentsView)
+    scene.handle_SegmentContraction();
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
@@ -112,22 +131,19 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
   lastMousePos = QVector2D(event->localPos());
 
   if (event->buttons() == Qt::LeftButton) {
-    if (mode == defaultView || mode == viewSegments) {
-      glm::vec2 mouseMoveOffset(mouseOffset.x(), mouseOffset.y());
-      scene.processMouseMovement(mouseOffset);
+    if (mode == defaultView || mode == segmentsView) {
+      // glm::vec2 mouseMoveOffset(mouseOffset.x(), mouseOffset.y());
+      scene.handle_MouseMovement(mouseOffset); // TODO create a signal function
     }
   }
 }
 
 void GLWidget::wheelEvent(QWheelEvent *event) {
 
-  if (mode == defaultView || mode == viewSegments)
-    scene.camera.processWheelMovement(event->delta());
-  else if (mode == pickSegment) {
-    if (event->delta() > 0)
-      scene.P.deformSegment(intersectionSegmentIndex, '+');
-    else
-      scene.P.deformSegment(intersectionSegmentIndex, '-');
+  if (!(event->modifiers() & Qt::ControlModifier))
+    cameraZoomChange_signal(event->delta());
+  else if ((event->modifiers() & Qt::ControlModifier) && mode == segmentsView) {
+    segmentDeformation_signal(event->delta() > 0);
   }
 }
 
@@ -136,49 +152,49 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
 
   case Qt::Key_M:
     mode = defaultView;
-    activeMeshFS = defaultMeshFS;
+    activeShader = defaultShader;
     break;
 
   case Qt::Key_S:
-    if (!scene.P.segmentsComputed) {
-      std::clock_t start;
-      start = std::clock();
-      scene.P.constructSegmentMap();
-      scene.P.assignSegmentColors();
-      scene.P.updateMeshBuffers();
-      std::cout << "Time: " << (std::clock() - start) / (double)CLOCKS_PER_SEC
-                << " ms" << std::endl;
-    }
-
-    mode = viewSegments;
-    activeMeshFS = segmentMeshFS;
+    mode = segmentsView;
+    activeShader = segmentShader;
+    showMeshSegments_signal();
     break;
 
-  case Qt::Key_D:
-    mode = pickSegment;
-    activeMeshFS = segmentMeshFS;
+  case Qt::Key_C:
+    contraction_signal();
     break;
+
+    // case Qt::Key_A:
+    //  if (mode == contractSegment) {
+    //    if (selectedSegmentIndex == -1) {
+    //      std::cout << "Please select a segment to contract." << std::endl;
+    //    } else {
+    //      // scene.contractSegment(selectedSegmentIndex);
+    //      scene.P.updateMeshBuffers();
+    //    }
+    //    break;
+    //  }
+    // case Qt::Key_R:
+    //  scene.contractMesh();
+    //  scene.P.updateMeshBuffers();
+    //  break;
   }
 }
-// void GLWidget::keyReleaseEvent(QKeyEvent *event)
-//{
-//    switch(event->key()){
-
-//        case Qt::Key_M:
-//            break;
-
-//    }
-
-//}
+void GLWidget::keyReleaseEvent(QKeyEvent *event) {
+  switch (event->key()) {}
+}
 
 void GLWidget::modelWasChosen(std::__cxx11::string filename) {
   makeCurrent();
-  activeMeshFS = defaultMeshFS;
+  activeShader = defaultShader;
   mode = defaultView;
   scene.loadMesh(filename);
 }
 
-void GLWidget::updateAxesState(bool state) { scene.setShowAxes(state); }
+void GLWidget::updateAxesState(bool state) {
+  scene.handle_AxesStateChange(state);
+}
 
 void GLWidget::updateMeshSurfaceState(bool state) {
   surfaceState = static_cast<meshSurfaceVizualization>(state);
@@ -186,10 +202,10 @@ void GLWidget::updateMeshSurfaceState(bool state) {
 
 void GLWidget::resetCamera() {
   std::cout << "camera reseted" << std::endl;
-  scene.camera.resetCamera();
-  scene.light.changeLightDirection(scene.camera.getPosition());
+
+  cameraReset_signal();
 }
 
-void GLWidget::handleLoggedMessage(QOpenGLDebugMessage message) {
-  qDebug() << message;
+void GLWidget::showVerticesStateChange(int state) {
+  scene.handle_meshVerticesStateChange(state);
 }
