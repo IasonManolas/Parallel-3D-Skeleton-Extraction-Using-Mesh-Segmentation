@@ -31,7 +31,7 @@ public:
     rotationAxis = glm::normalize(rotationAxis);
     glm::quat rot = glm::angleAxis(angle, rotationAxis);
     rotationQ = rotationQ * rot;
-    std::cout << glm::to_string(rotationQ) << std::endl;
+    // std::cout << glm::to_string(rotationQ) << std::endl;
     rotationMatrix = glm::toMat4(rotationQ);
   }
 
@@ -45,8 +45,8 @@ public:
     //        up=glm::vec3(rotationMatrix*glm::vec4(up,0));
     up = glm::vec3(rotationMatrix * glm::vec4(0, 1, 0, 0));
     //        right=glm::cross(look,up);
-    std::cout << "CAM POS:X=" << position.x << " Y=" << position.y
-              << " Z=" << position.z << std::endl;
+    // std::cout << "CAM POS:X=" << position.x << " Y=" << position.y
+    //           << " Z=" << position.z << std::endl;
   }
 
   void processMouseMovement(const QVector2D &mouseDV) {
