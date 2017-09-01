@@ -14,9 +14,6 @@ CONFIG+=c++14
 QMAKE_CC=clang
 QMAKE_CXX=clang
 
-QMAKE_CXXFLAGS+= -openmp
-QMAKE_LFLAGS +=  -openmp
-
 SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \

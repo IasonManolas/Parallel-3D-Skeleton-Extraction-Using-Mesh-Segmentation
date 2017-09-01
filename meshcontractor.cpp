@@ -2,6 +2,7 @@
 
 MeshContractor::MeshContractor(CGALSurfaceMesh meshToContract)
     : m_M(meshToContract) {
+
   m_M.collect_garbage();
   if (!CGAL::is_closed(m_M)) {
     using Halfedge_handle =
@@ -103,6 +104,7 @@ SpMatrix concatenateVertically(SpMatrix A, SpMatrix B) {
   return M;
 }
 
+#include <unsupported/Eigen/SparseExtra>
 Matrix MeshContractor::solveForNewVertexPositions(
     Matrix currentVertexPositions) const {
   SpMatrix WlL = m_Wl * m_L;
@@ -116,16 +118,18 @@ Matrix MeshContractor::solveForNewVertexPositions(
   SpMatrix SpB = B.sparseView();
 
   Eigen::LeastSquaresConjugateGradient<SpMatrix> solver;
+  solver.setTolerance(pow(10, -3));
   // Eigen::SparseQR<SpMatrix, Eigen::COLAMDOrdering<Eigen::Index>> solver;
 
-  // std::cout << "#iterations:     " << solver.iterations() << std::endl;
-  // std::cout << "estimated error: " << solver.error() << std::endl;
   solver.compute(A);
   // auto x = solver.solve(SpB);
   //   A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(B);
   // A.colPivHouseholderQr().solve(B);
   //(A.transpose() * A).ldlt().solve(A.transpose() * B);
-  Matrix newVertexPositions(solver.solve(SpB));
+  Matrix newVertexPositions = solver.solve(SpB);
+  std::cout << "#iterations to solve system:     " << solver.iterations()
+            << std::endl;
+  std::cout << "estimated error: " << solver.error() << std::endl;
   return newVertexPositions;
 }
 void MeshContractor::updateMeshPositions(Matrix Vnew) {
