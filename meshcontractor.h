@@ -9,9 +9,9 @@
 #include <CGAL/Polygon_mesh_processing/measure.h>
 #include <CGAL/Polygon_mesh_processing/triangulate_hole.h>
 #include <CGAL/boost/graph/graph_traits_Surface_mesh.h>
+#include <Eigen/Eigen>
+#include <Eigen/Sparse>
 #include <boost/graph/graph_traits.hpp>
-#include <eigen3/Eigen/Eigen>
-#include <eigen3/Eigen/Sparse>
 // Cotangent weight calculator
 using Weight_calculator = CGAL::internal::Cotangent_weight<
     CGALSurfaceMesh,
