@@ -9,8 +9,9 @@
 #include <CGAL/Polygon_mesh_processing/measure.h>
 #include <CGAL/Polygon_mesh_processing/triangulate_hole.h>
 #include <CGAL/boost/graph/graph_traits_Surface_mesh.h>
-#include <Eigen/Eigen>
 #include <boost/graph/graph_traits.hpp>
+#include <eigen3/Eigen/Eigen>
+#include <eigen3/Eigen/Sparse>
 // Cotangent weight calculator
 using Weight_calculator = CGAL::internal::Cotangent_weight<
     CGALSurfaceMesh,
@@ -24,6 +25,8 @@ using halfedge_descriptor =
     boost::graph_traits<CGALSurfaceMesh>::halfedge_descriptor;
 using Matrix = Eigen::MatrixXd;
 using Vector = Eigen::VectorXd;
+using SpMatrix = Eigen::SparseMatrix<double>;
+using Triplet = Eigen::Triplet<double>;
 class MeshContractor {
 public:
   MeshContractor() {}
@@ -36,9 +39,9 @@ private:
   double m_originalVolume;
   double m_volumeThreshold{std::pow(10, -6)};
   double m_Sl{2};
-  Matrix m_Wh;
-  Matrix m_Wl;
-  Matrix m_L;
+  SpMatrix m_Wh;
+  SpMatrix m_Wl;
+  SpMatrix m_L;
   Vector m_A0;
   Vector m_A;
   size_t m_maxNumOfIterations{10};

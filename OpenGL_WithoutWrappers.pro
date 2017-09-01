@@ -14,6 +14,9 @@ CONFIG+=c++14
 QMAKE_CC=clang
 QMAKE_CXX=clang
 
+QMAKE_CXXFLAGS+= -openmp
+QMAKE_LFLAGS +=  -openmp
+
 SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
@@ -71,8 +74,6 @@ INCLUDEPATH += $$PWD/../../../../../usr/local/include/eigen3
 #DEPENDPATH += $$PWD/../../../../../usr/local/include
 
 #unix:!macx:
-LIBS += -L$$PWD/../../../../../usr/local/lib/ -lassimp
+LIBS +=  -lassimp
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../../usr/local/lib/release/ -lgmp
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../../usr/local/lib/debug/ -lgmp
-else:unix: LIBS += -L$$PWD/../../../../../usr/local/lib/ -lgmp
+LIBS +=  -lgmp

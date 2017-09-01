@@ -20,14 +20,17 @@ MeshContractor::MeshContractor(CGALSurfaceMesh meshToContract)
   }
   // NOTE teapot
   m_originalVolume = CGAL::Polygon_mesh_processing::volume(m_M);
-  m_Wh = Matrix::Identity(m_M.number_of_vertices(),
-                          m_M.number_of_vertices()); // ok
+  // m_Wh = Matrix::Identity(m_M.number_of_vertices(),
+  //                      m_M.number_of_vertices()); // ok
+  m_Wh = SpMatrix(m_M.number_of_vertices(), m_M.number_of_vertices());
+  m_Wh.setIdentity();
   double averageFaceArea =
       CGAL::Polygon_mesh_processing::area(m_M) / m_M.number_of_faces(); // ok
-  m_Wl = Matrix::Identity(m_M.number_of_vertices(),
-                          m_M.number_of_vertices()) *
-         0.001 * std::sqrt(averageFaceArea); // ok
-  m_L = Matrix::Zero(m_M.number_of_vertices(), m_M.number_of_vertices());
+  m_Wl = SpMatrix(m_M.number_of_vertices(), m_M.number_of_vertices());
+  m_Wl.setIdentity();
+  m_Wl = m_Wl * 0.001 * std::sqrt(averageFaceArea); // ok
+  // m_L = Matrix::Zero(m_M.number_of_vertices(),
+  // m_M.number_of_vertices());
   computeLaplaceOperator();
   m_A = Vector::Zero(m_M.number_of_vertices());
   computeOneRingAreaVector();
@@ -79,24 +82,52 @@ Matrix MeshContractor::constructVertexMatrix() const {
   }
   return V;
 }
+SpMatrix concatenateVertically(SpMatrix A, SpMatrix B) {
+  // A
+  //---
+  // B
+  assert(A.cols() == B.cols());
+  std::vector<Triplet> tripletVector;
+  for (int k = 0; k < A.outerSize(); ++k) {
+    for (SpMatrix::InnerIterator it(A, k); it; ++it) {
+      tripletVector.push_back(Triplet(it.row(), it.col(), it.value()));
+    }
+    for (SpMatrix::InnerIterator it(B, k); it; ++it) {
+      tripletVector.push_back(
+          Triplet(it.row() + A.rows(), it.col(), it.value()));
+    }
+  }
+  SpMatrix M(A.rows() + B.rows(), A.cols());
+  M.setFromTriplets(tripletVector.begin(), tripletVector.end());
+
+  return M;
+}
 
 Matrix MeshContractor::solveForNewVertexPositions(
     Matrix currentVertexPositions) const {
-  Matrix WlL = m_Wl * m_L;
-  Matrix A(WlL.rows() + m_Wh.rows(), WlL.cols());
-  A << WlL, m_Wh;
+  SpMatrix WlL = m_Wl * m_L;
+  SpMatrix A = concatenateVertically(WlL, m_Wh);
+  // SpMatrix A(WlL.rows() + m_Wh.rows(), WlL.cols());
+  // A << WlL, m_Wh;
   Matrix Bupper = Matrix::Zero(WlL.rows(), 3);
   Matrix Blower = m_Wh * currentVertexPositions;
   Matrix B(Bupper.rows() + Blower.rows(), 3);
   B << Bupper, Blower;
-  Matrix newVertexPositions =
-      //   A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(B);
-      // A.colPivHouseholderQr().solve(B);
-      (A.transpose() * A).ldlt().solve(A.transpose() * B);
+  SpMatrix SpB = B.sparseView();
 
+  Eigen::LeastSquaresConjugateGradient<SpMatrix> solver;
+  // Eigen::SparseQR<SpMatrix, Eigen::COLAMDOrdering<Eigen::Index>> solver;
+
+  // std::cout << "#iterations:     " << solver.iterations() << std::endl;
+  // std::cout << "estimated error: " << solver.error() << std::endl;
+  solver.compute(A);
+  // auto x = solver.solve(SpB);
+  //   A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(B);
+  // A.colPivHouseholderQr().solve(B);
+  //(A.transpose() * A).ldlt().solve(A.transpose() * B);
+  Matrix newVertexPositions(solver.solve(SpB));
   return newVertexPositions;
 }
-
 void MeshContractor::updateMeshPositions(Matrix Vnew) {
   int i = 0;
   for (auto v : m_M.vertices()) {
@@ -111,7 +142,7 @@ void MeshContractor::updateWl() { m_Wl *= m_Sl; }
 
 void MeshContractor::updateWh() {
   for (size_t i = 0; i < m_M.number_of_vertices(); i++) {
-    m_Wh(i, i) = std::sqrt(m_A0(i) / m_A(i));
+    m_Wh.coeffRef(i, i) = std::sqrt(m_A0(i) / m_A(i));
     // Wh(i, i) = Wh(i, i) * std::sqrt(A0(i) / A(i));
   }
 }
@@ -130,32 +161,43 @@ double MeshContractor::computeOneRingAreaAroundVertex(
 
 void MeshContractor::computeLaplaceOperator() {
 
-  m_L = Matrix::Zero(m_M.number_of_vertices(), m_M.number_of_vertices());
+  m_L = SpMatrix(m_M.number_of_vertices(), m_M.number_of_vertices());
+
+  std::vector<Triplet> tripletVector;
+  std::vector<double> diagonalElements(m_M.number_of_vertices(), 0);
   Weight_calculator m_weight_calculator(m_M);
 
   BOOST_FOREACH (halfedge_descriptor hd, halfedges(m_M)) {
     double weight = m_weight_calculator(hd);
     size_t i = size_t(m_M.source(hd));
     size_t j = size_t(m_M.target(hd));
-    m_L(i, j) = 2 * weight; // multiplied with 2 because m_weight_calculator's
-                            // operator() returns cota/2+cotb/2
+    double Lij = 2 * weight; // multiplied with 2 because m_weight_calculator's
+                             // operator() returns cota/2+cotb/2
+    diagonalElements[i] -= Lij;
+    tripletVector.push_back(Triplet(i, j, Lij));
   }
 
   // populate diagonal elements
-  for (size_t row = 0; row < m_M.number_of_vertices(); row++) {
-    double rowSum = 0;
-    for (size_t col = 0; col < m_M.number_of_vertices(); col++) {
-      rowSum -= m_L(row, col);
-    }
-    m_L(row, row) = rowSum;
+  for (int i = 0; i < diagonalElements.size(); i++) {
+    tripletVector.push_back(Triplet(i, i, diagonalElements[i]));
   }
+  // for (size_t row = 0; row < m_M.number_of_vertices(); row++) {
+  //  double rowSum = 0;
+  //  for (size_t col = 0; col < m_M.number_of_vertices(); col++) {
+  //    rowSum -= m_L(row, col);
+  //  }
+  //  m_L(row, row) = rowSum;
+  //}
+  m_L.setFromTriplets(tripletVector.begin(), tripletVector.end());
 }
-// double MeshContractor::computeAngleOppositeToEdge(CGALSurfaceMesh::Edge_index
+// double
+// MeshContractor::computeAngleOppositeToEdge(CGALSurfaceMesh::Edge_index
 // e,
 //                                                  size_t edgeSide) const {
 //  CGALSurfaceMesh::Halfedge_index halfedge = M.halfedge(e, edgeSide);
 //  CGALSurfaceMesh::Halfedge_index nextHalfedge = M.next(halfedge);
-//  CGALSurfaceMesh::Vertex_index vertexOppositeToEdge = M.target(nextHalfedge);
+//  CGALSurfaceMesh::Vertex_index vertexOppositeToEdge =
+//  M.target(nextHalfedge);
 //  CGALSurfaceMesh::Point Pa = M.point(vertexOppositeToEdge);
 //  CGALSurfaceMesh::Vertex_index edgeVertex0 = M.vertex(e, 0);
 //  CGALSurfaceMesh::Point P0 = M.point(edgeVertex0);
