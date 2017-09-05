@@ -17,6 +17,7 @@ void Mesh::load(std::string filename) {
   resetMeshAttributes();
   std::tie(indices, vertices) =
       meshLoader::load(filename); // vertices contains coords & normals
+  std::cout << "INDICES SIZE=" << indices.size() << std::endl;
 
   setupDrawingBuffers();
   // Find the model matrix that normalizes the mesh

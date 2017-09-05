@@ -29,26 +29,25 @@ using SpMatrix = Eigen::SparseMatrix<double>;
 using Triplet = Eigen::Triplet<double>;
 class MeshContractor {
 public:
-  MeshContractor() {}
   MeshContractor(CGALSurfaceMesh meshToContract);
   CGALSurfaceMesh getContractedMesh() const;
-  void contractMesh();
+  void calculateSkeleton();
 
 private:
-  CGALSurfaceMesh m_M;
+  CGALSurfaceMesh &m_M;
   double m_originalVolume;
-  double m_volumeThreshold{std::pow(10, -6)};
+  static constexpr double m_volumeThreshold{std::pow(10, -1)};
   double m_Sl{2};
   SpMatrix m_Wh;
   SpMatrix m_Wl;
   SpMatrix m_L;
   Vector m_A0;
   Vector m_A;
-  size_t m_maxNumOfIterations{10};
+  static constexpr size_t m_maxNumOfIterations{100};
   size_t m_iterationsCompleted{0};
 
 private:
-  void calculateSkeleton();
+  void contractMesh();
   void computeLaplaceOperator();
   double computeAngleOppositeToEdge(CGALSurfaceMesh::Edge_index,
                                     size_t edgeSide) const;

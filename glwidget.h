@@ -52,6 +52,7 @@ private:
   void showMeshSegments_signal();
   void segmentSelection_signal(float, float);
   void contraction_signal();
+  void connectivitySurgery_signal();
   void showMeshVertices_signal();
   void segmentDeformation_signal(bool inflation);
   void cameraZoomChange_signal(float delta);

@@ -10,9 +10,12 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = OpenGL_WithoutWrappers
 TEMPLATE = app
-CONFIG+=c++14
-QMAKE_CC=clang
-QMAKE_CXX=clang
+CONFIG+=c++1z
+#QMAKE_CC=clang
+#QMAKE_CXX=clang
+
+QMAKE_CXXFLAGS+= -fopenmp
+QMAKE_LFLAGS +=  -fopenmp
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -20,7 +23,8 @@ SOURCES += main.cpp\
     meshcontractor.cpp \
     skeleton.cpp \
     mesh.cpp \
-    scene.cpp
+    scene.cpp \
+    connectivitysurgeon.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -39,7 +43,8 @@ HEADERS  += mainwindow.h \
     meshsegment.h \
     meshcontractor.h \
     skeleton.h \
-    mesh.h
+    mesh.h \
+    connectivitysurgeon.h
 #    tinyObjLoader/tiny_obj_loader.h
 
 FORMS    += mainwindow.ui
@@ -67,8 +72,7 @@ DISTFILES += \
     shaders/axesfs.glsl \
     shaders/axesvs.glsl
 
-INCLUDEPATH += $$PWD/../../../../../usr/local/include/eigen3
-#DEPENDPATH += $$PWD/../../../../../usr/local/include
+INCLUDEPATH +=/usr/local/include/eigen3
 
 #unix:!macx:
 LIBS +=  -lassimp
