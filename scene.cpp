@@ -21,18 +21,18 @@ void Scene::updateProjectionMatrix(int w, int h) {
       glm::perspective(camera.fov, float(w) / float(h), nearPlane, farPlane);
 }
 
-void Scene::handle_CameraZoomChange(float delta) {
+void Scene::handle_cameraZoomChange(float delta) {
   camera.processWheelMovement(delta);
 }
 
-void Scene::handle_CameraReset() {
+void Scene::handle_cameraReset() {
   camera.resetCamera();
   light.changeLightDirection(camera.getPosition());
 }
 
 void Scene::initializeScene() {
-  loadPointSphere();
   loadMesh("../Models/Small/test.obj");
+  loadPointSphere();
   // loadMesh("../Models/cylinder.obj");
   // loadMesh("../Models/Small/coctel.obj");
   // loadMesh("../Models/Small/Wrong by assimp/stretched cube.obj");
@@ -44,7 +44,7 @@ void Scene::initializeScene() {
 
 void Scene::loadPointSphere() { PS.load("../Models/Small/icosahedron.obj"); }
 
-void Scene::handle_SegmentSelection(float mousePosX, float mousePosY,
+void Scene::handle_segmentSelection(float mousePosX, float mousePosY,
                                     int windowWidth, int windowHeight) {
 
   Ray_intersection intersection;
@@ -55,19 +55,26 @@ void Scene::handle_SegmentSelection(float mousePosX, float mousePosY,
   }
 }
 
-void Scene::handle_ShowSegments() { P.handleShowSegments(); }
+void Scene::handle_showSegments() { P.handleShowSegments(); }
 
-void Scene::handle_SegmentContraction() {}
+void Scene::handle_segmentContraction() {}
 
-void Scene::handle_MeshContraction() {
+void Scene::handle_meshContraction() {
   contractMesh();
   if (m_showPointSpheresOnVertices)
     updatePointSpheresOnVerticesPositions();
 }
 
-void Scene::handle_MeshInflation() { P.handleInflation(); }
+void Scene::handle_meshConnectivitySurgery() {
+  // I suppose mesh has already been contracted
+  executeMeshConnectivitySurgery();
+  if (m_showPointSpheresOnVertices)
+    updatePointSpheresOnVerticesPositions();
+}
 
-void Scene::handle_MeshDeflation() { P.handleDeflation(); }
+void Scene::handle_meshInflation() { P.handleInflation(); }
+
+void Scene::handle_meshDeflation() { P.handleDeflation(); }
 
 void Scene::loadMesh(std::__cxx11::string filename) {
   camera.resetCamera();
@@ -75,14 +82,13 @@ void Scene::loadMesh(std::__cxx11::string filename) {
 
   P = Mesh{};
   P.load(filename);
-
-  MC = MeshContractor(P.M);
+  EM = P.M; // copy contents to another object which will be edited.
+  MC = MeshContractor(EM);
 
   PS.updateRadius(P.M);
-  updatePointSpheresOnVerticesPositions();
 }
 
-void Scene::handle_AxesStateChange(bool value) { showAxes = value; }
+void Scene::handle_axesStateChange(bool value) { showAxes = value; }
 
 bool Scene::rayIntersectsPolyhedron(const int &mouseX, const int &mouseY,
                                     const int width, const int height,
@@ -121,7 +127,7 @@ void Scene::updatePointSpheresOnVerticesPositions() {
   }
 }
 
-void Scene::handle_MouseMovement(const QVector2D &mouseDV) {
+void Scene::handle_mouseMovement(const QVector2D &mouseDV) {
   camera.processMouseMovement(mouseDV);
   light.changeLightDirection(camera.getPosition());
 }
@@ -132,14 +138,12 @@ void Scene::handle_meshVerticesStateChange(int state) {
 }
 
 void Scene::contractMesh() {
-  MC.contractMesh(); // TODO this should be private when the algo is working
-  CGALSurfaceMesh contractedMesh = MC.getContractedMesh();
-  if (contractedMesh.has_garbage()) {
-    std::cout << "Mesh has garbage.Collecting it.." << std::endl;
-    contractedMesh.collect_garbage();
-  }
-  // skeleton = Skeleton(contractedMesh, PS);
-  P.updateVertices(contractedMesh);
+  MC->get()->calculateSkeleton();
+  P.updateVertices(EM);
+}
+
+void Scene::executeMeshConnectivitySurgery() {
+  ConnectivitySurgeon CS(MC->get()->getContractedMesh());
 }
 
 void Scene::setSceneUniforms(Shader *modelShader, Shader *axisShader) {

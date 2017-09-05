@@ -87,44 +87,28 @@ load(std::string filename) {
 namespace meshMeasuring {
 
 inline float findMaxDimension(std::vector<MyVertex> vertices) {
-  float maxDim;
-  // std::cout << "Normalizing mesh.." << std::endl;
-  std::vector<MyVertex>::iterator first, last;
-  first = vertices.begin();
-  last = vertices.end();
-  if (first == last)
-    maxDim = 1;
+  double xmax{vertices[0].Position.x}, xmin{vertices[0].Position.x},
+      ymax{vertices[0].Position.y}, ymin{vertices[0].Position.y},
+      zmax{vertices[0].Position.z}, zmin{vertices[0].Position.z};
+  for (auto vertex : vertices) {
+    auto p = vertex.Position;
 
-  std::vector<MyVertex>::iterator xmin, xmax, ymin, ymax, zmin, zmax;
+    if (p.x > xmax)
+      xmax = p.x;
+    else if (p.x < xmin)
+      xmin = p.x;
 
-  xmin = first;
-  xmax = first;
-  ymin = first;
-  ymax = first;
-  zmin = first;
-  zmax = first;
+    if (p.y > ymax)
+      ymax = p.y;
+    else if (p.y < ymin)
+      ymin = p.y;
 
-  while (++first != last) {
-    if ((*first).Position.x < (*xmin).Position.x)
-      xmin = first;
-    else if ((*first).Position.x > (*xmax).Position.x)
-      xmax = first;
-
-    if ((*first).Position.y < (*ymin).Position.y)
-      ymin = first;
-    else if ((*first).Position.y > (*ymax).Position.y)
-      ymax = first;
-
-    if ((*first).Position.z < (*zmin).Position.z)
-      zmin = first;
-    else if ((*first).Position.z > (*zmax).Position.z)
-      zmax = first;
+    if (p.z > zmax)
+      zmax = p.z;
+    else if (p.z < zmin)
+      zmin = p.z;
   }
-  maxDim = std::max(std::max((*xmax).Position.x - (*xmin).Position.x,
-                             (*ymax).Position.y - (*ymin).Position.y),
-                    (*zmax).Position.z - (*zmin).Position.z);
-  // std::cout << "finished mesh normalization." << std::endl;
-  return maxDim;
+  return std::max(std::max(xmax - xmin, ymax - ymin), zmax - zmin);
 }
 inline glm::vec3 findCenterOfMass(std::vector<MyVertex> vertices) {
   glm::vec3 centerOfMass;

@@ -1,6 +1,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include <optional>
 #include <vector>
 
 #include <QVector2D>
@@ -16,12 +17,12 @@
 #include "axes.h"
 #include "camera.h"
 #include "cgaltypedefs.h"
+#include "connectivitysurgeon.h"
 #include "directionallight.h"
 #include "mesh.h"
 #include "meshcontractor.h"
 #include "pointsphere.h"
 #include "shader.h"
-#include "skeleton.h"
 
 class Scene {
 public:
@@ -41,10 +42,9 @@ private:
   glm::mat4 projectionMatrix{glm::mat4(1.0f)};
   float nearPlane{0.1};
   float farPlane{100};
-  Skeleton meshSkeleton;
   Mesh P;
-  Mesh contractedMesh;
-  MeshContractor MC;
+  CGALSurfaceMesh EM; // Edited Mesh: the mesh which I manipulate
+  std::optional<MeshContractor> MC;
 
   bool m_showPointSpheresOnVertices{false};
   std::vector<PointSphere> m_pointSpheresOnVertices;
@@ -53,17 +53,18 @@ public:
   void initializeScene();
   void loadMesh(std::string filename);
   // Signal handlers
-  void handle_AxesStateChange(bool value);
-  void handle_CameraZoomChange(float delta);
-  void handle_CameraReset();
-  void handle_SegmentSelection(float mousePosX, float mousePosY,
+  void handle_axesStateChange(bool value);
+  void handle_cameraZoomChange(float delta);
+  void handle_cameraReset();
+  void handle_segmentSelection(float mousePosX, float mousePosY,
                                int windowWidth, int windowHeight);
-  void handle_ShowSegments();
-  void handle_SegmentContraction();
-  void handle_MeshContraction();
-  void handle_MeshInflation();
-  void handle_MeshDeflation();
-  void handle_MouseMovement(const QVector2D &mouseDV);
+  void handle_showSegments();
+  void handle_segmentContraction();
+  void handle_meshContraction();
+  void handle_meshConnectivitySurgery();
+  void handle_meshInflation();
+  void handle_meshDeflation();
+  void handle_mouseMovement(const QVector2D &mouseDV);
   void handle_meshVerticesStateChange(int state);
 
 private:
@@ -71,6 +72,7 @@ private:
   void setProjectionMatrixUniform(Shader *shader);
   void setSceneUniforms(Shader *modelShader, Shader *axisShader);
   void contractMesh();
+  void executeMeshConnectivitySurgery();
   bool rayIntersectsPolyhedron(const int &mouseX, const int &mouseY,
                                const int width, const int height,
                                Ray_intersection &intersection);

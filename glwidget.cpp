@@ -43,13 +43,13 @@ void GLWidget::initializeGL() {
 
   glEnable(GL_DEPTH_TEST);
 
-  char *renderer = (char *)glGetString(GL_RENDERER);
-  char *version = (char *)glGetString(GL_VERSION);
-  char *vendor = (char *)glGetString(GL_VENDOR);
+  // char *renderer = (char *)glGetString(GL_RENDERER);
+  // char *version = (char *)glGetString(GL_VERSION);
+  // char *vendor = (char *)glGetString(GL_VENDOR);
 
-  std::cout << "version:" << version << std::endl;
-  std::cout << "renderer:" << renderer << std::endl;
-  std::cout << "vendor:" << vendor << std::endl;
+  // std::cout << "version:" << version << std::endl;
+  // std::cout << "renderer:" << renderer << std::endl;
+  // std::cout << "vendor:" << vendor << std::endl;
 
   initializeShaders();
   scene.initializeScene(); // has to be done here since glew needs to have been
@@ -75,15 +75,7 @@ void GLWidget::paintGL() {
   scene.Draw(activeShader, axesShader);
 }
 void GLWidget::mousePressEvent(QMouseEvent *event) {
-  // initialize mouse position
   lastMousePos = QVector2D(event->localPos());
-  // if (mode == pickVertex) {
-  //  int vertexIndex;
-  //  bool intersectionFound = scene.rayIntersectsPolyhedron(
-  //      lastMousePos.x(), lastMousePos.y(), WIDTH, HEIGHT, vertexIndex);
-  //  if (intersectionFound)
-  //    scene.showIntersection = true;
-  //}
   if (mode == segmentsView) {
     if (event->button() == Qt::RightButton) {
       segmentSelection_signal(lastMousePos.x(), lastMousePos.y());
@@ -91,24 +83,24 @@ void GLWidget::mousePressEvent(QMouseEvent *event) {
   }
 }
 
-void GLWidget::showMeshSegments_signal() { scene.handle_ShowSegments(); }
+void GLWidget::showMeshSegments_signal() { scene.handle_showSegments(); }
 
 void GLWidget::segmentSelection_signal(float mousePosX, float mousePosY) {
-  scene.handle_SegmentSelection(mousePosX, mousePosY, WIDTH, HEIGHT);
+  scene.handle_segmentSelection(mousePosX, mousePosY, WIDTH, HEIGHT);
 }
 
 void GLWidget::segmentDeformation_signal(bool inflation) {
   if (inflation)
-    scene.handle_MeshInflation();
+    scene.handle_meshInflation();
   else
-    scene.handle_MeshDeflation();
+    scene.handle_meshDeflation();
 }
 
 void GLWidget::cameraZoomChange_signal(float delta) {
-  scene.handle_CameraZoomChange(delta);
+  scene.handle_cameraZoomChange(delta);
 }
 
-void GLWidget::cameraReset_signal() { scene.handle_CameraReset(); }
+void GLWidget::cameraReset_signal() { scene.handle_cameraReset(); }
 
 void GLWidget::initializeShaders() {
   defaultShader =
@@ -121,9 +113,13 @@ void GLWidget::initializeShaders() {
 
 void GLWidget::contraction_signal() {
   if (mode == defaultView)
-    scene.handle_MeshContraction();
+    scene.handle_meshContraction();
   else if (mode == segmentsView)
-    scene.handle_SegmentContraction();
+    scene.handle_segmentContraction();
+}
+
+void GLWidget::connectivitySurgery_signal() {
+  scene.handle_meshConnectivitySurgery();
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
@@ -133,7 +129,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
   if (event->buttons() == Qt::LeftButton) {
     if (mode == defaultView || mode == segmentsView) {
       // glm::vec2 mouseMoveOffset(mouseOffset.x(), mouseOffset.y());
-      scene.handle_MouseMovement(mouseOffset); // TODO create a signal function
+      scene.handle_mouseMovement(mouseOffset); // TODO create a signal function
     }
   }
 }
@@ -164,6 +160,9 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
   case Qt::Key_C:
     contraction_signal();
     break;
+  case Qt::Key_1:
+    connectivitySurgery_signal();
+    break;
 
     // case Qt::Key_A:
     //  if (mode == contractSegment) {
@@ -193,7 +192,7 @@ void GLWidget::modelWasChosen(std::__cxx11::string filename) {
 }
 
 void GLWidget::updateAxesState(bool state) {
-  scene.handle_AxesStateChange(state);
+  scene.handle_axesStateChange(state);
 }
 
 void GLWidget::updateMeshSurfaceState(bool state) {

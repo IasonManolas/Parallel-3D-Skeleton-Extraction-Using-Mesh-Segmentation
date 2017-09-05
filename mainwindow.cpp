@@ -36,6 +36,8 @@ void MainWindow::on_actionOpenFile_triggered() {
     std::string filenameString = filename.toUtf8().constData();
     emit modelLoaded(filenameString);
   }
+  // uncheck show vertices when model is loaded
+  ui->checkBoxShowVertices->setChecked(false);
 }
 
 void MainWindow::on_checkBoxMeshSurface_clicked(bool state) {
