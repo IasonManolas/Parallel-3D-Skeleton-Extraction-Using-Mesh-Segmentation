@@ -66,7 +66,7 @@ public:
   glm::vec3 getPosition() const { return position; }
   void setPosition(const glm::vec3 &value) { position = value; }
 
-  glm::mat4 getViewMat() const { return viewMatrix; }
+  glm::mat4 getViewMatrix() const { return viewMatrix; }
   void setUniforms(Shader *shader) const {
     GLint viewPosLoc = glGetUniformLocation(shader->programID, "viewPos");
     if (viewPosLoc != -1)

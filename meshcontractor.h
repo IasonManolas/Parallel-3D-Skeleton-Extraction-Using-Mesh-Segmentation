@@ -1,7 +1,7 @@
 #ifndef SEGMENTCONTRACTOR_H
 #define SEGMENTCONTRACTOR_H
 
-#include <unordered_set>
+//#include <algorithm>
 #include <vector>
 
 #include "cgaltypedefs.h"
@@ -13,6 +13,7 @@
 #include <Eigen/Sparse>
 #include <boost/graph/graph_traits.hpp>
 // Cotangent weight calculator
+
 using Weight_calculator = CGAL::internal::Cotangent_weight<
     CGALSurfaceMesh,
     boost::property_map<CGALSurfaceMesh, boost::vertex_point_t>::type,
@@ -20,44 +21,65 @@ using Weight_calculator = CGAL::internal::Cotangent_weight<
         CGALSurfaceMesh,
         boost::property_map<CGALSurfaceMesh, boost::vertex_point_t>::type,
         CGAL::internal::Cotangent_value_Meyer_secure<CGALSurfaceMesh>>>;
-
 using halfedge_descriptor =
     boost::graph_traits<CGALSurfaceMesh>::halfedge_descriptor;
-using Matrix = Eigen::MatrixXd;
+using EigenMatrix = Eigen::MatrixXd;
 using Vector = Eigen::VectorXd;
 using SpMatrix = Eigen::SparseMatrix<double>;
-using Triplet = Eigen::Triplet<double>;
+using EigenTriplet = Eigen::Triplet<double>;
+static constexpr double maxNumber{std::pow(10, 8)};
 class MeshContractor {
+
 public:
-  MeshContractor(CGALSurfaceMesh meshToContract);
+  MeshContractor() {}
+  MeshContractor(CGALSurfaceMesh meshToContract, std::vector<uint> indices);
   CGALSurfaceMesh getContractedMesh() const;
-  void calculateSkeleton();
+  void contractMesh(const double volumeThreshold = std::pow(10, -6));
+  void executeContractionStep();
+
+  std::vector<size_t> getVertexIndicesWithHighLaplacianValue();
+  std::vector<size_t> getFixedVertices();
+  void printFixedVertices(EigenMatrix verticesMatrix);
 
 private:
-  CGALSurfaceMesh &m_M;
+  // CGALSurfaceMesh &m_M;
+  CGALSurfaceMesh m_M;
   double m_originalVolume;
-  static constexpr double m_volumeThreshold{std::pow(10, -1)};
+  static constexpr double m_volumeThreshold{
+      std::pow(10, -6)}; // m_originalVolume/currentVolume least ratio so the
+                         // contraction process stops
   double m_Sl{2};
   SpMatrix m_Wh;
+  double m_Wh0{1.0};
   SpMatrix m_Wl;
   SpMatrix m_L;
+  EigenMatrix m_previousDeltaCoords;
   Vector m_A0;
   Vector m_A;
+  Eigen::MatrixXi F;
   static constexpr size_t m_maxNumOfIterations{100};
   size_t m_iterationsCompleted{0};
 
+  std::set<size_t> fixedVertices;
+  std::vector<bool> isVertexFixed;
+
 private:
-  void contractMesh();
   void computeLaplaceOperator();
+  SpMatrix computeLaplaceOperatorUsingIGL();
   double computeAngleOppositeToEdge(CGALSurfaceMesh::Edge_index,
                                     size_t edgeSide) const;
-  Matrix constructVertexMatrix() const;
-  Matrix solveForNewVertexPositions(Matrix currentVertexPositions) const;
-  void updateMeshPositions(Matrix Vnew);
+  EigenMatrix constructVertexMatrix() const;
+  void fixVertices();
+  EigenMatrix solveForNewVertexPositions(EigenMatrix currentVertexPositions);
+  void updateMeshPositions(EigenMatrix Vnew);
+  void detectDegeneracies();
   void updateWl();
   void updateWh();
   void computeOneRingAreaVector();
   double computeOneRingAreaAroundVertex(CGALSurfaceMesh::Vertex_index) const;
+  double computeCotangentWeight(CGALSurfaceMesh::edge_index ei) const;
+  double computeCotangentWeight(CGALSurfaceMesh::halfedge_index hei) const;
+  double computeCotangentValue(Kernel::Vector_3, Kernel::Vector_3) const;
 };
 
 #endif // SEGMENTCONTRACTOR_H

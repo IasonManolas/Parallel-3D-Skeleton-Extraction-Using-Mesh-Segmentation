@@ -2,12 +2,11 @@
 
 void Scene::Draw(Shader *modelShader, Shader *axisShader) {
   setSceneUniforms(modelShader, axisShader);
-  modelShader->Use();
-  P.setUniforms(modelShader);
-  P.Draw();
+  M.handle_drawing(modelShader);
   if (m_showPointSpheresOnVertices) {
-    for (auto ps : m_pointSpheresOnVertices) {
-      ps.Draw(modelShader);
+    modelShader->Use();
+    for (PointSphere ps : m_pointSpheresOnVertices) {
+      ps.handle_drawing(modelShader, M.getModelMatrix());
     }
   }
   if (showAxes) {
@@ -31,7 +30,8 @@ void Scene::handle_cameraReset() {
 }
 
 void Scene::initializeScene() {
-  loadMesh("../Models/Small/test.obj");
+  // loadMesh("../Models/Small/test.obj");
+  loadMesh("../Models/tyra.obj");
   loadPointSphere();
   // loadMesh("../Models/cylinder.obj");
   // loadMesh("../Models/Small/coctel.obj");
@@ -51,41 +51,28 @@ void Scene::handle_segmentSelection(float mousePosX, float mousePosY,
   bool intersectionFound = rayIntersectsPolyhedron(
       mousePosX, mousePosY, windowWidth, windowHeight, intersection);
   if (intersectionFound) {
-    P.handleSegmentSelection(intersection);
+    M.handle_segmentSelection(intersection);
   }
 }
 
-void Scene::handle_showSegments() { P.handleShowSegments(); }
+void Scene::handle_showSegments() { M.handle_showSegments(); }
 
-void Scene::handle_segmentContraction() {}
+void Scene::handle_segmentContraction() { M.handle_segmentContraction(); }
 
-void Scene::handle_meshContraction() {
-  contractMesh();
-  if (m_showPointSpheresOnVertices)
-    updatePointSpheresOnVerticesPositions();
-}
+void Scene::handle_meshContraction() { contractMesh(); }
 
-void Scene::handle_meshConnectivitySurgery() {
-  // I suppose mesh has already been contracted
-  executeMeshConnectivitySurgery();
-  if (m_showPointSpheresOnVertices)
-    updatePointSpheresOnVerticesPositions();
-}
+void Scene::handle_meshInflation() { M.handle_inflation(); }
 
-void Scene::handle_meshInflation() { P.handleInflation(); }
-
-void Scene::handle_meshDeflation() { P.handleDeflation(); }
+void Scene::handle_meshDeflation() { M.handle_deflation(); }
 
 void Scene::loadMesh(std::__cxx11::string filename) {
   camera.resetCamera();
   light.changeLightDirection(camera.getPosition());
 
-  P = Mesh{};
-  P.load(filename);
-  EM = P.M; // copy contents to another object which will be edited.
-  MC = MeshContractor(EM);
+  M = Mesh{};
+  M.load(filename);
 
-  PS.updateRadius(P.M);
+  PS.updateRadius(M.M);
 }
 
 void Scene::handle_axesStateChange(bool value) { showAxes = value; }
@@ -98,19 +85,38 @@ bool Scene::rayIntersectsPolyhedron(const int &mouseX, const int &mouseY,
   float y = 1 - (2.0 * mouseY) / height;
   float z = -1; // we want the ray to point into the screen
   glm::vec3 ndcs(x, y, z);
-  glm::vec4 ray_clip(ndcs.x, ndcs.y, ndcs.z, 1.0);
+  // NDCSpace -> clipSpace
+  glm::vec4 ray4_clipSpace(ndcs.x, ndcs.y, ndcs.z, 1.0);
+  // clipSpace -> eyeSpace
+  glm::vec4 ray4_eyeSpace = glm::inverse(projectionMatrix) * ray4_clipSpace;
+  ray4_eyeSpace = glm::vec4(ray4_eyeSpace.x, ray4_eyeSpace.y, -1.0, 0.0);
+  // eyeSpace -> worldSpace
+  glm::vec4 ray4_worldSpace =
+      glm::inverse(camera.getViewMatrix()) * ray4_eyeSpace;
 
-  glm::vec4 ray_eye = glm::inverse(projectionMatrix) * ray_clip;
-  ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
-  glm::vec4 ray_wor4 = glm::inverse(camera.getViewMat()) * ray_eye;
+  // worldSpace -> modelSpace
+  glm::vec4 ray4_modelSpace =
+      glm::inverse(M.getModelMatrix()) * ray4_worldSpace;
 
-  glm::vec3 ray_wor(ray_wor4.x, ray_wor4.y, ray_wor4.z);
-  ray_wor = glm::normalize(ray_wor);
+  glm::vec3 ray3_modelSpace(ray4_modelSpace.x, ray4_modelSpace.y,
+                            ray4_modelSpace.z);
+  ray3_modelSpace = glm::normalize(ray3_modelSpace);
 
-  CGAL::Ray_3<Kernel> ray(Kernel::Point_3(camPos.x, camPos.y, camPos.z),
-                          Kernel::Direction_3(ray_wor.x, ray_wor.y, ray_wor.z));
+  glm::vec4 camPos4_worldSpace = glm::vec4(camPos, 1.0);
+  glm::vec4 camPos4_modelSpace =
+      glm::inverse(M.getModelMatrix()) * camPos4_worldSpace;
+  glm::vec3 camPos3_modelSpace(camPos4_modelSpace.x, camPos4_modelSpace.y,
+                               camPos4_modelSpace.z);
 
-  intersection = P.intersects(ray);
+  // glm ray -> CGAL ray
+  CGAL::Ray_3<Kernel> ray_modelSpace(
+      Kernel::Point_3(camPos3_modelSpace.x, camPos3_modelSpace.y,
+                      camPos3_modelSpace.z),
+      Kernel::Direction_3(ray3_modelSpace.x, ray3_modelSpace.y,
+                          ray3_modelSpace.z));
+
+  intersection = M.intersects(ray_modelSpace);
+
   if (intersection) {
     return true;
   }
@@ -119,12 +125,57 @@ bool Scene::rayIntersectsPolyhedron(const int &mouseX, const int &mouseY,
 
 void Scene::updatePointSpheresOnVerticesPositions() {
   m_pointSpheresOnVertices.clear();
-  for (const auto v : P.M.vertices()) {
+  // std::vector<size_t> highLVertices =
+  //    M.getVertexIndicesWithHighLaplacianValue();
+  std::vector<size_t> fixedVertices = M.MC.getFixedVertices();
+  for (const size_t v : fixedVertices) {
     PointSphere tempPS = PS;
-    auto p(P.M.point(v));
+    auto p(M.M.point(CGALSurfaceMesh::vertex_index(v)));
     tempPS.setPosition(p);
+    tempPS.setColor(glm::vec3(1, 0, 0));
+    tempPS.doubleSize();
+    tempPS.doubleSize();
     m_pointSpheresOnVertices.push_back(tempPS);
   }
+  // for (const auto v : M.M.vertices()) {
+  //   PointSphere tempPS = PS;
+  //   auto p(M.M.point(v));
+  //   tempPS.setPosition(p);
+  //   // if (std::find(highLVertices.begin(), highLVertices.end(), size_t(v))
+  //   !=
+  //   //     highLVertices.end()) {
+  //   //   tempPS.setColor(glm::vec3(0, 1, 0));
+  //   //   tempPS.doubleSize();
+  //   //   tempPS.doubleSize();
+  //   //   tempPS.doubleSize();
+  //   // }
+  //   m_pointSpheresOnVertices.push_back(tempPS);
+  // }
+  // for (size_t v : highLVertices) {
+  //   PointSphere tempPS = PS;
+  //   auto p(M.M.point(CGALSurfaceMesh::vertex_index(v)));
+  //   tempPS.setPosition(p);
+  //   if (std::find(highLVertices.begin(), highLVertices.end(), v) !=
+  //       highLVertices.end()) {
+  //     tempPS.setColor(glm::vec3(0, 1, 0));
+  //     tempPS.doubleSize();
+  //     tempPS.doubleSize();
+  //   }
+  //   m_pointSpheresOnVertices.push_back(tempPS);
+  // }
+  // for (size_t v : highLVerticesInPreviousIteration) {
+  //   PointSphere tempPS = PS;
+  //   auto p(M.M.point(CGALSurfaceMesh::vertex_index(v)));
+  //   tempPS.setPosition(p);
+  //   if (std::find(highLVertices.begin(), highLVertices.end(), v) !=
+  //       highLVertices.end()) {
+  //     tempPS.setColor(glm::vec3(1, 0, 0));
+  //     tempPS.doubleSize();
+  //     tempPS.doubleSize();
+  //   }
+  //   m_pointSpheresOnVertices.push_back(tempPS);
+  // }
+  // highLVerticesInPreviousIteration = highLVertices;
 }
 
 void Scene::handle_mouseMovement(const QVector2D &mouseDV) {
@@ -137,13 +188,14 @@ void Scene::handle_meshVerticesStateChange(int state) {
   updatePointSpheresOnVerticesPositions();
 }
 
-void Scene::contractMesh() {
-  MC->get()->calculateSkeleton();
-  P.updateVertices(EM);
+void Scene::handle_saveModel(const std::__cxx11::string destinationDirectory) {
+  M.handle_saveModel(destinationDirectory);
 }
 
-void Scene::executeMeshConnectivitySurgery() {
-  ConnectivitySurgeon CS(MC->get()->getContractedMesh());
+void Scene::contractMesh() {
+  M.handle_meshContraction();
+  if (m_showPointSpheresOnVertices)
+    updatePointSpheresOnVerticesPositions();
 }
 
 void Scene::setSceneUniforms(Shader *modelShader, Shader *axisShader) {
@@ -163,39 +215,3 @@ void Scene::setProjectionMatrixUniform(Shader *shader) {
   glUniformMatrix4fv(glGetUniformLocation(shader->programID, "projection"), 1,
                      GL_FALSE, glm::value_ptr(projectionMatrix));
 }
-
-// void Scene::contractSegment(int segmentIndex) {
-
-//  MeshSegment S = P.getMeshSegment(segmentIndex); // TODO:create something
-//                                                  // better than the
-//                                                  // MeshSegment class
-
-//  MeshContractor SC = MeshContractor(S.M);
-//  CGALSurfaceMesh contractedMesh = SC.getContractedMesh();
-
-//  for (auto v : contractedMesh.vertices()) {
-//    CGALSurfaceMesh::Point p = contractedMesh.point(v);
-//    P.vertices[S.vertexCorrespondence[size_t(v)]].Position =
-//        glm::vec3(p.x(), p.y(), p.z());
-//  }
-//  // for (auto v : contractedMesh.vertices()) {
-//  //  CGALSurfaceMesh::Point p = contractedMesh.point(v);
-//  //  P.M.point(CGALSurfaceMesh::Vertex_index(
-//  //      S.vertexCorrespondence[contractedMeshVertexIndex])) =
-//  //      CGALSurfaceMesh::Point((p.x() - P.centerOfMass.x) / P.maxDim,
-//  //                             (p.y() - P.centerOfMass.y) / P.maxDim,
-//  //                             (p.z() - P.centerOfMass.z) / P.maxDim);
-//  //  contractedMeshVertexIndex++;
-//  //  P.vertices[S.vertexCorrespondence[contractedMeshVertexIndex]].Position
-//  =
-//  //      glm::vec3(p.x(), p.y(), p.z())contractMesh();;
-//  //}
-//  P.centerOfMass = meshMeasuring::findCenterOfMass(P.vertices);
-//  P.maxDim = meshMeasuring::findMaxDimension(P.vertices);
-//  P.normalizeMeshViaModelMatrix();
-//}
-
-// void setIntersectionSphereUniforms(Shader *shader) {
-//  shader->Use();
-//  intersectionSphere.setUniforms(shader);
-//}
