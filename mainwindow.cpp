@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
   ui->setupUi(this);
   resize(800, 600);
   connect(this, SIGNAL(modelLoaded(std::string)), ui->openGLWidget,
-          SLOT(modelWasChosen(std::string)));
+          SLOT(loadModel(std::string)));
   connect(this, SIGNAL(stateCheckBoxAxesChanged(bool)), ui->openGLWidget,
           SLOT(updateAxesState(bool)));
   connect(this, SIGNAL(stateCheckBoxMeshSurfaceChanged(bool)), ui->openGLWidget,
@@ -21,6 +21,8 @@ MainWindow::MainWindow(QWidget *parent)
           SLOT(resetCamera()));
   connect(this, SIGNAL(stateCheckBoxShowVerticesChanged(int)), ui->openGLWidget,
           SLOT(showVerticesStateChange(int)));
+  connect(this, SIGNAL(actionSaveModelTriggered(std::string)), ui->openGLWidget,
+          SLOT(saveModel(std::string)));
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -31,7 +33,7 @@ void MainWindow::on_checkBoxAxis_clicked(bool state) {
 
 void MainWindow::on_actionOpenFile_triggered() {
   QString filename = QFileDialog::getOpenFileName(
-      this, tr("Load Model"), "../Models/", tr("All Files (*)"));
+      this, tr("Load Model"), "../Models/", tr("Object files(*.obj *off)"));
   if (filename != NULL) {
     std::string filenameString = filename.toUtf8().constData();
     emit modelLoaded(filenameString);
@@ -51,4 +53,14 @@ void MainWindow::on_pushButtonResetCamera_clicked() {
 
 void MainWindow::on_checkBoxShowVertices_stateChanged(int arg1) {
   emit stateCheckBoxShowVerticesChanged(arg1);
+}
+
+void MainWindow::on_actionSave_Model_triggered() {
+  QString destinationDirectory = QFileDialog::getSaveFileName(
+      this, tr("Save Model"), "../Models/", tr("Object file(*.obj *.off)"));
+  if (destinationDirectory != NULL) {
+    std::string destinationDirectory_std =
+        destinationDirectory.toUtf8().constData();
+    emit actionSaveModelTriggered(destinationDirectory_std);
+  }
 }

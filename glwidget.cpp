@@ -117,11 +117,6 @@ void GLWidget::contraction_signal() {
   else if (mode == segmentsView)
     scene.handle_segmentContraction();
 }
-
-void GLWidget::connectivitySurgery_signal() {
-  scene.handle_meshConnectivitySurgery();
-}
-
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
   QVector2D mouseOffset = QVector2D(event->localPos()) - lastMousePos;
   lastMousePos = QVector2D(event->localPos());
@@ -160,9 +155,6 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
   case Qt::Key_C:
     contraction_signal();
     break;
-  case Qt::Key_1:
-    connectivitySurgery_signal();
-    break;
 
     // case Qt::Key_A:
     //  if (mode == contractSegment) {
@@ -184,7 +176,7 @@ void GLWidget::keyReleaseEvent(QKeyEvent *event) {
   switch (event->key()) {}
 }
 
-void GLWidget::modelWasChosen(std::__cxx11::string filename) {
+void GLWidget::loadModel(std::__cxx11::string filename) {
   makeCurrent();
   activeShader = defaultShader;
   mode = defaultView;
@@ -207,4 +199,8 @@ void GLWidget::resetCamera() {
 
 void GLWidget::showVerticesStateChange(int state) {
   scene.handle_meshVerticesStateChange(state);
+}
+
+void GLWidget::saveModel(std::string destinationDirectory) {
+  scene.handle_saveModel(destinationDirectory);
 }

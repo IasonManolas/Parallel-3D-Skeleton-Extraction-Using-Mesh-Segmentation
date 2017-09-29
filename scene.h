@@ -1,7 +1,6 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include <optional>
 #include <vector>
 
 #include <QVector2D>
@@ -42,12 +41,12 @@ private:
   glm::mat4 projectionMatrix{glm::mat4(1.0f)};
   float nearPlane{0.1};
   float farPlane{100};
-  Mesh P;
-  CGALSurfaceMesh EM; // Edited Mesh: the mesh which I manipulate
-  std::optional<MeshContractor> MC;
+  Mesh M;
 
   bool m_showPointSpheresOnVertices{false};
   std::vector<PointSphere> m_pointSpheresOnVertices;
+
+  std::vector<size_t> highLVerticesInPreviousIteration;
 
 public:
   void initializeScene();
@@ -66,6 +65,7 @@ public:
   void handle_meshDeflation();
   void handle_mouseMovement(const QVector2D &mouseDV);
   void handle_meshVerticesStateChange(int state);
+  void handle_saveModel(const std::string destinationDirectory);
 
 private:
   void loadPointSphere();

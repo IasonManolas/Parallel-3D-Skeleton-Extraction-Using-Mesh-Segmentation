@@ -52,7 +52,6 @@ private:
   void showMeshSegments_signal();
   void segmentSelection_signal(float, float);
   void contraction_signal();
-  void connectivitySurgery_signal();
   void showMeshVertices_signal();
   void segmentDeformation_signal(bool inflation);
   void cameraZoomChange_signal(float delta);
@@ -74,10 +73,11 @@ private:
   Mode mode{defaultView};
 
 public slots:
-  void modelWasChosen(std::string filename);
+  void loadModel(std::string filename);
   void updateAxesState(bool state);
   void updateMeshSurfaceState(bool state);
   void resetCamera();
   void showVerticesStateChange(int state);
+  void saveModel(std::string);
 };
 #endif // GLWIDGET_H

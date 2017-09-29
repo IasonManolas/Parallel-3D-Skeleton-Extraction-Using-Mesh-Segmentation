@@ -44,7 +44,8 @@ HEADERS  += mainwindow.h \
     meshcontractor.h \
     skeleton.h \
     mesh.h \
-    connectivitysurgeon.h
+    connectivitysurgeon.h \
+    debug_meshcontractor.h
 #    tinyObjLoader/tiny_obj_loader.h
 
 FORMS    += mainwindow.ui

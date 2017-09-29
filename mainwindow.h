@@ -21,12 +21,15 @@ private slots:
 
   void on_checkBoxShowVertices_stateChanged(int arg1);
 
+  void on_actionSave_Model_triggered();
+
 signals:
   void modelLoaded(std::string filename);
   void stateCheckBoxAxesChanged(bool state);
   void stateCheckBoxMeshSurfaceChanged(bool state);
   void buttonResetCameraClicked();
   void stateCheckBoxShowVerticesChanged(int state);
+  void actionSaveModelTriggered(std::string destination);
 
 private:
   Ui::MainWindow *ui;

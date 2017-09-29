@@ -86,7 +86,7 @@ load(std::string filename) {
 }
 namespace meshMeasuring {
 
-inline float findMaxDimension(std::vector<MyVertex> vertices) {
+inline double findMaxDimension(std::vector<MyVertex> vertices) {
   double xmax{vertices[0].Position.x}, xmin{vertices[0].Position.x},
       ymax{vertices[0].Position.y}, ymin{vertices[0].Position.y},
       zmax{vertices[0].Position.z}, zmin{vertices[0].Position.z};
