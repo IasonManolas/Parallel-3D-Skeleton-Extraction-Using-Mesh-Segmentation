@@ -23,6 +23,8 @@ private slots:
 
   void on_actionSave_Model_triggered();
 
+  void on_actionSave_Segment_triggered();
+
 signals:
   void modelLoaded(std::string filename);
   void stateCheckBoxAxesChanged(bool state);
@@ -30,6 +32,7 @@ signals:
   void buttonResetCameraClicked();
   void stateCheckBoxShowVerticesChanged(int state);
   void actionSaveModelTriggered(std::string destination);
+  void actionSaveSegmentTriggered(std::string destination);
 
 private:
   Ui::MainWindow *ui;

@@ -1,18 +1,45 @@
 #ifndef DEBUG_MESHCONTRACTOR_H
 #define DEBUG_MESHCONTRACTOR_H
 
+std::pair<double,int> getMaximumAbsoluteDiagonalElement(SpMatrix M)
+{
+double maxNumber=0;
+int maxIndex=-1;
+  for (int index= 0;index< M.outerSize(); ++index)
+{
+	double absValue=std::abs(M.coeff(index,index));
+    if(absValue>maxNumber)
+    {
+        maxNumber=absValue;
+        maxIndex=index;
+    }
+}
+
+return std::make_pair(maxNumber,maxIndex);
+}
+
 bool hasNaN(EigenMatrix M) {
   for (size_t row = 0; row < M.rows(); row++)
     for (size_t col = 0; col < M.cols(); col++)
+{
       if (std::isnan(M(row, col)))
+{
+std::cout<<"Matrix has nan at: "<<row<<","<<col<<std::endl;
         return true;
+}
+}
 }
 
 bool hasNaN(SpMatrix M) {
   for (int k = 0; k < M.outerSize(); ++k)
     for (SpMatrix::InnerIterator it(M, k); it; ++it)
+{
       if (std::isnan(it.value()))
+{
+std::cout<<"Matrix has nan at: "<<it.row()<<","<<it.col()<<std::endl;
         return true;
+}
+}
 }
 
 void printSparseMatrix(SpMatrix M, std::string matrixName) {
@@ -74,7 +101,10 @@ bool hasInfinity(SpMatrix M) {
     for (SpMatrix::InnerIterator it(M, k); it; ++it)
       if (it.value() == std::numeric_limits<double>::infinity() ||
           it.value() == -std::numeric_limits<double>::infinity())
+{
+std::cout<<"Matrix has infinity at: "<<it.row()<<","<<it.col()<<std::endl;
         return true;
+}
 }
 
 bool hasInfinity(EigenMatrix M) {

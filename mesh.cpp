@@ -48,8 +48,8 @@ void Mesh::load(std::string filename) {
     normalizeMeshViaModelMatrix();
     buildSurfaceMesh();
     // averageEdgeLength = meshMeasuring::findAverageEdgeLength(M);
-    MC = MeshContractor(M, indices);
-    // MC = MeshContractor(M, indices);
+    //MC = MeshContractor(M, indices);
+     MC = MeshContractor(M);
   } else if (isAnOffFile(filename)) {
     // loadOffFile(filename);
     std::ifstream inputFile(filename);
@@ -57,13 +57,16 @@ void Mesh::load(std::string filename) {
     M.clear();
     CGAL::read_off(inputFile, M);
 
-    // populateVertices();
+    std::tie(indices, vertices) =
+        meshLoader::load(filename); // vertices contains coords & normals
+setupDrawingBuffers();
     // //CGAL::Polygon_mesh_processing::compute_vertex_normals
     // populateIndices();
     centerOfMass = meshMeasuring::findCenterOfMass(vertices);
     maxDim = meshMeasuring::findMaxDimension(vertices);
     normalizeMeshViaModelMatrix();
-    MC = MeshContractor(M, indices);
+    //MC = MeshContractor(M, indices);
+    MC = MeshContractor(M);
 
   } else {
     std::cerr << "The file type you selected cannot be loaded."
@@ -402,8 +405,8 @@ void Mesh::handle_segmentSelection(Ray_intersection intersection) {
   colorPickedSegment();
   updateMeshBuffers();
 
-  segment = getMeshSegment(selectedSegmentIndex);
-  // SMC = MeshContractor(segment.M);
+  segment=getMeshSegment(selectedSegmentIndex);
+   SMC = MeshContractor(segment.M);
 }
 
 void Mesh::computeSegments() { constructSegmentMap(); }
@@ -460,6 +463,17 @@ void Mesh::handle_saveModel(std::__cxx11::string destinationPathAndFileName) {
   outFile.close();
 }
 
+void Mesh::handle_saveSegment(std::__cxx11::string destinationPathAndFileName) {
+  MeshSegment segment=getMeshSegment(selectedSegmentIndex);
+  std::ofstream outFile;
+  outFile.open(destinationPathAndFileName, std::ios::out);
+  if (!outFile) {
+    std::cerr << "Can't save file: " << destinationPathAndFileName << std::endl;
+  } else {
+    CGAL::write_off(outFile,segment.M);
+  }
+  outFile.close();
+}
 std::vector<size_t> Mesh::getVertexIndicesWithHighLaplacianValue() {
   return MC.getVertexIndicesWithHighLaplacianValue();
 }
@@ -484,6 +498,20 @@ void Mesh::handle_segmentContraction() {
   updateVertices(segment);
   updateMeshBuffers();
 }
+
+void Mesh::handle_meshConnectivitySurgery(){}
+
+void Mesh::handle_segmentConnectivitySurgery()
+{
+	assert(selectedSegmentIndex!=-1);
+	MeshSegment segment = getMeshSegment(selectedSegmentIndex);
+	  ConnectivitySurgeon CS(segment.M);
+	  CS.extract_skeleton();
+	  skeletonEdges = CS.getSkeleton();
+	segmentMesh = segment.M;
+}
+
+
 
 void Mesh::updateVertices(const MeshSegment &copyFrom) {
   updateDrawingVertices(copyFrom);

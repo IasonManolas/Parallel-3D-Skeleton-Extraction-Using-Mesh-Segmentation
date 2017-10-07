@@ -63,6 +63,8 @@ public:
   void handle_showSegments();
   void handle_meshContraction();
   void handle_segmentContraction();
+void handle_meshConnectivitySurgery();
+void handle_segmentConnectivitySurgery();
   void handle_inflation() { inflation_handler(); }
   void handle_deflation() {
     deflation_handler();
@@ -70,6 +72,7 @@ public:
   void updateDrawingVertices();
   void handle_drawing(Shader *shader);
   void handle_saveModel(std::string destinationPathAndFileName);
+  void handle_saveSegment(std::string destinationPathAndFileName);
 
   std::vector<size_t> getVertexIndicesWithHighLaplacianValue();
   // public data members
