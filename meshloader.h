@@ -140,4 +140,11 @@ inline float findAverageEdgeLength(const CGALSurfaceMesh &M) {
   return meanEdgeLength;
 }
 }
+
+class OffLoader{
+OffLoader(std::string)
+{
+
+}
+};
 #endif // MESHLOADER_H

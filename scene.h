@@ -59,6 +59,7 @@ public:
                                int windowWidth, int windowHeight);
   void handle_showSegments();
   void handle_segmentContraction();
+void handle_segmentConnectivitySurgery();
   void handle_meshContraction();
   void handle_meshConnectivitySurgery();
   void handle_meshInflation();
@@ -66,6 +67,7 @@ public:
   void handle_mouseMovement(const QVector2D &mouseDV);
   void handle_meshVerticesStateChange(int state);
   void handle_saveModel(const std::string destinationDirectory);
+  void handle_saveSegment(const std::string destinationDirectory);
 
 private:
   void loadPointSphere();

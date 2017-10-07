@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>429</width>
+    <width>437</width>
     <height>310</height>
    </rect>
   </property>
@@ -83,8 +83,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>429</width>
-     <height>21</height>
+     <width>437</width>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSave">
@@ -92,6 +92,7 @@
      <string>Save</string>
     </property>
     <addaction name="actionSave_Model"/>
+    <addaction name="actionSave_Segment"/>
    </widget>
    <addaction name="menuSave"/>
   </widget>
@@ -110,6 +111,11 @@
   <action name="actionSave_Model">
    <property name="text">
     <string>Save Model</string>
+   </property>
+  </action>
+  <action name="actionSave_Segment">
+   <property name="text">
+    <string>Save Segment</string>
    </property>
   </action>
  </widget>

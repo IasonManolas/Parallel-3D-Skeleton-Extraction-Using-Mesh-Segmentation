@@ -27,12 +27,12 @@ using EigenMatrix = Eigen::MatrixXd;
 using Vector = Eigen::VectorXd;
 using SpMatrix = Eigen::SparseMatrix<double>;
 using EigenTriplet = Eigen::Triplet<double>;
-static constexpr double maxNumber{std::pow(10, 8)};
+static constexpr double maxNumber{500000};
 class MeshContractor {
 
 public:
   MeshContractor() {}
-  MeshContractor(CGALSurfaceMesh meshToContract, std::vector<uint> indices);
+  MeshContractor(CGALSurfaceMesh meshToContract/*, std::vector<uint> indices*/);
   CGALSurfaceMesh getContractedMesh() const;
   void contractMesh(const double volumeThreshold = std::pow(10, -6));
   void executeContractionStep();
@@ -53,6 +53,7 @@ private:
   double m_Wh0{1.0};
   SpMatrix m_Wl;
   SpMatrix m_L;
+SpMatrix previousLaplaceOperator;
   EigenMatrix m_previousDeltaCoords;
   Vector m_A0;
   Vector m_A;
@@ -61,15 +62,16 @@ private:
   size_t m_iterationsCompleted{0};
 
   std::set<size_t> fixedVertices;
+std::vector<double> m_initialFaceAreas;
   std::vector<bool> isVertexFixed;
 
 private:
   void computeLaplaceOperator();
+	void computeFixedVertices();
   SpMatrix computeLaplaceOperatorUsingIGL();
   double computeAngleOppositeToEdge(CGALSurfaceMesh::Edge_index,
                                     size_t edgeSide) const;
   EigenMatrix constructVertexMatrix() const;
-  void fixVertices();
   EigenMatrix solveForNewVertexPositions(EigenMatrix currentVertexPositions);
   void updateMeshPositions(EigenMatrix Vnew);
   void detectDegeneracies();
@@ -77,9 +79,9 @@ private:
   void updateWh();
   void computeOneRingAreaVector();
   double computeOneRingAreaAroundVertex(CGALSurfaceMesh::Vertex_index) const;
-  double computeCotangentWeight(CGALSurfaceMesh::edge_index ei) const;
-  double computeCotangentWeight(CGALSurfaceMesh::halfedge_index hei) const;
-  double computeCotangentValue(Kernel::Vector_3, Kernel::Vector_3) const;
+  boost::optional<double> computeCotangentWeight(CGALSurfaceMesh::edge_index ei) const;
+  boost::optional<double> computeCotangentWeight(CGALSurfaceMesh::halfedge_index hei) const;
+  boost::optional<double> computeCotangentValue(Kernel::Vector_3, Kernel::Vector_3) const;
 };
 
 #endif // SEGMENTCONTRACTOR_H

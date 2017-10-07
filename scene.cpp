@@ -2,13 +2,13 @@
 
 void Scene::Draw(Shader *modelShader, Shader *axisShader) {
   setSceneUniforms(modelShader, axisShader);
-  M.handle_drawing(modelShader);
   if (m_showPointSpheresOnVertices) {
     modelShader->Use();
     for (PointSphere ps : m_pointSpheresOnVertices) {
       ps.handle_drawing(modelShader, M.getModelMatrix());
     }
   }
+  M.handle_drawing(modelShader);
   if (showAxes) {
     axisShader->Use();
     sceneAxes.Draw();
@@ -31,7 +31,8 @@ void Scene::handle_cameraReset() {
 
 void Scene::initializeScene() {
   // loadMesh("../Models/Small/test.obj");
-  loadMesh("../Models/tyra.obj");
+  //loadMesh("../Models/tyra.obj");
+   loadMesh("../Models/bunny_low.obj");
   loadPointSphere();
   // loadMesh("../Models/cylinder.obj");
   // loadMesh("../Models/Small/coctel.obj");
@@ -60,6 +61,10 @@ void Scene::handle_showSegments() { M.handle_showSegments(); }
 void Scene::handle_segmentContraction() { M.handle_segmentContraction(); }
 
 void Scene::handle_meshContraction() { contractMesh(); }
+
+void Scene::handle_meshConnectivitySurgery(){M.handle_meshConnectivitySurgery();}
+
+void Scene::handle_segmentConnectivitySurgery(){M.handle_segmentConnectivitySurgery();}
 
 void Scene::handle_meshInflation() { M.handle_inflation(); }
 
@@ -134,7 +139,6 @@ void Scene::updatePointSpheresOnVerticesPositions() {
     tempPS.setPosition(p);
     tempPS.setColor(glm::vec3(1, 0, 0));
     tempPS.doubleSize();
-    tempPS.doubleSize();
     m_pointSpheresOnVertices.push_back(tempPS);
   }
   // for (const auto v : M.M.vertices()) {
@@ -190,6 +194,10 @@ void Scene::handle_meshVerticesStateChange(int state) {
 
 void Scene::handle_saveModel(const std::__cxx11::string destinationDirectory) {
   M.handle_saveModel(destinationDirectory);
+}
+
+void Scene::handle_saveSegment(const std::__cxx11::string destinationDirectory) {
+  M.handle_saveSegment(destinationDirectory);
 }
 
 void Scene::contractMesh() {
