@@ -24,6 +24,7 @@ GLWidget::~GLWidget() {
   delete defaultShader;
   delete axesShader;
   delete segmentShader;
+  delete skeletonShader;
   delete activeShader;
   disconnect(&timer, SIGNAL(timeout()), this, SLOT(update()));
 }
@@ -43,13 +44,13 @@ void GLWidget::initializeGL() {
 
   glEnable(GL_DEPTH_TEST);
 
-  // char *renderer = (char *)glGetString(GL_RENDERER);
-  // char *version = (char *)glGetString(GL_VERSION);
-  // char *vendor = (char *)glGetString(GL_VENDOR);
+  char *renderer = (char *)glGetString(GL_RENDERER);
+  char *version = (char *)glGetString(GL_VERSION);
+  char *vendor = (char *)glGetString(GL_VENDOR);
 
-  // std::cout << "version:" << version << std::endl;
-  // std::cout << "renderer:" << renderer << std::endl;
-  // std::cout << "vendor:" << vendor << std::endl;
+  std::cout << "version:" << version << std::endl;
+  std::cout << "renderer:" << renderer << std::endl;
+  std::cout << "vendor:" << vendor << std::endl;
 
   initializeShaders();
   scene.initializeScene(); // has to be done here since glew needs to have been
@@ -66,13 +67,17 @@ void GLWidget::resizeGL(int w, int h) {
 
 void GLWidget::paintGL() {
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  // Enable blending
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glShadeModel(GL_SMOOTH);
+  glLineWidth(10);
   if (surfaceState == dontShowTriangles)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   else if (surfaceState == showTriangles)
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  scene.Draw(activeShader, axesShader);
+  scene.Draw(activeShader, axesShader, skeletonShader);
 }
 void GLWidget::mousePressEvent(QMouseEvent *event) {
   lastMousePos = QVector2D(event->localPos());
@@ -108,6 +113,9 @@ void GLWidget::initializeShaders() {
   axesShader = new Shader("../shaders/axesvs.glsl", "../shaders/axesfs.glsl");
   segmentShader =
       new Shader("../shaders/vertex.glsl", "../shaders/segmfragment.glsl");
+  skeletonShader = new Shader("../shaders/skeletonvertex.glsl",
+                              "../shaders/skeletonfragment.glsl");
+
   activeShader = defaultShader;
 }
 
@@ -123,6 +131,13 @@ void GLWidget::connectivitySurgery_signal() {
     scene.handle_meshConnectivitySurgery();
   else if (mode == segmentsView)
     scene.handle_segmentConnectivitySurgery();
+}
+
+void GLWidget::refinementEmbedding_signal() {
+  if (mode == defaultView)
+    scene.handle_meshRefinementEmbedding();
+  else if (mode == segmentsView)
+    scene.handle_segmentRefinementEmbedding();
 }
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
   QVector2D mouseOffset = QVector2D(event->localPos()) - lastMousePos;
@@ -162,10 +177,12 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
   case Qt::Key_C:
     contraction_signal();
     break;
-case Qt::Key_1:
+  case Qt::Key_1:
     connectivitySurgery_signal();
     break;
-
+  case Qt::Key_2:
+    refinementEmbedding_signal();
+    break;
 
     // case Qt::Key_A:
     //  if (mode == contractSegment) {

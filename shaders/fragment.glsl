@@ -24,7 +24,7 @@ out vec4 color;
 uniform vec3 viewPos;
 uniform Material material;
 uniform Light light;
-
+uniform float alpha;
 void main()
 {
 	//    color=vec4(Color,1.0f);
@@ -43,5 +43,5 @@ void main()
 
         vec3 result = ambient+diffuse+specular;
 
-	color = vec4(result, 1.0f);
+        color = vec4(result, alpha);
 }

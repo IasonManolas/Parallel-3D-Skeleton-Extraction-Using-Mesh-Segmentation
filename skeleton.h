@@ -4,32 +4,94 @@
 #include <boost/graph/adjacency_list.hpp>
 
 #include "cgaltypedefs.h"
+#include "drawableskeleton.h"
 #include "pointsphere.h"
-
-class Skeleton {
+#include <glm/gtx/string_cast.hpp>
+#include <glm/mat4x4.hpp>
+class Skeleton : public DrawableSkeleton {
 
   // public member functions
 public:
-  Skeleton();
-  Skeleton(const CGALSurfaceMesh &contractedMesh,
-           const PointSphere &); // NOTE PointSphere should not be an argument
-                                 // but for some reason PointSphere cannot be
-                                 // loaded in this class but only through
-                                 // Scene::load.Maybe because
-                                 // GLWidget::makeCurrent() need to be called?
+  // NOTE PointSphere should not be an argument
+  // but for some reason PointSphere cannot be
+  // loaded in this class but only through
+  // Scene::load.Maybe because
+  // GLWidget::makeCurrent() needs to be called?
+  Skeleton(PointSphere &PS, glm::mat4 &modelMatrix)
+      : m_PS(PS), m_meshModelMatrix(modelMatrix) {}
   // void setUniforms(Shader *shader);
-  void Draw(Shader *shader);
+  void Draw(Shader *shader) {
+    drawEdges();
+    drawNodes(shader);
+  }
+  void clear() {
+    m_edges.clear();
+    m_drawingVector.clear();
+    m_vertices.clear();
+    m_indices.clear();
+    updateMeshBuffers();
+  }
+  void initializeBuffers() { initializeDrawingBuffers(); }
+
+  void append(
+      const std::unordered_set<std::pair<size_t, size_t>,
+                               boost::hash<std::pair<size_t, size_t>>> &edges,
+      std::vector<CGALSurfaceMesh::Point> nodePositions) {
+    if (m_vertices.size() == 0) {
+      appendEdges(edges);
+      appendNodes(nodePositions);
+      initializeDrawingBuffers();
+    } else {
+      appendEdges(edges);
+      appendNodes(nodePositions);
+      updateMeshBuffers();
+    }
+  }
+
   // private data members
 private:
-  std::vector<CGALSurfaceMesh::Point>
-      m_skeletonPoints; // NOTE a vector might not be sufficient in the future
+  const PointSphere &m_PS;
+  const glm::mat4 &m_meshModelMatrix;
   std::vector<PointSphere> m_drawingVector;
-  // PointSphere drawingSphere;
+  std::unordered_set<std::pair<size_t, size_t>,
+                     boost::hash<std::pair<size_t, size_t>>>
+      m_edges;
 
   // private member functions
 private:
-  void extract_skeleton_vertices(const CGALSurfaceMesh &M);
-  void construct_drawing_spheres(const CGALSurfaceMesh &M, const PointSphere &);
+  void
+  appendEdges(const std::unordered_set<std::pair<size_t, size_t>,
+                                       boost::hash<std::pair<size_t, size_t>>>
+                  &newEdges) {
+
+    for (std::pair<size_t, size_t> edge : newEdges) {
+      m_edges.insert(std::make_pair(edge.first + m_drawingVector.size(),
+                                    edge.second + m_drawingVector.size()));
+      m_indices.push_back(edge.first + m_vertices.size());
+      m_indices.push_back(edge.second + m_vertices.size());
+    }
+
+    std::cout << "New size of m_edges is:" << m_edges.size() << std::endl;
+    std::cout << "New size of m_indices is:" << m_indices.size() << std::endl;
+  }
+  void appendNodes(std::vector<CGALSurfaceMesh::Point> nodePositions) {
+    for (CGALSurfaceMesh::Point p : nodePositions) {
+      PointSphere tempPS = m_PS;
+      tempPS.setPosition(p);
+      tempPS.setColor(glm::vec3(1, 0, 0));
+      m_drawingVector.push_back(tempPS);
+
+      m_vertices.push_back(glm::vec3(p.x(), p.y(), p.z()));
+    }
+    std::cout << "New size of m_vertices is:" << m_vertices.size() << std::endl;
+  }
+
+  void drawNodes(Shader *shader) {
+    shader->Use();
+    for (PointSphere ps : m_drawingVector) {
+      ps.handle_drawing(shader, m_meshModelMatrix);
+    }
+  }
 };
 
 #endif // SKELETON_H

@@ -3,8 +3,14 @@
 
 #include <string>
 
+#include "cgaltypedefs.h"
 #include "material.h"
-#include "mesh.h"
+#include "meshloader.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <glm/mat4x4.hpp>
+
 class PointSphere {
 
 public:
@@ -15,6 +21,7 @@ public:
                       meshMeasuring::findAverageEdgeLength(onWhichMesh);
   }
 
+  bool wasInitialized() const { return vertices.size() != 0; }
   // loads a model and sets the sphere's size
   void load(std::string filename) {
     resetMeshAttributes();
@@ -40,7 +47,9 @@ public:
     m_position = newPosition;
     updateModelMatrix();
   }
+
   Kernel::Point_3 getPosition() { return m_position; }
+
   void handle_drawing(Shader *shader,
                       glm::mat4 meshModelMatrix = glm::mat4(1.0)) {
     shader->Use();
@@ -48,8 +57,15 @@ public:
     Draw(shader);
   }
 
-  void setColor(glm::vec3 color) {
-    m_material = Material(color, color, color, 128 * 0.25);
+  void setColor(glm::vec3 color) { // TODO unify the following for both shaders
+    m_material =
+        Material(color, color, color,
+                 128 * 0.25);     // this is being used by the defaultShader
+    for (auto &vertex : vertices) // this is being used by the segmentShader
+    {
+      vertex.Color = color;
+    }
+    updateMeshBuffers();
   }
 
   void doubleSize() {
@@ -89,8 +105,8 @@ private:
   void setUniforms(Shader *shader,
                    glm::mat4 meshModelMatrix =
                        glm::mat4(1.0)) { // the second argument is optional and
-                                         // it is used when pointsphere is used
-                                         // to represent a meshes vertex
+    // it is used when pointsphere is used
+    // to represent a meshes vertex
     m_material.setUniforms(shader);
     glUniformMatrix4fv(
         glGetUniformLocation(shader->programID, "model"), 1, GL_FALSE,
@@ -141,6 +157,32 @@ private:
     // std::cout << "printDebugInformation was called in "<<__func__<<std::endl;
     //     // printDebugInformation();
     //
+  }
+  void updateMeshBuffers() {
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(MyVertex),
+                 &vertices[0], GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint),
+                 &indices[0], GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex),
+                          (GLvoid *)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex),
+                          (GLvoid *)offsetof(MyVertex, Normal));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex),
+                          (GLvoid *)offsetof(MyVertex, Color));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
   }
   void resetMeshAttributes() {
     indices.clear();

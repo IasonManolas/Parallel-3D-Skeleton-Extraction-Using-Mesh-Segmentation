@@ -102,6 +102,8 @@ public:
     return skeletonEdges;
   }
 
+  std::vector<std::vector<size_t>> getSkeletonMeshMapping() { return record; }
+
 private:
   const CGALSurfaceMesh &m_M;
 
@@ -151,6 +153,7 @@ private:
   }
 
   void initialize_edge_to_face() {
+    size_t numberOfEdges = m_M.number_of_edges();
     edge_to_face.resize(m_M.number_of_edges());
     int face_id = 0;
     const CGALSurfaceMesh &hg = m_M;

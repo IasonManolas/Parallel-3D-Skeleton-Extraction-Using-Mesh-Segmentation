@@ -52,7 +52,8 @@ private:
   void showMeshSegments_signal();
   void segmentSelection_signal(float, float);
   void contraction_signal();
-void connectivitySurgery_signal();
+  void connectivitySurgery_signal();
+  void refinementEmbedding_signal();
   void showMeshVertices_signal();
   void segmentDeformation_signal(bool inflation);
   void cameraZoomChange_signal(float delta);
@@ -61,11 +62,12 @@ void connectivitySurgery_signal();
 
 private:
   meshSurfaceVizualization surfaceState{dontShowTriangles};
-  Scene scene{};
   Shader *defaultShader{nullptr};
   Shader *axesShader{nullptr};
   Shader *segmentShader{nullptr};
+  Shader *skeletonShader{nullptr};
   Shader *activeShader{nullptr};
+  Scene scene{};
   QTimer timer{};
   QVector2D lastMousePos{0, 0};
   float fov{45};

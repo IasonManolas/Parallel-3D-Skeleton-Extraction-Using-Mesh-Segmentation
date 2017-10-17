@@ -27,7 +27,7 @@ class Scene {
 public:
   Scene() {}
 
-  void Draw(Shader *modelShader, Shader *axisShader);
+  void Draw(Shader *modelShader, Shader *axisShader, Shader *skeletonShader);
   void updateProjectionMatrix(int w, int h);
 
 private:
@@ -59,9 +59,11 @@ public:
                                int windowWidth, int windowHeight);
   void handle_showSegments();
   void handle_segmentContraction();
-void handle_segmentConnectivitySurgery();
+  void handle_segmentConnectivitySurgery();
   void handle_meshContraction();
   void handle_meshConnectivitySurgery();
+  void handle_meshRefinementEmbedding();
+  void handle_segmentRefinementEmbedding();
   void handle_meshInflation();
   void handle_meshDeflation();
   void handle_mouseMovement(const QVector2D &mouseDV);
@@ -79,6 +81,8 @@ private:
                                const int width, const int height,
                                Ray_intersection &intersection);
   void updatePointSpheresOnVerticesPositions();
+
+  void setSkeletonShaderUniforms(Shader *shader);
 };
 
 #endif // SCENE_H

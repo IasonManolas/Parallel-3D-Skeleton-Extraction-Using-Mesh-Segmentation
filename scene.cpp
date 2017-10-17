@@ -1,6 +1,7 @@
 #include "scene.h"
 
-void Scene::Draw(Shader *modelShader, Shader *axisShader) {
+void Scene::Draw(Shader *modelShader, Shader *axisShader,
+                 Shader *skeletonShader) {
   setSceneUniforms(modelShader, axisShader);
   if (m_showPointSpheresOnVertices) {
     modelShader->Use();
@@ -8,11 +9,17 @@ void Scene::Draw(Shader *modelShader, Shader *axisShader) {
       ps.handle_drawing(modelShader, M.getModelMatrix());
     }
   }
-  M.handle_drawing(modelShader);
+  setSkeletonShaderUniforms(skeletonShader);
+  M.handle_drawing(modelShader, skeletonShader);
   if (showAxes) {
     axisShader->Use();
     sceneAxes.Draw();
   }
+}
+void Scene::setSkeletonShaderUniforms(Shader *shader) {
+  shader->Use();
+  camera.setUniforms(shader);
+  setProjectionMatrixUniform(shader);
 }
 
 void Scene::updateProjectionMatrix(int w, int h) {
@@ -30,17 +37,16 @@ void Scene::handle_cameraReset() {
 }
 
 void Scene::initializeScene() {
-  // loadMesh("../Models/Small/test.obj");
-  //loadMesh("../Models/tyra.obj");
-   loadMesh("../Models/bunny_low.obj");
+  // loadMesh("../Models/tyra.obj");
   loadPointSphere();
+  PS.setPosition(0, 0, 0);
+  loadMesh("../Models/Small/test.obj");
+  // loadMesh("../Models/bunny_low.obj");
   // loadMesh("../Models/cylinder.obj");
   // loadMesh("../Models/Small/coctel.obj");
   // loadMesh("../Models/Small/Wrong by assimp/stretched cube.obj");
   // loadMesh("../Models/teapot.obj");
   // loadMesh("../Models/icosahedron.obj");
-
-  PS.setPosition(0, 0, 0);
 }
 
 void Scene::loadPointSphere() { PS.load("../Models/Small/icosahedron.obj"); }
@@ -62,9 +68,20 @@ void Scene::handle_segmentContraction() { M.handle_segmentContraction(); }
 
 void Scene::handle_meshContraction() { contractMesh(); }
 
-void Scene::handle_meshConnectivitySurgery(){M.handle_meshConnectivitySurgery();}
+void Scene::handle_meshConnectivitySurgery() {
+  M.handle_meshConnectivitySurgery();
+}
 
-void Scene::handle_segmentConnectivitySurgery(){M.handle_segmentConnectivitySurgery();}
+void Scene::handle_meshRefinementEmbedding() {
+  M.handle_meshRefinementEmbedding();
+}
+
+void Scene::handle_segmentRefinementEmbedding() {}
+
+void Scene::handle_segmentConnectivitySurgery() {
+  std::cout << "in scene.cpp: handling seg" << std::endl;
+  M.handle_segmentConnectivitySurgery();
+}
 
 void Scene::handle_meshInflation() { M.handle_inflation(); }
 
@@ -74,10 +91,10 @@ void Scene::loadMesh(std::__cxx11::string filename) {
   camera.resetCamera();
   light.changeLightDirection(camera.getPosition());
 
-  M = Mesh{};
+  // M = Mesh(PS);
   M.load(filename);
-
-  PS.updateRadius(M.M);
+  PS.updateRadius(M.getM());
+  M.loadPointSphere(PS);
 }
 
 void Scene::handle_axesStateChange(bool value) { showAxes = value; }
@@ -135,7 +152,7 @@ void Scene::updatePointSpheresOnVerticesPositions() {
   std::vector<size_t> fixedVertices = M.MC.getFixedVertices();
   for (const size_t v : fixedVertices) {
     PointSphere tempPS = PS;
-    auto p(M.M.point(CGALSurfaceMesh::vertex_index(v)));
+    auto p(M.getM().point(CGALSurfaceMesh::vertex_index(v)));
     tempPS.setPosition(p);
     tempPS.setColor(glm::vec3(1, 0, 0));
     tempPS.doubleSize();
@@ -196,7 +213,8 @@ void Scene::handle_saveModel(const std::__cxx11::string destinationDirectory) {
   M.handle_saveModel(destinationDirectory);
 }
 
-void Scene::handle_saveSegment(const std::__cxx11::string destinationDirectory) {
+void Scene::handle_saveSegment(
+    const std::__cxx11::string destinationDirectory) {
   M.handle_saveSegment(destinationDirectory);
 }
 
