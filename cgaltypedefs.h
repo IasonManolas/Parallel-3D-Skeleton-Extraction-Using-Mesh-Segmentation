@@ -7,7 +7,7 @@ using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
 using CGALSurfaceMesh = CGAL::Surface_mesh<Kernel::Point_3>;
 using Ray = Kernel::Ray_3;
 using Point = Kernel::Point_3;
-
+using v_index = CGALSurfaceMesh::vertex_index;
 // segment mesh
 using face_descriptor = boost::graph_traits<CGALSurfaceMesh>::face_descriptor;
 using Facet_double_map = CGALSurfaceMesh::Property_map<face_descriptor, double>;

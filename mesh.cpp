@@ -1,123 +1,94 @@
 #include "mesh.h"
 
-bool icompare_pred(unsigned char a, unsigned char b) {
-  return std::tolower(a) == std::tolower(b);
-}
+// bool icompare_pred(unsigned char a, unsigned char b) {
+//  return std::tolower(a) == std::tolower(b);
+//}
+//
+// bool iscompare(std::string const &a, std::string const &b) {
+//  if (a.length() == b.length()) {
+//    return std::equal(b.begin(), b.end(), a.begin(), icompare_pred);
+//  } else {
+//    return false;
+//  }
+//}
+// bool isAnObjFile(std::string filename) {
+//  std::string fileExtension(filename.end() - 3, filename.end());
+//  return iscompare(fileExtension, "obj");
+//}
+//
+// bool isAnOffFile(std::string filename) {
+//  std::string fileExtension(filename.end() - 3, filename.end());
+//  return iscompare(fileExtension, "off");
+//}
 
-bool iscompare(std::string const &a, std::string const &b) {
-  if (a.length() == b.length()) {
-    return std::equal(b.begin(), b.end(), a.begin(), icompare_pred);
-  } else {
-    return false;
-  }
-}
-bool isAnObjFile(std::string filename) {
-  std::string fileExtension(filename.end() - 3, filename.end());
-  return iscompare(fileExtension, "obj");
-}
-
-bool isAnOffFile(std::string filename) {
-  std::string fileExtension(filename.end() - 3, filename.end());
-  return iscompare(fileExtension, "off");
-}
-Mesh::Mesh() {
-  for (auto &color : colorPalette) {
-    color /= 255.0;
-  }
-}
+void Mesh::loadPointSphere(PointSphere ps) { m_PS = ps; }
 
 void Mesh::resetMeshAttributes() {
-  indices.clear();
-  vertices.clear();
+  m_indices.clear();
+  m_vertices.clear();
   centerOfMass = glm::vec3(0.0);
-  modelMatrix = glm::mat4(1.0);
+  m_modelMatrix = glm::mat4(1.0);
   segmentsComputed = false;
+  m_perSegmentSkeletonEdges.clear();
+  m_showContractedSegment = false;
+  skeleton.clear();
+  alphaValue = 1;
 }
 
 void Mesh::load(std::string filename) {
-  if (isAnObjFile(filename)) {
-    resetMeshAttributes();
-    // loadObjFile(filename);
-    std::tie(indices, vertices) =
-        meshLoader::load(filename); // vertices contains coords & normals
+  resetMeshAttributes();
+  populateVerticesAndIndices(filename);
+  normalizeMeshViaModelMatrix();
+  initializeDrawingBuffers();
 
-    setupDrawingBuffers();
-    // Find the model matrix that normalizes the mesh
-    centerOfMass = meshMeasuring::findCenterOfMass(vertices);
-    maxDim = meshMeasuring::findMaxDimension(vertices);
-    normalizeMeshViaModelMatrix();
-    buildSurfaceMesh();
-    // averageEdgeLength = meshMeasuring::findAverageEdgeLength(M);
-    //MC = MeshContractor(M, indices);
-     MC = MeshContractor(M);
-  } else if (isAnOffFile(filename)) {
-    // loadOffFile(filename);
-    std::ifstream inputFile(filename);
-    assert(inputFile);
-    M.clear();
-    CGAL::read_off(inputFile, M);
-
-    std::tie(indices, vertices) =
-        meshLoader::load(filename); // vertices contains coords & normals
-setupDrawingBuffers();
-    // //CGAL::Polygon_mesh_processing::compute_vertex_normals
-    // populateIndices();
-    centerOfMass = meshMeasuring::findCenterOfMass(vertices);
-    maxDim = meshMeasuring::findMaxDimension(vertices);
-    normalizeMeshViaModelMatrix();
-    //MC = MeshContractor(M, indices);
-    MC = MeshContractor(M);
-
-  } else {
-    std::cerr << "The file type you selected cannot be loaded."
-                 "Use an .obj or an .off file."
-              << std::endl;
-  }
+  createCGALSurfaceMesh();
+  // MC = MeshContractor(M, indices);
+  MC = MeshContractor(m_M);
+  computeSegments();
+  // segment = MeshSegment(true);
+  segment = MeshSegment(getMeshSegment(0)); // TODO opws einai twra prepei na
+  // pou fortwthei.
 
   printMeshInformation();
 }
 
 void Mesh::assignSegmentColors() {
-  for (CGALSurfaceMesh::Face_iterator it = M.faces_begin(); it != M.faces_end();
-       it++) {
-    CGALSurfaceMesh::Face_index fIndex(*it);
-    auto r = M.vertices_around_face(M.halfedge(fIndex));
-    auto vbegin = r.begin();
-    std::size_t segmentID = segment_property_map[fIndex];
-    glm::vec3 color = colorPalette[segmentID];
-    for (auto vbegin = r.begin(); vbegin != r.end(); vbegin++) {
-      std::size_t vIndex = std::size_t(*vbegin);
-      vertices[vIndex].Color = color;
+  for (CGALSurfaceMesh::face_index fIndex : m_M.faces()) {
+    std::size_t segmentIndex = segmentFaceMap[fIndex];
+    glm::vec3 color = colorPalette[segmentIndex];
+    for (CGALSurfaceMesh::vertex_index vi :
+         m_M.vertices_around_face(m_M.halfedge(fIndex))) {
+      m_vertices[size_t(vi)].Color = color;
     }
   }
 }
 
 void Mesh::colorPickedSegment() {
-  for (CGALSurfaceMesh::Face_iterator it = M.faces_begin(); it != M.faces_end();
-       it++) {
-    CGALSurfaceMesh::Face_index fIndex(*it);
-    std::size_t segmentID = segment_property_map[fIndex];
-    auto r = M.vertices_around_face(M.halfedge(fIndex));
+  // for (CGALSurfaceMesh::Face_iterator it = m_M.faces_begin();
+  //     it != m_M.faces_end(); it++) {
+  for (CGALSurfaceMesh::face_index fIndex : m_M.faces()) {
+    size_t segmentIndex = getCorrespondingSegmentIndex(fIndex);
     glm::vec3 color;
-    if (segmentID == selectedSegmentIndex) {
-      color = colorPalette[selectedSegmentIndex];
+    glm::vec3 grey = glm::vec3(0.6, 0.6, 0.5);
+    if (segmentIndex == selectedSegmentIndex.get()) {
+      color = colorPalette[selectedSegmentIndex.get()];
     } else {
-      color = glm::vec3(0.6, 0.6, 0.5);
+      color = grey;
     }
-    for (auto vbegin = r.begin(); vbegin != r.end(); vbegin++) {
-      std::size_t vIndex = std::size_t(*vbegin);
-      vertices[vIndex].Color = color;
+    for (CGALSurfaceMesh::vertex_index vi :
+         m_M.vertices_around_face(m_M.halfedge(fIndex))) {
+      m_vertices[size_t(vi)].Color = color;
     }
   }
 }
 
-void Mesh::constructSegmentMap() {
+size_t Mesh::constructSegmentMap() {
   std::cout << "Segmenting mesh.." << std::endl;
   // create a property-map ean are you sure the edge sean are you sure the
   // edge shared by two triangles is not duplicatehared by two triangles is
   // not duplicatefor segment-id
-  segment_property_map =
-      M.add_property_map<face_descriptor, std::size_t>("f:sid").first;
+  segmentFaceMap =
+      m_M.add_property_map<face_descriptor, std::size_t>("f:sid").first;
   ;
   segmentsComputed = true;
   // segment the mesh using default parameters for number of levels, and
@@ -125,26 +96,22 @@ void Mesh::constructSegmentMap() {
   // Any other scalar values can be used instead of using SDF values computed
   // using the CGAL function
   std::size_t number_of_segments =
-      CGAL::segmentation_via_sdf_values(M, segment_property_map);
+      CGAL::segmentation_via_sdf_values(m_M, segmentFaceMap);
 
   std::cout << "Number of segments: " << number_of_segments << std::endl;
+  return number_of_segments;
 }
 
-bool Mesh::segmentHasBeenSelected() const { return selectedSegmentIndex != -1; }
-
 void Mesh::inflationDeflationDeformer(float deformationFactor) {
-  for (CGALSurfaceMesh::Face_iterator it = M.faces_begin(); it != M.faces_end();
-       it++) {
-    CGALSurfaceMesh::Face_index fIndex(*it);
-    if (segment_property_map[fIndex] == selectedSegmentIndex) {
-      auto r = M.vertices_around_face(M.halfedge(fIndex));
-      for (auto v : r) {
-        std::size_t vIndex = std::size_t(v);
+  for (CGALSurfaceMesh::face_index fIndex : m_M.faces()) {
+    if (getCorrespondingSegmentIndex(fIndex) == selectedSegmentIndex.get()) {
+      for (CGALSurfaceMesh::vertex_index vi :
+           m_M.vertices_around_face(m_M.halfedge(fIndex))) {
         glm::vec3 deformationVector =
-            deformationFactor * vertices[vIndex].Normal;
-        vertices[vIndex].Position += deformationVector;
-        CGALSurfaceMesh::Point previousPosition(M.point(v));
-        M.point(v) =
+            deformationFactor * m_vertices[size_t(vi)].Normal;
+        m_vertices[size_t(vi)].Position += deformationVector;
+        CGALSurfaceMesh::Point previousPosition(m_M.point(vi));
+        m_M.point(vi) =
             CGALSurfaceMesh::Point(previousPosition.x() + deformationVector.x,
                                    previousPosition.y() + deformationVector.y,
                                    previousPosition.z() + deformationVector.z);
@@ -153,275 +120,139 @@ void Mesh::inflationDeflationDeformer(float deformationFactor) {
   }
 }
 
+// void Mesh::setIntersectingTriangleUniform(int faceIndex) {
+//  int location =
+//      glGetUniformLocation(modelShader->programID, "intersectingFace");
+//  glUniform1i(location, int(faceIndex));
+//}
+
+void Mesh::handle_drawing(Shader *shader, Shader *skeletonShader) {
+
+  skeletonShader->Use();
+  glUniformMatrix4fv(glGetUniformLocation(skeletonShader->programID, "model"),
+                     1, GL_FALSE, glm::value_ptr(m_modelMatrix));
+  skeleton.Draw(shader);
+  if (m_showContractedSegment) {
+    segment.handle_drawing(shader);
+  }
+  drawThisMesh(shader);
+}
+
+void Mesh::drawThisMesh(Shader *shader) {
+  setUniforms(shader);
+  drawMesh();
+}
+
 void Mesh::setUniforms(Shader *shader) {
   shader->Use();
-  modelShader = shader; // NOTE wtf is this?
+  // modelShader = shader; // NOTE wtf is this?
   material.setUniforms(shader);
   glUniformMatrix4fv(glGetUniformLocation(shader->programID, "model"), 1,
-                     GL_FALSE, glm::value_ptr(modelMatrix));
-  // glUniform1f(glGetUniformLocation(shader->programID, "alpha"), alphaValue);
+                     GL_FALSE, glm::value_ptr(m_modelMatrix));
+  glUniform1f(glGetUniformLocation(shader->programID, "alpha"), alphaValue);
 }
 
-void Mesh::setIntersectingTriangleUniform(int faceIndex) {
-  int location =
-      glGetUniformLocation(modelShader->programID, "intersectingFace");
-  glUniform1i(location, int(faceIndex));
+void Mesh::populateVerticesAndIndices(std::__cxx11::string filename) {
+  std::tie(m_indices, m_vertices) =
+      meshLoader::load(filename); // vertices contains coords & normals
 }
 
-void Mesh::DrawMesh() {
-  glBindVertexArray(VAO);
-  glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-  glBindVertexArray(0);
-}
-
-void Mesh::loadObj(std::__cxx11::string) {}
-
-void Mesh::setMaterial(const Material &value) { material = value; }
-std::size_t
-Mesh::getSegmentIndex(const CGALSurfaceMesh::Face_index face_index) const {
-  return segment_property_map[face_index];
+std::size_t Mesh::getCorrespondingSegmentIndex(
+    const CGALSurfaceMesh::Face_index face_index) const {
+  return segmentFaceMap[face_index];
 }
 
 Ray_intersection Mesh::intersects(Kernel::Ray_3 ray) const {
 
-  Tree tree(faces(M).first, faces(M).second, M);
+  Tree tree(faces(m_M).first, faces(m_M).second, m_M);
 
   Ray_intersection intersection = tree.first_intersection(ray);
   return intersection;
 }
 
-int Mesh::findClosestVertex(Point intersectionPoint,
-                            CGALSurfaceMesh::Face_index intersectingFaceIndex) {
-  CGALSurfaceMesh::halfedge_index beginHalfedge =
-      M.halfedge(intersectingFaceIndex);
-  CGALSurfaceMesh::halfedge_index h = beginHalfedge;
-  CGALSurfaceMesh::vertex_index vIndex = M.source(h);
-  Kernel::Point_3 vertex = M.point(vIndex);
-  double minDistance = CGAL::squared_distance(vertex, intersectionPoint);
-  int closestVertexIndex = (int)vIndex;
-  do {
-    std::cout << h << std::endl;
-    vIndex = M.source(h);
-    Kernel::Point_3 vertex = M.point(vIndex);
-    double distance = CGAL::squared_distance(vertex, intersectionPoint);
-    if (distance < minDistance) {
-
-      minDistance = distance;
-      vIndex = M.source(h);
-      closestVertexIndex = int(vIndex);
-    }
-    h = M.next(h);
-  } while (h != beginHalfedge);
-  return closestVertexIndex;
-}
-
-void Mesh::buildSurfaceMesh() {
-  M.clear();
-  std::cout << "Building CGALPolygonMesh.." << std::endl;
-  std::vector<Kernel::Point_3> points;
-  std::vector<std::vector<std::size_t>> polygons;
-
-  for (auto const &vert : vertices) {
-    points.push_back(
-        Kernel::Point_3(vert.Position.x, vert.Position.y, vert.Position.z));
-    // Kernel::Point_3((vert.Position.x - centerOfMass.x) / maxDim,
-    //
-    //                (vert.Position.y - centerOfMass.y) / maxDim,
-    //                (vert.Position.z - centerOfMass.z) / maxDim));
-  }
-  for (size_t i = 0; i < indices.size(); i += 3) {
-    std::vector<std::size_t> tri{indices[i], indices[i + 1], indices[i + 2]};
-    polygons.push_back(tri);
-  }
-  //               CGAL::Polygon_mesh_processing::orient_polygon_soup(points,polygons);
-  std::cout << "is polygon soup polygon mesh:"
-            << CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(
-                   polygons)
-            << std::endl;
-  CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons,
-                                                              M);
-
-  std::cout << "Finished building Polygon Mesh." << std::endl;
-  std::cout << "Is closed:" << CGAL::is_closed(M) << std::endl;
-}
+// int Mesh::findClosestVertex(Point intersectionPoint,
+//                            CGALSurfaceMesh::Face_index intersectingFaceIndex)
+//                            {
+//  CGALSurfaceMesh::halfedge_index beginHalfedge =
+//      m_M.halfedge(intersectingFaceIndex);
+//  CGALSurfaceMesh::halfedge_index h = beginHalfedge;
+//  CGALSurfaceMesh::vertex_index vIndex = m_M.source(h);
+//  Kernel::Point_3 vertex = m_M.point(vIndex);
+//  double minDistance = CGAL::squared_distance(vertex, intersectionPoint);
+//  int closestVertexIndex = (int)vIndex;
+//  do {
+//    std::cout << h << std::endl;
+//    vIndex = m_M.source(h);
+//    Kernel::Point_3 vertex = m_M.point(vIndex);
+//    double distance = CGAL::squared_distance(vertex, intersectionPoint);
+//    if (distance < minDistance) {
+//
+//      minDistance = distance;
+//      vIndex = m_M.source(h);
+//      closestVertexIndex = int(vIndex);
+//    }
+//    h = m_M.next(h);
+//  } while (h != beginHalfedge);
+//  return closestVertexIndex;
+//}
 
 void Mesh::normalizeMeshViaModelMatrix() {
-  modelMatrix = glm::mat4(1.0);
+  centerOfMass = meshMeasuring::findCenterOfMass(m_vertices);
+  maxDim = meshMeasuring::findMaxDimension(m_vertices);
+  m_modelMatrix = glm::mat4(1.0);
   float scaleFactor = 1.0 / maxDim;
-  modelMatrix = glm::scale(modelMatrix, glm::vec3(scaleFactor));
+  m_modelMatrix = glm::scale(m_modelMatrix, glm::vec3(scaleFactor));
 
   glm::vec3 translationVector(-centerOfMass);
-  modelMatrix = glm::translate(modelMatrix, translationVector);
+  m_modelMatrix = glm::translate(m_modelMatrix, translationVector);
 }
 
-void Mesh::setupDrawingBuffers() {
-
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
-  glGenBuffers(1, &EBO);
-
-  glBindVertexArray(VAO);
-
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(MyVertex),
-               &vertices[0], GL_DYNAMIC_DRAW);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint),
-               &indices[0], GL_DYNAMIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex),
-                        (GLvoid *)0);
-  glEnableVertexAttribArray(0);
-
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex),
-                        (GLvoid *)offsetof(MyVertex, Normal));
-  glEnableVertexAttribArray(1);
-
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex),
-                        (GLvoid *)offsetof(MyVertex, Color));
-  glEnableVertexAttribArray(2);
-
-  glBindVertexArray(0);
-  // std::cout << "printDebugInformation was called in "<<__func__<<std::endl;
-  //     // printDebugInformation();
-  //
+MeshSegment Mesh::getMeshSegment() const {
+  assert(selectedSegmentIndex);
+  std::cout << "Using segment " << selectedSegmentIndex.get()
+            << " to construct MeshSegment." << std::endl;
+  MeshSegment S(m_M, m_vertices, segmentFaceMap, selectedSegmentIndex.get(),
+                m_modelMatrix);
+  return S;
 }
-
-std::vector<MyVertex> Mesh::getVertices() const { return vertices; }
-
-void Mesh::updateMeshBuffers() {
-
-  glBindVertexArray(VAO);
-
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(MyVertex),
-               &vertices[0], GL_DYNAMIC_DRAW);
-
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint),
-               &indices[0], GL_DYNAMIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex),
-                        (GLvoid *)0);
-  glEnableVertexAttribArray(0);
-
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex),
-                        (GLvoid *)offsetof(MyVertex, Normal));
-  glEnableVertexAttribArray(1);
-
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex),
-                        (GLvoid *)offsetof(MyVertex, Color));
-  glEnableVertexAttribArray(2);
-
-  glBindVertexArray(0);
-}
-
 MeshSegment Mesh::getMeshSegment(size_t segmentIndex) const {
-  MeshSegment S;
-
-  std::vector<Kernel::Point_3> points;
-  std::vector<std::vector<size_t>> faces;
-
-  for (CGALSurfaceMesh::Face_iterator it = M.faces_begin(); it != M.faces_end();
-       it++) {
-    CGALSurfaceMesh::Face_index fIndex(*it);
-    if (segment_property_map[fIndex] == segmentIndex) {
-      CGALSurfaceMesh::Halfedge_index h = M.halfedge(fIndex);
-      CGALSurfaceMesh::Halfedge_index hNext = M.next_around_target(h);
-      CGALSurfaceMesh::Halfedge_index hPrevious = M.next_around_source(h);
-
-      // CGALSurfaceMesh::Edge_index e1 = M.edge(h);
-      // CGALSurfaceMesh::Edge_index e2 = M.edge(hNext);
-      // CGALSurfaceMesh::Edge_index e3 = M.edge(hPrevious);
-
-      CGALSurfaceMesh::Vertex_index v1; //= M.source(h);
-      CGALSurfaceMesh::Vertex_index v2; //= M.target(h);
-      CGALSurfaceMesh::Vertex_index v3; //= M.target(hNext);
-
-      auto vri = M.vertices_around_face(h);
-      v1 = *vri.begin();
-      v2 = *(++vri.begin());
-      v3 = *(++++vri.begin());
-
-      CGALSurfaceMesh::Point p1(M.point(v1));
-      CGALSurfaceMesh::Point p2(M.point(v2));
-      CGALSurfaceMesh::Point p3(M.point(v3));
-
-      size_t i1 = std::distance(points.begin(),
-                                std::find(points.begin(), points.end(), p1));
-      if (i1 == points.size()) {
-        points.push_back(p1);
-        S.vertexCorrespondence.push_back(size_t(v1));
-        i1 = points.size() - 1;
-      }
-
-      size_t i2 = std::distance(points.begin(),
-                                std::find(points.begin(), points.end(), p2));
-      if (i2 == points.size()) {
-        points.push_back(p2);
-        S.vertexCorrespondence.push_back(size_t(v2));
-        i2 = points.size() - 1;
-      }
-
-      size_t i3 = std::distance(points.begin(),
-                                std::find(points.begin(), points.end(), p3));
-      if (i3 == points.size()) {
-        points.push_back(p3);
-        S.vertexCorrespondence.push_back(size_t(v3));
-        i3 = points.size() - 1;
-      }
-
-      std::vector<size_t> face{i1, i2, i3};
-      faces.push_back(face);
-    }
-  }
-  S.indices = faces;
-  S.vertices = points;
-  std::cout << "is polygon soup polygon mesh:"
-            << CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(
-                   faces)
-            << std::endl;
-  CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, faces,
-                                                              S.M);
-  std::cout << "Is closed:" << CGAL::is_closed(S.M) << std::endl;
-  if (!CGAL::is_closed(S.M)) {
-    std::cout << "Segment is not closed." << std::endl;
-    std::cout << "Stitching mesh.." << std::endl;
-    CGAL::Polygon_mesh_processing::stitch_borders(S.M);
-  }
-  std::cout << "Finished building Polygon Mesh." << std::endl;
-  std::cout << "Is closed:" << CGAL::is_closed(S.M) << std::endl;
+  MeshSegment S(m_M, m_vertices, segmentFaceMap, segmentIndex, m_modelMatrix);
   return S;
 }
 
 void Mesh::handle_segmentSelection(Ray_intersection intersection) {
-  CGALSurfaceMesh::Face_index intersectingTriangleIndex;
-  intersectingTriangleIndex = intersection->second;
-  size_t intersectionIndex = getSegmentIndex(intersectingTriangleIndex);
+  CGALSurfaceMesh::Face_index intersectingFaceIndex = intersection->second;
+  selectedSegmentIndex = getCorrespondingSegmentIndex(intersectingFaceIndex);
 
-  selectedSegmentIndex = intersectionIndex;
-  std::cout << "Intersection segment:" << selectedSegmentIndex << std::endl;
+  std::cout << "Intersection segment:" << selectedSegmentIndex.get()
+            << std::endl;
   colorPickedSegment();
   updateMeshBuffers();
 
-  segment=getMeshSegment(selectedSegmentIndex);
-   SMC = MeshContractor(segment.M);
+  segment.setSegment(getMeshSegment());
+  SMC = MeshContractor(segment.M());
 }
 
-void Mesh::computeSegments() { constructSegmentMap(); }
+size_t Mesh::computeSegments() {
+  return constructSegmentMap();
+  segmentsComputed = true;
+}
 
 void Mesh::handle_showSegments() {
   if (!segmentsComputed) {
-    computeSegments();
+    size_t numberOfSegments = computeSegments();
+    assignSegmentColors();
+    m_perSegmentSkeletonEdges.resize(numberOfSegments);
   }
+  alphaValue = 1;
   assignSegmentColors();
   updateMeshBuffers();
+  m_showContractedSegment = false;
 }
 
 void Mesh::inflation_handler() { // TODO δεν βρισκει τομη ακτινας με το mesh
-                                 // μετα το deformation
-  if (segmentHasBeenSelected()) {
+  // μετα το deformation
+  if (selectedSegmentIndex) {
     float deformationFactor = 0.01;
     inflationDeflationDeformer(deformationFactor);
     updateMeshBuffers();
@@ -429,28 +260,14 @@ void Mesh::inflation_handler() { // TODO δεν βρισκει τομη ακτι
 }
 
 void Mesh::deflation_handler() {
-  if (segmentHasBeenSelected()) {
+  if (selectedSegmentIndex) {
     float deformationFactor = -0.01;
     inflationDeflationDeformer(deformationFactor);
     updateMeshBuffers();
   }
 }
 
-void Mesh::unselectSegment() { selectedSegmentIndex = -1; }
-
-void Mesh::updateDrawingVertices() { // uses M to update std::vector<MyVertex>
-                                     // vertices
-  for (auto v : M.vertices()) {
-    CGALSurfaceMesh::Point p = M.point(v);
-    vertices[size_t(v)].Position = glm::vec3(p.x(), p.y(), p.z());
-  }
-}
-
-void Mesh::handle_drawing(Shader *shader) {
-  shader->Use();
-  setUniforms(shader);
-  DrawMesh();
-}
+void Mesh::unselectSegment() { selectedSegmentIndex = boost::none; }
 
 void Mesh::handle_saveModel(std::__cxx11::string destinationPathAndFileName) {
   std::ofstream outFile;
@@ -458,33 +275,33 @@ void Mesh::handle_saveModel(std::__cxx11::string destinationPathAndFileName) {
   if (!outFile) {
     std::cerr << "Can't save file: " << destinationPathAndFileName << std::endl;
   } else {
-    CGAL::write_off(outFile, M);
+    CGAL::write_off(outFile, m_M);
   }
   outFile.close();
 }
 
 void Mesh::handle_saveSegment(std::__cxx11::string destinationPathAndFileName) {
-  MeshSegment segment=getMeshSegment(selectedSegmentIndex);
+  MeshSegment segment = getMeshSegment();
   std::ofstream outFile;
   outFile.open(destinationPathAndFileName, std::ios::out);
   if (!outFile) {
     std::cerr << "Can't save file: " << destinationPathAndFileName << std::endl;
   } else {
-    CGAL::write_off(outFile,segment.M);
+    CGAL::write_off(outFile, segment.M());
   }
   outFile.close();
 }
-std::vector<size_t> Mesh::getVertexIndicesWithHighLaplacianValue() {
-  return MC.getVertexIndicesWithHighLaplacianValue();
-}
+// std::vector<size_t> Mesh::getVertexIndicesWithHighLaplacianValue() {
+//  return MC.getVertexIndicesWithHighLaplacianValue();
+//}
 
 void Mesh::handle_meshContraction() {
-  if (M.has_garbage())
-    M.collect_garbage();
+  if (m_M.has_garbage())
+    m_M.collect_garbage();
 
   MC.executeContractionStep();
-  M = MC.getContractedMesh();
-  updateDrawingVertices(); // Wrong?
+  m_M = MC.getContractedMesh();
+  DrawableMesh::updateDrawingVertices(); // Wrong?
   // centerOfMass = meshMeasuring::findCenterOfMass(vertices);
   // maxDim = meshMeasuring::findMaxDimension(vertices);
   // normalizeMeshViaModelMatrix();
@@ -492,26 +309,118 @@ void Mesh::handle_meshContraction() {
 }
 
 void Mesh::handle_segmentContraction() {
+  alphaValue = 0.4;
   SMC.executeContractionStep();
   CGALSurfaceMesh contractedSegment = SMC.getContractedMesh();
-  segment.M = contractedSegment;
-  updateVertices(segment);
-  updateMeshBuffers();
+  segment.setM(contractedSegment);
+  m_showContractedSegment = true;
+
+  // updateVertices(segment);
+  // updateMeshBuffers();
 }
 
-void Mesh::handle_meshConnectivitySurgery(){}
+void Mesh::addToSkeleton(
+    std::vector<std::vector<size_t>> skeletonEdgesInMeshIndices,
+    const CGALSurfaceMesh &M) {
+  std::unordered_set<size_t> skeletonNodesInMeshIndices;
 
-void Mesh::handle_segmentConnectivitySurgery()
-{
-	assert(selectedSegmentIndex!=-1);
-	MeshSegment segment = getMeshSegment(selectedSegmentIndex);
-	  ConnectivitySurgeon CS(segment.M);
-	  CS.extract_skeleton();
-	  skeletonEdges = CS.getSkeleton();
-	segmentMesh = segment.M;
+  for (auto skeletonEdge : skeletonEdgesInMeshIndices) {
+    for (auto v : skeletonEdge) {
+      skeletonNodesInMeshIndices.insert(v);
+    }
+  }
+  std::vector<CGALSurfaceMesh::Point> skeletonNodePositions;
+  std::map<size_t, size_t> meshIndices_to_skeletonIndices;
+  size_t indexInSkeleton = 0;
+  for (auto indexInMesh : skeletonNodesInMeshIndices) {
+    skeletonNodePositions.push_back(
+        M.point(CGALSurfaceMesh::vertex_index(indexInMesh)));
+    meshIndices_to_skeletonIndices.insert(
+        std::make_pair(indexInMesh, indexInSkeleton));
+    indexInSkeleton++;
+  }
+
+  // skeletonEdges with mesh indices -> skeletonEdges with skeleton indices
+
+  std::unordered_set<std::pair<size_t, size_t>,
+                     boost::hash<std::pair<size_t, size_t>>>
+      skeletonEdgesInSkeletonIndices;
+  for (auto edge : skeletonEdgesInMeshIndices) {
+    skeletonEdgesInSkeletonIndices.insert(
+        std::make_pair(meshIndices_to_skeletonIndices[edge[0]],
+                       meshIndices_to_skeletonIndices[edge[1]]));
+  }
+
+  skeleton.append(skeletonEdgesInSkeletonIndices, skeletonNodePositions);
+}
+void Mesh::handle_meshConnectivitySurgery() {
+  ConnectivitySurgeon CS(m_M);
+  CS.extract_skeleton();
+  auto skeletonEdgesInMeshIndices = CS.getSkeleton();
+  m_skeletonMeshMapping = CS.getSkeletonMeshMapping();
+
+  addToSkeleton(skeletonEdgesInMeshIndices, m_M);
 }
 
+void Mesh::handle_meshRefinementEmbedding() {
+  // m_skeletonNodes.clear(); // forget skeleton node drawing vector.
 
+  // for (size_t i = 0; i < m_M.number_of_vertices(); i++) {
+  // std::vector<size_t> localVerticesThatMapToThisNode =
+  // m_skeletonMeshMapping[i];
+  // if (localVerticesThatMapToThisNode.empty())
+  //    continue;
+  // CGALSurfaceMesh::Point centerOfMass =
+  // computeCenterOfMass(localVerticesThatMapToThisNode);
+
+  // PointSphere tempPS = m_PS;
+  // tempPS.setPosition(centerOfMass);
+  // tempPS.setColor(glm::vec3(1, 0, 0));
+  // tempPS.doubleSize();
+  // m_skeletonNodes.push_back(tempPS);
+  //}
+}
+
+CGALSurfaceMesh::Point
+Mesh::computeCenterOfMass(std::vector<size_t> vertexIndices) {
+  Kernel::Vector_3 sum(CGAL::NULL_VECTOR);
+  for (size_t vIndex : vertexIndices) {
+    CGALSurfaceMesh::Point p = m_M.point(CGALSurfaceMesh::vertex_index(vIndex));
+    sum += Kernel::Vector_3(p.x(), p.y(), p.z());
+  }
+  Kernel::Vector_3 centerOfMassVector = sum / vertexIndices.size();
+  CGALSurfaceMesh::Point centerOfMass(
+      centerOfMassVector.x(), centerOfMassVector.y(), centerOfMassVector.z());
+}
+
+void Mesh::handle_segmentConnectivitySurgery() {
+  assert(selectedSegmentIndex);
+  CGALSurfaceMesh contractedSegment = segment.M();
+  ConnectivitySurgeon CS(contractedSegment);
+  CS.extract_skeleton();
+  auto skeletonEdgesInMeshIndices = CS.getSkeleton();
+
+  addToSkeleton(skeletonEdgesInMeshIndices, contractedSegment);
+  m_showContractedSegment = false;
+  // std::set<size_t> skeletonNodes;
+  // for (auto skeletonEdge : skeletonEdges) {
+  //    for (auto v : skeletonEdge) {
+  //        skeletonNodes.insert(
+  //    	v); // v is the index in the segment and not in the original
+  //    mesh
+  //    }
+  //}
+
+  // for (auto vIndex : skeletonNodes) {
+  //    PointSphere tempPS = m_PS;
+  //    auto p(contractedSegment.point(CGALSurfaceMesh::vertex_index(vIndex)));
+  //    tempPS.setPosition(p);
+  //    tempPS.setColor(glm::vec3(1, 0, 0));
+  //    tempPS.doubleSize();
+  //    m_skeletonNodes.push_back(tempPS);
+  //}
+  // m_showContractedSegment = false;
+}
 
 void Mesh::updateVertices(const MeshSegment &copyFrom) {
   updateDrawingVertices(copyFrom);
@@ -520,35 +429,20 @@ void Mesh::updateVertices(const MeshSegment &copyFrom) {
 
 void Mesh::updateDrawingVertices(const MeshSegment &copyFrom) {
   size_t index = 0;
-  for (auto v : copyFrom.M.vertices()) { // update drawing vertices in model
-    CGALSurfaceMesh::Point p = copyFrom.M.point(v);
-    vertices[copyFrom.vertexCorrespondence[index]].Position =
+  for (auto v : copyFrom.M().vertices()) { // update drawing vertices in model
+    CGALSurfaceMesh::Point p = copyFrom.M().point(v);
+    m_vertices[copyFrom.vertexCorrespondence[index]].Position =
         glm::vec3(p.x(), p.y(), p.z());
     index++;
   }
 }
 void Mesh::updateCGALSurfaceMeshVertices(const MeshSegment &copyFrom) {
   size_t index = 0;
-  for (auto v : copyFrom.M.vertices()) {
-    CGALSurfaceMesh::Point p = copyFrom.M.point(v);
+  for (auto v : copyFrom.M().vertices()) {
+    CGALSurfaceMesh::Point p = copyFrom.M().point(v);
     CGALSurfaceMesh::vertex_index vInOriginalMesh(
         copyFrom.vertexCorrespondence[index]);
-    M.point(vInOriginalMesh) = CGALSurfaceMesh::Point(p.x(), p.y(), p.z());
+    m_M.point(vInOriginalMesh) = CGALSurfaceMesh::Point(p.x(), p.y(), p.z());
     index++;
-  }
-}
-
-void Mesh::testVerticesConsistency() const {
-  for (auto v : M.vertices()) {
-    if (M.point(v).x() != vertices[size_t(v)].Position.x ||
-        M.point(v).y() != vertices[size_t(v)].Position.y ||
-        M.point(v).z() != vertices[size_t(v)].Position.z) {
-      std::cout
-          << "ERROR CGAL's mesh vertices are different than drawing vertices."
-          << "vertex index=" << size_t(v) << std::endl;
-      std::cout << "drawing vertex="
-                << glm::to_string(vertices[size_t(v)].Position) << std::endl;
-      std::cout << "drawing vertex=" << M.point(v) << std::endl;
-    }
   }
 }

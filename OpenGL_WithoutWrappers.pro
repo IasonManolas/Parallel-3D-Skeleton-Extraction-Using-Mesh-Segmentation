@@ -21,7 +21,6 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
     meshcontractor.cpp \
-    skeleton.cpp \
     mesh.cpp \
     scene.cpp \
     connectivitysurgeon.cpp
@@ -45,7 +44,10 @@ HEADERS  += mainwindow.h \
     skeleton.h \
     mesh.h \
     connectivitysurgeon.h \
-    debug_meshcontractor.h
+    debug_meshcontractor.h \
+    drawablemesh.h \
+    polygonalmesh.h \
+    drawableskeleton.h
 #    tinyObjLoader/tiny_obj_loader.h
 
 FORMS    += mainwindow.ui
