@@ -33,15 +33,16 @@ protected:
       polygons.push_back(tri);
     }
     //               CGAL::Polygon_mesh_processing::orient_polygon_soup(points,polygons);
-    std::cout << "is polygon soup polygon mesh:"
-              << CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(
-                     polygons)
-              << std::endl;
+    // std::cout << "is polygon soup polygon mesh:"
+    //          <<
+    //          CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(
+    //                 polygons)
+    //          << std::endl;
     CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points,
                                                                 polygons, m_M);
 
-    std::cout << "Finished building Polygon Mesh." << std::endl;
-    std::cout << "Is closed:" << CGAL::is_closed(m_M) << std::endl;
+    // std::cout << "Finished building Polygon Mesh." << std::endl;
+    // std::cout << "Is closed:" << CGAL::is_closed(m_M) << std::endl;
   }
   void createCGALSurfaceMesh(std::string filename) {
     std::ifstream inputFile(filename);

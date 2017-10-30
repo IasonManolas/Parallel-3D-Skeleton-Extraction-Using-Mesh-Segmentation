@@ -10,7 +10,13 @@
 class DrawableSkeleton {
 
 public:
-  DrawableSkeleton() {}
+  DrawableSkeleton() {
+    m_vertices.push_back(glm::vec3(-1, 0, 0));
+    m_vertices.push_back(glm::vec3(1, 0, 0));
+
+    m_indices.push_back(0);
+    m_indices.push_back(1);
+  }
 
   void drawEdges() {
     glBindVertexArray(VAO);
@@ -39,11 +45,11 @@ protected:
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(glm::vec3),
-                 &m_vertices[0], GL_DYNAMIC_DRAW);
+                 &m_vertices[0], GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLuint),
-                 &m_indices[0], GL_DYNAMIC_DRAW);
+                 &m_indices[0], GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                           (GLvoid *)0);
@@ -96,7 +102,7 @@ protected:
       glGetVertexAttribiv(i, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &ival);
       printf("Attr %d: BUFFER		= %d\n", i, ival);
       glGetVertexAttribPointerv(i, GL_VERTEX_ATTRIB_ARRAY_POINTER, &pval);
-      printf("Attr %d: POINTER		= %p\n", i, ival);
+      printf("Attr %d: POINTER		= %d\n", i, ival);
     }
     // Also print the numeric handle of the VAO:
     printf("VAO = %ld\n", long(VAO));

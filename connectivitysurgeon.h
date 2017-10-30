@@ -5,6 +5,7 @@
 #include <Eigen/Sparse>
 
 #include "cgaltypedefs.h"
+#include <ctime>
 
 /*
  ConnectivitySurgeon operates on an already contracted mesh. In short it
@@ -137,23 +138,63 @@ private:
 
 private:
   void init() {
+    std::clock_t start;
+    start = std::clock();
     initialize_edge_to_face();
+    std::cout << "Time init_edge_to_face: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
+    start = std::clock();
     initialize_edge_to_vertex();
+    std::cout << "Time edge_to_vertex: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
+    start = std::clock();
     initialize_vertex_to_edge();
+    std::cout << "Time vertex_to_edge: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
+    start = std::clock();
     initialize_vertex_to_point();
+    std::cout << "Time vertex_to_point: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
+    start = std::clock();
     initialize_face_to_edge();
+    std::cout << "Time face_to_edge: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
 
+    start = std::clock();
     initialize_record();
+    std::cout << "Time record: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
 
+    start = std::clock();
     initialize_is_edge_deleted();
+    std::cout << "Time edge_deleted: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
+    start = std::clock();
     initialize_is_face_deleted();
+    std::cout << "Time face_deleted: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
+    start = std::clock();
     initialize_is_vertex_deleted();
+    std::cout << "Time vertex_deleted: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
 
+    start = std::clock();
     initialize_edge_to_totalCost();
+    std::cout << "Time edge_to_totalCost: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
   }
 
   void initialize_edge_to_face() {
-    size_t numberOfEdges = m_M.number_of_edges();
     edge_to_face.resize(m_M.number_of_edges());
     int face_id = 0;
     const CGALSurfaceMesh &hg = m_M;
@@ -249,8 +290,18 @@ private:
   void initialize_edge_to_totalCost() {
     edge_to_totalCost.resize(m_M.number_of_edges());
 
+    std::clock_t start;
+    start = std::clock();
     initialize_edge_to_shapeCost();
+    std::cout << "Time edge_to_shapeCost: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
+    start = std::clock();
     initialize_edge_to_samplingCost();
+    std::cout << "Time edge_to_samplingCost: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
+
     for (size_t index = 0; index < edge_to_totalCost.size(); index++) {
       double totalCost0 =
           edge_to_shapeCost[index].first + edge_to_shapeCost[index].first;
@@ -273,22 +324,28 @@ private:
   void initialize_edge_to_shapeCost() {
     edge_to_shapeCost.resize(m_M.number_of_edges());
 
+    std::clock_t start;
+    start = std::clock();
     initialize_vertex_to_Q();
 
+    std::cout << "Time initialize_vertex_to_Q: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
+
+    start = std::clock();
     for (size_t edgeIndex = 0; edgeIndex < edge_to_shapeCost.size();
          edgeIndex++) {
 
       size_t i = edge_to_vertex[edgeIndex][0], j = edge_to_vertex[edgeIndex][1];
 
-      CGALSurfaceMesh::Point Pi = m_M.point(v_index(i)),
-                             Pj = m_M.point(v_index(j));
-
       double ij_shapeCost = compute_ShapeCostOfHE(i, j);
       double ji_shapeCost = compute_ShapeCostOfHE(j, i);
 
-      edge_to_shapeCost[edgeIndex] =
-          std::move(std::make_pair(ij_shapeCost, ji_shapeCost));
+      edge_to_shapeCost[edgeIndex] = std::make_pair(ij_shapeCost, ji_shapeCost);
     }
+    std::cout << "Time rest of shape_cost: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
   }
 
   void initialize_vertex_to_Q() {
@@ -396,6 +453,8 @@ private:
     EdgeQueue edgeQueue(edge_to_totalCost);
     initialize_queue(edgeQueue);
 
+    std::clock_t start;
+    start = std::clock();
     while (!edgeQueue.empty()) {
       size_t ei = edgeQueue.pop();
 
@@ -449,8 +508,10 @@ private:
       // edge_comparator.update_totalCostVector(edge_to_totalCost);
 
       edgeQueue.update();
-      std::cout << "Edges left:" << edgeQueue.size() << std::endl;
     }
+    std::cout << "Time collapse: "
+              << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000)
+              << " ms" << std::endl;
     print_stat();
   }
 
@@ -514,7 +575,7 @@ private:
       is_face_deleted[fid] = true;               // mark them as deleted
       for (size_t j = 0; j < face_to_edge[fid].size();
            ++j) { // get the edges of the face that will be removed
-        int e = face_to_edge[fid][j];
+        size_t e = face_to_edge[fid][j];
         if (e == edgeIndex) // when you fall onto the edge that will be deleted
                             // continue since for this we don't need to fix
                             // edge_to_face
@@ -599,7 +660,7 @@ private:
     return std::make_pair(false, -1);
   }
 
-  void move_face(int ei, int ej) {
+  void move_face(size_t ei, size_t ej) {
     for (size_t i = 0; i < edge_to_face[ei].size(); ++i) {
       int fid = edge_to_face[ei][i];
       if (!is_face_deleted[fid]) {
@@ -617,7 +678,7 @@ private:
     }
   }
 
-  void remove_edge(int v, int e, int ind) {
+  void remove_edge(int v, size_t e, int ind) {
     vertex_to_edge[v].erase(vertex_to_edge[v].begin() + ind);
     // and also remove ei from the other end point
     for (size_t i = 0; i < edge_to_vertex[e].size(); ++i) {

@@ -4,7 +4,6 @@
 #include "material.h"
 #include "polygonalmesh.h"
 #include "shader.h"
-
 class DrawableMesh : public PolygonalMesh {
 public:
   DrawableMesh() {
@@ -123,7 +122,7 @@ protected:
       glGetVertexAttribiv(i, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &ival);
       printf("Attr %d: BUFFER		= %d\n", i, ival);
       glGetVertexAttribPointerv(i, GL_VERTEX_ATTRIB_ARRAY_POINTER, &pval);
-      printf("Attr %d: POINTER		= %p\n", i, ival);
+      printf("Attr %d: POINTER		= %d\n", i, ival);
     }
     // Also print the numeric handle of the VAO:
     printf("VAO = %ld\n", long(VAO));

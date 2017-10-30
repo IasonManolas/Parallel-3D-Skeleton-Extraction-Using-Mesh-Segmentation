@@ -62,6 +62,7 @@ public:
   size_t computeSegments();
   void colorPickedSegment();
   void handle_showSegments();
+  void handle_meshContractionReversing();
   void handle_meshContraction();
   void handle_segmentContraction();
   void handle_meshConnectivitySurgery();
@@ -71,11 +72,14 @@ public:
   void handle_deflation() {
     deflation_handler();
   } // TODO use this type of handlers.I like them.
-  void handle_drawing(Shader *shader, Shader *skeletonShader);
+  void handle_drawing(Shader *shader, Shader *skeletonShader,
+                      glm::mat4 projectionViewMat);
   void handle_saveModel(std::string destinationPathAndFileName);
   void handle_saveSegment(std::string destinationPathAndFileName);
   void loadPointSphere(PointSphere);
+  void handle_showVerticesStateChange(int state);
 
+  void handle_paintEdge();
   std::vector<size_t> getVertexIndicesWithHighLaplacianValue();
   // public data members
 public:
@@ -85,6 +89,7 @@ public:
   MeshContractor MC;
   //    std::vector<Kernel::Vector_3> normals;
 
+  Skeleton skeleton{Skeleton(m_PS, m_modelMatrix)};
   // private member functions
 
 private:
@@ -106,6 +111,8 @@ private:
   void
   addToSkeleton(std::vector<std::vector<size_t>> skeletonEdgesInMeshIndices,
                 const CGALSurfaceMesh &);
+  void
+  addToSkeleton(std::vector<std::vector<size_t>> skeletonEdgesInMeshIndices);
 
   CGALSurfaceMesh::Point computeCenterOfMass(
       std::vector<size_t> vertexIndices); // TODO merge to meshMeasuring
@@ -117,14 +124,17 @@ private:
   boost::optional<size_t> selectedSegmentIndex{boost::none};
 
   MeshContractor SMC; // segment mesh contractor
-  MeshSegment segment;
+  MeshSegment segment{MeshSegment(m_modelMatrix)};
   std::vector<std::vector<std::vector<size_t>>>
       m_perSegmentSkeletonEdges; //[i][j][0 or 1]: get the vertex 0 or 1 of edge
                                  // j in the ith segment.
   bool m_showContractedSegment{false};
   std::vector<std::vector<size_t>> m_skeletonMeshMapping; // used in Refinement
-  Skeleton skeleton{Skeleton(m_PS, m_modelMatrix)};
+  std::vector<PointSphere> fixedVerticesDrawingVector;
+  size_t edgeCounter{0};
+  float step{0.1};
 
+  bool m_showPointSpheresOnVertices{false};
   // Embedding. NOTE
   // should not be
   // present in the

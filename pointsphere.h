@@ -46,6 +46,7 @@ public:
   void setPosition(CGALSurfaceMesh::Point newPosition) {
     m_position = newPosition;
     updateModelMatrix();
+    updateMeshBuffers();
   }
 
   Kernel::Point_3 getPosition() { return m_position; }
@@ -54,7 +55,7 @@ public:
                       glm::mat4 meshModelMatrix = glm::mat4(1.0)) {
     shader->Use();
     setUniforms(shader, meshModelMatrix);
-    Draw(shader);
+    Draw();
   }
 
   void setColor(glm::vec3 color) { // TODO unify the following for both shaders
@@ -90,9 +91,11 @@ private:
   void updateModelMatrix() // Model space -> World space
   {
     modelMatrix = glm::mat4{1.0};
-    glm::vec3 translationVector(-centerOfMass + glm::vec3(m_position.x(),
-                                                          m_position.y(),
-                                                          m_position.z()));
+    glm::vec3 translationVector(
+        -centerOfMass +
+        glm::vec3(
+            m_position.x(), m_position.y(),
+            m_position.z())); // move to (0,0,0) and then to desired position
     modelMatrix = glm::translate(modelMatrix, translationVector);
 
     double scaleFactor =
@@ -120,7 +123,7 @@ private:
   } // fix it by breaking the meshModelMatrix into two parts. One translates and
   // one scales and pass here only the translation part.
 
-  void Draw(Shader *shader) {
+  void Draw() {
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
