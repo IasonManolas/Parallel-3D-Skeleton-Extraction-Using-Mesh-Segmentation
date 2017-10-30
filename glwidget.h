@@ -52,12 +52,14 @@ private:
   void showMeshSegments_signal();
   void segmentSelection_signal(float, float);
   void contraction_signal();
+  void reverseContraction_signal();
   void connectivitySurgery_signal();
   void refinementEmbedding_signal();
   void showMeshVertices_signal();
   void segmentDeformation_signal(bool inflation);
   void cameraZoomChange_signal(float delta);
   void cameraReset_signal();
+  void paintEdge_signal();
   void initializeShaders();
 
 private:

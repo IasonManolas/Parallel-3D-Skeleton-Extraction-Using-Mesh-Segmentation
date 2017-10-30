@@ -26,18 +26,24 @@ using halfedge_descriptor =
 using EigenMatrix = Eigen::MatrixXd;
 using Vector = Eigen::VectorXd;
 using SpMatrix = Eigen::SparseMatrix<double>;
+using DiagMatrix = Eigen::Diagonal<double>;
 using EigenTriplet = Eigen::Triplet<double>;
 static constexpr double maxNumber{500000};
 class MeshContractor {
 
 public:
   MeshContractor() {}
-  MeshContractor(CGALSurfaceMesh meshToContract/*, std::vector<uint> indices*/);
+  MeshContractor(
+      CGALSurfaceMesh meshToContract /*, std::vector<uint> indices*/);
   CGALSurfaceMesh getContractedMesh() const;
   void contractMesh(const double volumeThreshold = std::pow(10, -6));
   void executeContractionStep();
+  void executeContractionReversingStep();
 
-  std::vector<size_t> getVertexIndicesWithHighLaplacianValue();
+  size_t getMaxLIndex() { return maxLIndex; }
+  std::vector<size_t> getVerticesForWhichPreviousCotWeightWasUsed() {
+    return problematicVertices;
+  }
   std::vector<size_t> getFixedVertices();
   void printFixedVertices(EigenMatrix verticesMatrix);
 
@@ -45,7 +51,7 @@ private:
   // CGALSurfaceMesh &m_M;
   CGALSurfaceMesh m_M;
   double m_originalVolume;
-  static constexpr double m_volumeThreshold{
+  double m_volumeThreshold{
       std::pow(10, -6)}; // m_originalVolume/currentVolume least ratio so the
                          // contraction process stops
   double m_Sl{2};
@@ -53,7 +59,7 @@ private:
   double m_Wh0{1.0};
   SpMatrix m_Wl;
   SpMatrix m_L;
-SpMatrix previousLaplaceOperator;
+  SpMatrix previousLaplaceOperator;
   EigenMatrix m_previousDeltaCoords;
   Vector m_A0;
   Vector m_A;
@@ -62,12 +68,14 @@ SpMatrix previousLaplaceOperator;
   size_t m_iterationsCompleted{0};
 
   std::set<size_t> fixedVertices;
-std::vector<double> m_initialFaceAreas;
+  std::vector<double> m_initialFaceAreas;
   std::vector<bool> isVertexFixed;
+
+  std::vector<EigenMatrix> m_previousVertexPositions;
 
 private:
   void computeLaplaceOperator();
-	void computeFixedVertices();
+  void computeFixedVertices();
   SpMatrix computeLaplaceOperatorUsingIGL();
   double computeAngleOppositeToEdge(CGALSurfaceMesh::Edge_index,
                                     size_t edgeSide) const;
@@ -79,9 +87,14 @@ private:
   void updateWh();
   void computeOneRingAreaVector();
   double computeOneRingAreaAroundVertex(CGALSurfaceMesh::Vertex_index) const;
-  boost::optional<double> computeCotangentWeight(CGALSurfaceMesh::edge_index ei) const;
-  boost::optional<double> computeCotangentWeight(CGALSurfaceMesh::halfedge_index hei) const;
-  boost::optional<double> computeCotangentValue(Kernel::Vector_3, Kernel::Vector_3) const;
+  boost::optional<double>
+  computeCotangentWeight(CGALSurfaceMesh::edge_index ei) const;
+  boost::optional<double>
+  computeCotangentWeight(CGALSurfaceMesh::halfedge_index hei) const;
+  boost::optional<double> computeCotangentValue(Kernel::Vector_3,
+                                                Kernel::Vector_3) const;
+  size_t maxLIndex;
+  std::vector<size_t> problematicVertices;
 };
 
 #endif // SEGMENTCONTRACTOR_H

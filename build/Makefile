@@ -14,7 +14,7 @@ CC            = gcc
 CXX           = g++
 DEFINES       = -DQT_QML_DEBUG -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -g -Wall -W -D_REENTRANT -fPIC $(DEFINES)
-CXXFLAGS      = -pipe -fopenmp -g -std=gnu++11 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
+CXXFLAGS      = -pipe -std=c++17 -g -std=gnu++11 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
 INCPATH       = -I../../Thesis -I. -I/home/iason/Desktop/livadaki/Thesis/../CGAL\ build/build/include -isystem /usr/include/GL -isystem /usr/local/include/eigen3 -I../../../../Qt/5.7/gcc_64/include -I../../../../Qt/5.7/gcc_64/include/QtOpenGL -I../../../../Qt/5.7/gcc_64/include/QtWidgets -I../../../../Qt/5.7/gcc_64/include/QtGui -I../../../../Qt/5.7/gcc_64/include/QtCore -I. -I. -I../../../../Qt/5.7/gcc_64/mkspecs/linux-g++
 QMAKE         = /home/iason/Qt/5.7/gcc_64/bin/qmake
 DEL_FILE      = rm -f
@@ -35,7 +35,7 @@ COMPRESS      = gzip -9f
 DISTNAME      = OpenGL_WithoutWrappers1.0.0
 DISTDIR = /home/iason/Desktop/livadaki/Thesis/build/.tmp/OpenGL_WithoutWrappers1.0.0
 LINK          = g++
-LFLAGS        = -fopenmp -Wl,-rpath,/home/iason/Qt/5.7/gcc_64/lib
+LFLAGS        = -Wl,-rpath,/home/iason/Qt/5.7/gcc_64/lib
 LIBS          = $(SUBLIBS) -L/home/iason/Desktop/livadaki/Thesis/../CGAL\ build/build/lib/ -lCGAL -lboost_system -L/home/iason/Desktop/livadaki/Thesis/../../../../../usr/lib64/ -lGLEW -lassimp -lgmp -L/home/iason/Qt/5.7/gcc_64/lib -lQt5OpenGL -L/usr/lib64 -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread 
 AR            = ar cqs
 RANLIB        = 
@@ -783,27 +783,23 @@ moc_glwidget.cpp: ../../../../Qt/5.7/gcc_64/include/QtGui/QKeyEvent \
 		../../../../Qt/5.7/gcc_64/include/QtCore/QTimer \
 		../../../../Qt/5.7/gcc_64/include/QtCore/qtimer.h \
 		../../../../Qt/5.7/gcc_64/include/QtCore/qbasictimer.h \
-		../camera.h \
+		../../../Thesis/camera.h \
 		../../../../Qt/5.7/gcc_64/include/QtGui/QVector2D \
 		../../../../Qt/5.7/gcc_64/include/QtGui/QVector3D \
 		../../../../Qt/5.7/gcc_64/include/QtGui/qvector3d.h \
-		../shader.h \
-		../directionallight.h \
-		../light.h \
-		../material.h \
-		../mesh.h \
-		../meshloader.h \
-		../cgaltypedefs.h \
-		../connectivitysurgeon.h \
-		../drawablemesh.h \
-		../polygonalmesh.h \
-		../meshcontractor.h \
-		../meshsegment.h \
-		../pointsphere.h \
-		../skeleton.h \
-		../drawableskeleton.h \
-		../scene.h \
-		../axes.h \
+		../../../Thesis/shader.h \
+		../../../Thesis/directionallight.h \
+		../../../Thesis/light.h \
+		../../../Thesis/material.h \
+		../../../Thesis/mesh.h \
+		../../../Thesis/meshloader.h \
+		../../../Thesis/cgaltypedefs.h \
+		../../../Thesis/connectivitysurgeon.h \
+		../../../Thesis/meshcontractor.h \
+		../../../Thesis/meshsegment.h \
+		../../../Thesis/pointsphere.h \
+		../../../Thesis/scene.h \
+		../../../Thesis/axes.h \
 		../glwidget.h \
 		../../../../Qt/5.7/gcc_64/bin/moc
 	/home/iason/Qt/5.7/gcc_64/bin/moc $(DEFINES) -I/home/iason/Qt/5.7/gcc_64/mkspecs/linux-g++ -I/home/iason/Desktop/livadaki/Thesis -I'/home/iason/Desktop/livadaki/CGAL build/build/include' -I/usr/include/GL -I/usr/local/include/eigen3 -I/home/iason/Qt/5.7/gcc_64/include -I/home/iason/Qt/5.7/gcc_64/include/QtOpenGL -I/home/iason/Qt/5.7/gcc_64/include/QtWidgets -I/home/iason/Qt/5.7/gcc_64/include/QtGui -I/home/iason/Qt/5.7/gcc_64/include/QtCore -I. -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include ../glwidget.h -o moc_glwidget.cpp
@@ -1051,12 +1047,58 @@ mainwindow.o: ../mainwindow.cpp ../mainwindow.h \
 		../../../../Qt/5.7/gcc_64/include/QtWidgets/qtabwidget.h \
 		../../../../Qt/5.7/gcc_64/include/QtGui/qicon.h \
 		ui_mainwindow.h \
-		../../../../Qt/5.7/gcc_64/include/QtWidgets/QFileDialog \
-		../../../../Qt/5.7/gcc_64/include/QtWidgets/qfiledialog.h \
-		../../../../Qt/5.7/gcc_64/include/QtCore/qdir.h \
-		../../../../Qt/5.7/gcc_64/include/QtCore/qfileinfo.h \
-		../../../../Qt/5.7/gcc_64/include/QtWidgets/qdialog.h \
-		../../../../Qt/5.7/gcc_64/include/QtGui/QOpenGLContext \
+		../../../../Qt/5.7/gcc_64/include/QtCore/QVariant \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QAction \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qaction.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qactiongroup.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QApplication \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qapplication.h \
+		../../../../Qt/5.7/gcc_64/include/QtCore/qcoreapplication.h \
+		../../../../Qt/5.7/gcc_64/include/QtCore/qeventloop.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		../../../../Qt/5.7/gcc_64/include/QtGui/qguiapplication.h \
+		../../../../Qt/5.7/gcc_64/include/QtGui/qinputmethod.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QButtonGroup \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qbuttongroup.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QCheckBox \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qcheckbox.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qabstractbutton.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QHBoxLayout \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qboxlayout.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qlayout.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qlayoutitem.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qgridlayout.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QHeaderView \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qheaderview.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qabstractitemview.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qframe.h \
+		../../../../Qt/5.7/gcc_64/include/QtCore/qabstractitemmodel.h \
+		../../../../Qt/5.7/gcc_64/include/QtCore/qitemselectionmodel.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qstyleoption.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qabstractspinbox.h \
+		../../../../Qt/5.7/gcc_64/include/QtGui/qvalidator.h \
+		../../../../Qt/5.7/gcc_64/include/QtCore/qregularexpression.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qslider.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qabstractslider.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qstyle.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qtabbar.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qrubberband.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QMenu \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qmenu.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QMenuBar \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qmenubar.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QPushButton \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qpushbutton.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QToolBar \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qtoolbar.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QVBoxLayout \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QWidget \
+		../../../Thesis/glwidget.h \
+		../../../../Qt/5.7/gcc_64/include/QtGui/QKeyEvent \
+		../../../../Qt/5.7/gcc_64/include/QtGui/QOpenGLDebugLogger \
+		../../../../Qt/5.7/gcc_64/include/QtGui/qopengldebug.h \
 		../../../../Qt/5.7/gcc_64/include/QtGui/qopenglcontext.h \
 		../../../../Qt/5.7/gcc_64/include/QtCore/QObject \
 		../../../../Qt/5.7/gcc_64/include/QtCore/QScopedPointer \
@@ -1069,10 +1111,37 @@ mainwindow.o: ../mainwindow.cpp ../mainwindow.h \
 		../../../../Qt/5.7/gcc_64/include/QtGui/qopenglversionfunctions.h \
 		../../../../Qt/5.7/gcc_64/include/QtWidgets/QOpenGLWidget \
 		../../../../Qt/5.7/gcc_64/include/QtWidgets/qopenglwidget.h \
-		../../../../Qt/5.7/gcc_64/include/QtWidgets/QWidget
+		../../../../Qt/5.7/gcc_64/include/QtCore/QTime \
+		../../../../Qt/5.7/gcc_64/include/QtCore/qdatetime.h \
+		../../../../Qt/5.7/gcc_64/include/QtCore/QTimer \
+		../../../../Qt/5.7/gcc_64/include/QtCore/qtimer.h \
+		../../../../Qt/5.7/gcc_64/include/QtCore/qbasictimer.h \
+		../../../Thesis/camera.h \
+		../../../../Qt/5.7/gcc_64/include/QtGui/QVector2D \
+		../../../../Qt/5.7/gcc_64/include/QtGui/QVector3D \
+		../../../../Qt/5.7/gcc_64/include/QtGui/qvector3d.h \
+		../../../Thesis/shader.h \
+		../../../Thesis/directionallight.h \
+		../../../Thesis/light.h \
+		../../../Thesis/material.h \
+		../../../Thesis/mesh.h \
+		../../../Thesis/meshloader.h \
+		../../../Thesis/cgaltypedefs.h \
+		../../../Thesis/connectivitysurgeon.h \
+		../../../Thesis/meshcontractor.h \
+		../../../Thesis/meshsegment.h \
+		../../../Thesis/pointsphere.h \
+		../../../Thesis/scene.h \
+		../../../Thesis/axes.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/QFileDialog \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qfiledialog.h \
+		../../../../Qt/5.7/gcc_64/include/QtCore/qdir.h \
+		../../../../Qt/5.7/gcc_64/include/QtCore/qfileinfo.h \
+		../../../../Qt/5.7/gcc_64/include/QtWidgets/qdialog.h \
+		../../../../Qt/5.7/gcc_64/include/QtGui/QOpenGLContext
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../mainwindow.cpp
 
-glwidget.o: ../glwidget.cpp ../glwidget.h \
+glwidget.o: ../glwidget.cpp ../../../Thesis/glwidget.h \
 		../../../../Qt/5.7/gcc_64/include/QtGui/QKeyEvent \
 		../../../../Qt/5.7/gcc_64/include/QtGui/qevent.h \
 		../../../../Qt/5.7/gcc_64/include/QtGui/qwindowdefs.h \
@@ -1190,50 +1259,42 @@ glwidget.o: ../glwidget.cpp ../glwidget.h \
 		../../../../Qt/5.7/gcc_64/include/QtCore/QTimer \
 		../../../../Qt/5.7/gcc_64/include/QtCore/qtimer.h \
 		../../../../Qt/5.7/gcc_64/include/QtCore/qbasictimer.h \
-		../camera.h \
+		../../../Thesis/camera.h \
 		../../../../Qt/5.7/gcc_64/include/QtGui/QVector2D \
 		../../../../Qt/5.7/gcc_64/include/QtGui/QVector3D \
 		../../../../Qt/5.7/gcc_64/include/QtGui/qvector3d.h \
-		../shader.h \
-		../directionallight.h \
-		../light.h \
-		../material.h \
-		../mesh.h \
-		../meshloader.h \
-		../cgaltypedefs.h \
-		../connectivitysurgeon.h \
-		../drawablemesh.h \
-		../polygonalmesh.h \
-		../meshcontractor.h \
-		../meshsegment.h \
-		../pointsphere.h \
-		../skeleton.h \
-		../drawableskeleton.h \
-		../scene.h \
-		../axes.h
+		../../../Thesis/shader.h \
+		../../../Thesis/directionallight.h \
+		../../../Thesis/light.h \
+		../../../Thesis/material.h \
+		../../../Thesis/mesh.h \
+		../../../Thesis/meshloader.h \
+		../../../Thesis/cgaltypedefs.h \
+		../../../Thesis/connectivitysurgeon.h \
+		../../../Thesis/meshcontractor.h \
+		../../../Thesis/meshsegment.h \
+		../../../Thesis/pointsphere.h \
+		../../../Thesis/scene.h \
+		../../../Thesis/axes.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o glwidget.o ../glwidget.cpp
 
-meshcontractor.o: ../meshcontractor.cpp ../meshcontractor.h \
-		../cgaltypedefs.h \
+meshcontractor.o: ../meshcontractor.cpp ../../../Thesis/meshcontractor.h \
+		../../../Thesis/cgaltypedefs.h \
 		../debug_meshcontractor.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o meshcontractor.o ../meshcontractor.cpp
 
-mesh.o: ../mesh.cpp ../mesh.h \
-		../meshloader.h \
-		../cgaltypedefs.h \
-		../connectivitysurgeon.h \
-		../drawablemesh.h \
-		../material.h \
-		../shader.h \
-		../polygonalmesh.h \
-		../meshcontractor.h \
-		../meshsegment.h \
-		../pointsphere.h \
-		../skeleton.h \
-		../drawableskeleton.h
+mesh.o: ../mesh.cpp ../../../Thesis/mesh.h \
+		../../../Thesis/meshloader.h \
+		../../../Thesis/cgaltypedefs.h \
+		../../../Thesis/connectivitysurgeon.h \
+		../../../Thesis/material.h \
+		../../../Thesis/shader.h \
+		../../../Thesis/meshcontractor.h \
+		../../../Thesis/meshsegment.h \
+		../../../Thesis/pointsphere.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mesh.o ../mesh.cpp
 
-scene.o: ../scene.cpp ../scene.h \
+scene.o: ../scene.cpp ../../../Thesis/scene.h \
 		../../../../Qt/5.7/gcc_64/include/QtGui/QVector2D \
 		../../../../Qt/5.7/gcc_64/include/QtGui/qvector2d.h \
 		../../../../Qt/5.7/gcc_64/include/QtCore/qpoint.h \
@@ -1274,23 +1335,19 @@ scene.o: ../scene.cpp ../scene.h \
 		../../../../Qt/5.7/gcc_64/include/QtCore/qobjectdefs_impl.h \
 		../../../../Qt/5.7/gcc_64/include/QtGui/QVector3D \
 		../../../../Qt/5.7/gcc_64/include/QtGui/qvector3d.h \
-		../axes.h \
-		../shader.h \
-		../camera.h \
-		../cgaltypedefs.h \
-		../connectivitysurgeon.h \
-		../directionallight.h \
-		../light.h \
-		../mesh.h \
-		../meshloader.h \
-		../drawablemesh.h \
-		../material.h \
-		../polygonalmesh.h \
-		../meshcontractor.h \
-		../meshsegment.h \
-		../pointsphere.h \
-		../skeleton.h \
-		../drawableskeleton.h
+		../../../Thesis/axes.h \
+		../../../Thesis/shader.h \
+		../../../Thesis/camera.h \
+		../../../Thesis/cgaltypedefs.h \
+		../../../Thesis/connectivitysurgeon.h \
+		../../../Thesis/directionallight.h \
+		../../../Thesis/light.h \
+		../../../Thesis/mesh.h \
+		../../../Thesis/meshloader.h \
+		../../../Thesis/material.h \
+		../../../Thesis/meshcontractor.h \
+		../../../Thesis/meshsegment.h \
+		../../../Thesis/pointsphere.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o scene.o ../scene.cpp
 
 connectivitysurgeon.o: ../connectivitysurgeon.cpp 

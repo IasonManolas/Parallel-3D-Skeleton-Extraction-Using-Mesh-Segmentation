@@ -72,7 +72,7 @@ void GLWidget::paintGL() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glShadeModel(GL_SMOOTH);
-  glLineWidth(10);
+  // glLineWidth(10);
   if (surfaceState == dontShowTriangles)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   else if (surfaceState == showTriangles)
@@ -107,6 +107,8 @@ void GLWidget::cameraZoomChange_signal(float delta) {
 
 void GLWidget::cameraReset_signal() { scene.handle_cameraReset(); }
 
+void GLWidget::paintEdge_signal() { scene.handle_paintEdge(); }
+
 void GLWidget::initializeShaders() {
   defaultShader =
       new Shader("../shaders/vertex.glsl", "../shaders/fragment.glsl");
@@ -124,6 +126,11 @@ void GLWidget::contraction_signal() {
     scene.handle_meshContraction();
   else if (mode == segmentsView)
     scene.handle_segmentContraction();
+}
+
+void GLWidget::reverseContraction_signal() {
+  if (mode == defaultView)
+    scene.handle_meshContractionReversing();
 }
 void GLWidget::connectivitySurgery_signal() {
 
@@ -177,11 +184,23 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
   case Qt::Key_C:
     contraction_signal();
     break;
+
+  case Qt::Key_R:
+    reverseContraction_signal();
+    break;
   case Qt::Key_1:
     connectivitySurgery_signal();
     break;
   case Qt::Key_2:
     refinementEmbedding_signal();
+    break;
+
+  case Qt::Key_E:
+    // makeCurrent();
+    paintEdge_signal();
+    break;
+  case Qt::Key_A:
+    scene.M.skeleton.updateMeshBuffers();
     break;
 
     // case Qt::Key_A:

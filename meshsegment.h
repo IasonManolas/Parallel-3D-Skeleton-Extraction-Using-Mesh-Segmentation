@@ -8,18 +8,18 @@
 
 class MeshSegment : public DrawableMesh {
 public:
-  MeshSegment() {}
-  MeshSegment(bool nothing) {
-    m_vertices.resize(5, MyVertex());
-    m_indices.resize(5, 0);
-    initializeDrawingBuffers();
+  MeshSegment(const glm::mat4 &wholeMeshModelMatrix)
+      : m_modelMatrix(wholeMeshModelMatrix) {
+    std::cout << "initialized meshsegment" << std::endl;
   }
+  void initialize() { initializeDrawingBuffers(); }
   MeshSegment(const CGALSurfaceMesh &M, std::vector<MyVertex> wholeMeshVertices,
               const Facet_int_map &segmentMap, size_t segmentIndex,
               glm::mat4 modelMatrix)
       : m_modelMatrix(modelMatrix) {
     populate(M, wholeMeshVertices, segmentMap, segmentIndex);
-    initializeDrawingBuffers();
+    // initializeDrawingBuffers();
+    updateMeshBuffers();
   }
   void handle_drawing(Shader *shader) {
     shader->Use();
@@ -49,7 +49,7 @@ private:
   Material material{glm::vec3(0.05, 0.05, 0.05),
                     glm::vec3(1.0, 1.0, 1.0), // should be static constexpr
                     glm::vec3(1.0, 1.0, 1.0), 128 * 0.25};
-  glm::mat4 m_modelMatrix;
+  const glm::mat4 &m_modelMatrix;
   std::vector<std::vector<size_t>>
   createCGALSurfaceMesh(CGALSurfaceMesh M, Facet_int_map segmentMap,
                         size_t segmentIndex) {

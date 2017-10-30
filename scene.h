@@ -30,6 +30,8 @@ public:
   void Draw(Shader *modelShader, Shader *axisShader, Shader *skeletonShader);
   void updateProjectionMatrix(int w, int h);
 
+  Mesh M;
+
 private:
   PointSphere PS;
   Camera camera{glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f),
@@ -41,7 +43,6 @@ private:
   glm::mat4 projectionMatrix{glm::mat4(1.0f)};
   float nearPlane{0.1};
   float farPlane{100};
-  Mesh M;
 
   bool m_showPointSpheresOnVertices{false};
   std::vector<PointSphere> m_pointSpheresOnVertices;
@@ -60,6 +61,7 @@ public:
   void handle_showSegments();
   void handle_segmentContraction();
   void handle_segmentConnectivitySurgery();
+  void handle_meshContractionReversing();
   void handle_meshContraction();
   void handle_meshConnectivitySurgery();
   void handle_meshRefinementEmbedding();
@@ -71,11 +73,12 @@ public:
   void handle_saveModel(const std::string destinationDirectory);
   void handle_saveSegment(const std::string destinationDirectory);
 
+  void handle_paintEdge();
+
 private:
   void loadPointSphere();
   void setProjectionMatrixUniform(Shader *shader);
   void setSceneUniforms(Shader *modelShader, Shader *axisShader);
-  void contractMesh();
   void executeMeshConnectivitySurgery();
   bool rayIntersectsPolyhedron(const int &mouseX, const int &mouseY,
                                const int width, const int height,

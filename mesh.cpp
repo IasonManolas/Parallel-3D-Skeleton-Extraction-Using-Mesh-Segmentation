@@ -23,6 +23,45 @@
 
 void Mesh::loadPointSphere(PointSphere ps) { m_PS = ps; }
 
+void Mesh::handle_showVerticesStateChange(int state) {
+  m_showPointSpheresOnVertices = bool(state);
+}
+
+void Mesh::handle_paintEdge() {
+  // std::vector<size_t> edge{0 + edgeCounter, 1 + edgeCounter};
+  skeleton.clear();
+  // std::vector<size_t> edge0{0, 1}, edge1{3, 4}, edge2{5, 6};
+  // std::vector<size_t> edge{0, 3};
+  // std::vector<std::vector<size_t>> edges{edge0, edge1, edge2};
+  std::vector<std::vector<size_t>> edges{{3, 0, 2, 1}};
+  addToSkeleton(edges, m_M);
+  // edgeCounter++;
+  // skeleton.append({}, {m_M.point(CGALSurfaceMesh::vertex_index(0)),
+  //                     m_M.point(CGALSurfaceMesh::vertex_index(1))});
+
+  // NOTE H SEIRA PAIZEI ROLO! AYTO EINAI LATHOS
+  // if (edgeCounter % 2 == 0) {
+  //  skeleton.append(
+  //      {}, {CGALSurfaceMesh::Point(0, 0, 0), CGALSurfaceMesh::Point(1, 1,
+  //      0)});
+  //  skeleton.append({{0, 1}}, {CGALSurfaceMesh::Point(0, 0, 0),
+  //                             CGALSurfaceMesh::Point(10, 0, 0)});
+  //} else {
+  //  skeleton.append(
+  //      {}, {CGALSurfaceMesh::Point(0, 1, 0), CGALSurfaceMesh::Point(0, -1,
+  //      0),
+  //           CGALSurfaceMesh::Point(1, 0, 0), CGALSurfaceMesh::Point(0, 1,
+  //           0)});
+  //}
+  // skeleton.m_vertices[0].x += step;
+  // skeleton.m_vertices.clear();
+  // skeleton.m_indices.clear();
+  // skeleton.m_vertices.push_back(glm::vec3(-1.0 + pointStep, 0, 0));
+  // skeleton.m_vertices.push_back(glm::vec3(1.5, 0, 0));
+  // skeleton.m_indices.push_back(0);
+  // skeleton.m_indices.push_back(1);
+}
+
 void Mesh::resetMeshAttributes() {
   m_indices.clear();
   m_vertices.clear();
@@ -41,13 +80,13 @@ void Mesh::load(std::string filename) {
   normalizeMeshViaModelMatrix();
   initializeDrawingBuffers();
 
+  skeleton.initializeDrawingBuffers();
+  segment.initialize();
+
   createCGALSurfaceMesh();
   // MC = MeshContractor(M, indices);
   MC = MeshContractor(m_M);
-  computeSegments();
-  // segment = MeshSegment(true);
-  segment = MeshSegment(getMeshSegment(0)); // TODO opws einai twra prepei na
-  // pou fortwthei.
+  // computeSegments();
 
   printMeshInformation();
 }
@@ -126,16 +165,32 @@ void Mesh::inflationDeflationDeformer(float deformationFactor) {
 //  glUniform1i(location, int(faceIndex));
 //}
 
-void Mesh::handle_drawing(Shader *shader, Shader *skeletonShader) {
+void Mesh::handle_drawing(Shader *shader, Shader *skeletonShader,
+                          glm::mat4 projectionViewMat) {
 
   skeletonShader->Use();
-  glUniformMatrix4fv(glGetUniformLocation(skeletonShader->programID, "model"),
-                     1, GL_FALSE, glm::value_ptr(m_modelMatrix));
-  skeleton.Draw(shader);
+  GLint MVPLoc = glGetUniformLocation(skeletonShader->programID, "MVP");
+  if (MVPLoc == -1)
+    std::cout << "Could not find MVP." << std::endl;
+  else
+    glUniformMatrix4fv(glGetUniformLocation(skeletonShader->programID, "MVP"),
+                       1, GL_FALSE,
+                       glm::value_ptr(projectionViewMat * m_modelMatrix));
+
+  skeleton.Draw(skeletonShader, shader);
+
   if (m_showContractedSegment) {
     segment.handle_drawing(shader);
   }
+
   drawThisMesh(shader);
+
+  if (m_showPointSpheresOnVertices) {
+    // draw specific vertices
+    for (PointSphere s : fixedVerticesDrawingVector) {
+      s.handle_drawing(shader, m_modelMatrix);
+    }
+  }
 }
 
 void Mesh::drawThisMesh(Shader *shader) {
@@ -234,8 +289,8 @@ void Mesh::handle_segmentSelection(Ray_intersection intersection) {
 }
 
 size_t Mesh::computeSegments() {
-  return constructSegmentMap();
   segmentsComputed = true;
+  return constructSegmentMap();
 }
 
 void Mesh::handle_showSegments() {
@@ -295,33 +350,54 @@ void Mesh::handle_saveSegment(std::__cxx11::string destinationPathAndFileName) {
 //  return MC.getVertexIndicesWithHighLaplacianValue();
 //}
 
+void Mesh::handle_meshContractionReversing() {
+  MC.executeContractionReversingStep();
+  m_M = MC.getContractedMesh();
+  DrawableMesh::updateDrawingVertices();
+  updateMeshBuffers();
+
+  fixedVerticesDrawingVector.clear();
+  for (size_t vi : MC.getFixedVertices()) {
+    PointSphere ps = m_PS;
+    ps.setPosition(m_M.point(CGALSurfaceMesh::vertex_index(vi)));
+    ps.setColor(glm::vec3(1, 0, 0));
+    fixedVerticesDrawingVector.push_back(ps);
+  }
+}
+
 void Mesh::handle_meshContraction() {
   if (m_M.has_garbage())
     m_M.collect_garbage();
 
   MC.executeContractionStep();
   m_M = MC.getContractedMesh();
-  DrawableMesh::updateDrawingVertices(); // Wrong?
-  // centerOfMass = meshMeasuring::findCenterOfMass(vertices);
-  // maxDim = meshMeasuring::findMaxDimension(vertices);
-  // normalizeMeshViaModelMatrix();
+
+  DrawableMesh::updateDrawingVertices();
   updateMeshBuffers();
+
+  fixedVerticesDrawingVector.clear();
+  for (size_t vi : MC.getFixedVertices()) {
+    PointSphere ps = m_PS;
+    ps.setPosition(m_M.point(CGALSurfaceMesh::vertex_index(vi)));
+    ps.setColor(glm::vec3(1, 0, 0));
+    fixedVerticesDrawingVector.push_back(ps);
+  }
 }
 
 void Mesh::handle_segmentContraction() {
   alphaValue = 0.4;
+  // SMC.contractMesh(std::pow(10, -4));
   SMC.executeContractionStep();
   CGALSurfaceMesh contractedSegment = SMC.getContractedMesh();
   segment.setM(contractedSegment);
   m_showContractedSegment = true;
-
-  // updateVertices(segment);
-  // updateMeshBuffers();
 }
 
 void Mesh::addToSkeleton(
     std::vector<std::vector<size_t>> skeletonEdgesInMeshIndices,
     const CGALSurfaceMesh &M) {
+  using MeshIndex = size_t;
+  using SkeletonIndex = size_t;
   std::unordered_set<size_t> skeletonNodesInMeshIndices;
 
   for (auto skeletonEdge : skeletonEdgesInMeshIndices) {
@@ -330,9 +406,11 @@ void Mesh::addToSkeleton(
     }
   }
   std::vector<CGALSurfaceMesh::Point> skeletonNodePositions;
-  std::map<size_t, size_t> meshIndices_to_skeletonIndices;
-  size_t indexInSkeleton = 0;
-  for (auto indexInMesh : skeletonNodesInMeshIndices) {
+  std::map<MeshIndex, SkeletonIndex> meshIndices_to_skeletonIndices;
+  SkeletonIndex indexInSkeleton = 0;
+  for (MeshIndex indexInMesh : skeletonNodesInMeshIndices) {
+    // skeletonNodePositions.push_back(
+    //    CGALSurfaceMesh::Point(1 + indexInMesh, 2 + indexInMesh, 0));
     skeletonNodePositions.push_back(
         M.point(CGALSurfaceMesh::vertex_index(indexInMesh)));
     meshIndices_to_skeletonIndices.insert(
@@ -342,13 +420,11 @@ void Mesh::addToSkeleton(
 
   // skeletonEdges with mesh indices -> skeletonEdges with skeleton indices
 
-  std::unordered_set<std::pair<size_t, size_t>,
-                     boost::hash<std::pair<size_t, size_t>>>
-      skeletonEdgesInSkeletonIndices;
+  std::vector<std::vector<size_t>> skeletonEdgesInSkeletonIndices;
   for (auto edge : skeletonEdgesInMeshIndices) {
-    skeletonEdgesInSkeletonIndices.insert(
-        std::make_pair(meshIndices_to_skeletonIndices[edge[0]],
-                       meshIndices_to_skeletonIndices[edge[1]]));
+    skeletonEdgesInSkeletonIndices.push_back(
+        std::vector<size_t>{meshIndices_to_skeletonIndices[edge[0]],
+                            meshIndices_to_skeletonIndices[edge[1]]});
   }
 
   skeleton.append(skeletonEdgesInSkeletonIndices, skeletonNodePositions);
@@ -391,6 +467,7 @@ Mesh::computeCenterOfMass(std::vector<size_t> vertexIndices) {
   Kernel::Vector_3 centerOfMassVector = sum / vertexIndices.size();
   CGALSurfaceMesh::Point centerOfMass(
       centerOfMassVector.x(), centerOfMassVector.y(), centerOfMassVector.z());
+  return centerOfMass;
 }
 
 void Mesh::handle_segmentConnectivitySurgery() {

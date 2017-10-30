@@ -9,8 +9,8 @@ void Scene::Draw(Shader *modelShader, Shader *axisShader,
       ps.handle_drawing(modelShader, M.getModelMatrix());
     }
   }
-  setSkeletonShaderUniforms(skeletonShader);
-  M.handle_drawing(modelShader, skeletonShader);
+  glm::mat4 projectionViewMat = projectionMatrix * camera.getViewMatrix();
+  M.handle_drawing(modelShader, skeletonShader, projectionViewMat);
   if (showAxes) {
     axisShader->Use();
     sceneAxes.Draw();
@@ -40,8 +40,9 @@ void Scene::initializeScene() {
   // loadMesh("../Models/tyra.obj");
   loadPointSphere();
   PS.setPosition(0, 0, 0);
-  loadMesh("../Models/Small/test.obj");
-  // loadMesh("../Models/bunny_low.obj");
+  // loadMesh("../Models/Small/test.obj");
+
+  loadMesh("../Models/bunny_low.obj");
   // loadMesh("../Models/cylinder.obj");
   // loadMesh("../Models/Small/coctel.obj");
   // loadMesh("../Models/Small/Wrong by assimp/stretched cube.obj");
@@ -66,7 +67,7 @@ void Scene::handle_showSegments() { M.handle_showSegments(); }
 
 void Scene::handle_segmentContraction() { M.handle_segmentContraction(); }
 
-void Scene::handle_meshContraction() { contractMesh(); }
+void Scene::handle_meshContraction() { M.handle_meshContraction(); }
 
 void Scene::handle_meshConnectivitySurgery() {
   M.handle_meshConnectivitySurgery();
@@ -81,6 +82,10 @@ void Scene::handle_segmentRefinementEmbedding() {}
 void Scene::handle_segmentConnectivitySurgery() {
   std::cout << "in scene.cpp: handling seg" << std::endl;
   M.handle_segmentConnectivitySurgery();
+}
+
+void Scene::handle_meshContractionReversing() {
+  M.handle_meshContractionReversing();
 }
 
 void Scene::handle_meshInflation() { M.handle_inflation(); }
@@ -205,8 +210,8 @@ void Scene::handle_mouseMovement(const QVector2D &mouseDV) {
 }
 
 void Scene::handle_meshVerticesStateChange(int state) {
-  m_showPointSpheresOnVertices = bool(state);
-  updatePointSpheresOnVerticesPositions();
+  M.handle_showVerticesStateChange(state);
+  // updatePointSpheresOnVerticesPositions();
 }
 
 void Scene::handle_saveModel(const std::__cxx11::string destinationDirectory) {
@@ -218,11 +223,7 @@ void Scene::handle_saveSegment(
   M.handle_saveSegment(destinationDirectory);
 }
 
-void Scene::contractMesh() {
-  M.handle_meshContraction();
-  if (m_showPointSpheresOnVertices)
-    updatePointSpheresOnVerticesPositions();
-}
+void Scene::handle_paintEdge() { M.handle_paintEdge(); }
 
 void Scene::setSceneUniforms(Shader *modelShader, Shader *axisShader) {
   modelShader->Use();
