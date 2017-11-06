@@ -130,7 +130,9 @@ private:
                                  // j in the ith segment.
   bool m_showContractedSegment{false};
   std::vector<std::vector<size_t>> m_skeletonMeshMapping; // used in Refinement
-  std::vector<PointSphere> fixedVerticesDrawingVector;
+  std::vector<PointSphere> pointSphereDrawingVector; // holds all the points
+                                                     // that should be drawn on
+                                                     // the model
   size_t edgeCounter{0};
   float step{0.1};
 

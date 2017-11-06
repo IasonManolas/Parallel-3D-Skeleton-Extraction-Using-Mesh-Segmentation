@@ -21,10 +21,6 @@ SpMatrix concatenateVertically(SpMatrix A, SpMatrix B) {
   return M;
 }
 
-std::vector<size_t> MeshContractor::getFixedVertices() {
-  return std::vector<size_t>(fixedVertices.begin(), fixedVertices.end());
-}
-
 MeshContractor::MeshContractor(CGALSurfaceMesh meshToContract /*,
                                std::vector<uint> indices*/)
     : m_M(meshToContract) {
@@ -106,22 +102,22 @@ void MeshContractor::contractMesh(const double volumeThresholdRatio) {
 //  //std::cout << fixedVerticesPositions << std::endl;
 //}
 
-void MeshContractor::computeFixedVertices() {
-  double faceRatioThreshold = 100000;
-  fixedVertices.clear();
-  for (CGALSurfaceMesh::face_index fi : m_M.faces()) {
-    if (m_initialFaceAreas[size_t(fi)] /
-            CGAL::Polygon_mesh_processing::face_area(fi, m_M) >
-        faceRatioThreshold) {
-      BOOST_FOREACH (CGALSurfaceMesh::vertex_index vd,
-                     vertices_around_face(m_M.halfedge(fi), m_M)) {
-        std::cout << vd << std::endl;
-        // isVertexFixed[size_t(vd)]=true;
-        fixedVertices.insert(size_t(vd));
-      }
-    }
-  }
-}
+// void MeshContractor::computeFixedVertices() {
+//  double faceRatioThreshold = 100000;
+//  fixedVertices.clear();
+//  for (CGALSurfaceMesh::face_index fi : m_M.faces()) {
+//    if (m_initialFaceAreas[size_t(fi)] /
+//            CGAL::Polygon_mesh_processing::face_area(fi, m_M) >
+//        faceRatioThreshold) {
+//      BOOST_FOREACH (CGALSurfaceMesh::vertex_index vd,
+//                     vertices_around_face(m_M.halfedge(fi), m_M)) {
+//        std::cout << vd << std::endl;
+//        // isVertexFixed[size_t(vd)]=true;
+//        fixedVertices.insert(size_t(vd));
+//      }
+//    }
+//  }
+//}
 void setMaximumNumber(SpMatrix &M, double maximumNumber) {
   for (int k = 0; k < M.outerSize(); ++k)
     for (SpMatrix::InnerIterator it(M, k); it; ++it) {
@@ -136,32 +132,37 @@ void setMaximumNumber(SpMatrix &M, double maximumNumber) {
 void MeshContractor::executeContractionReversingStep() {
   std::cout << "Contracting Mesh.." << std::endl;
 
-  m_iterationsCompleted--;
-  EigenMatrix V = m_previousVertexPositions[m_iterationsCompleted];
-  // printFixedVertices(V);
-  // printMatrix(V, "NewV");
-  updateMeshPositions(V);
-  // computeFixedVertices();
+  if (m_iterationsCompleted > 0) {
+    m_iterationsCompleted--;
+    EigenMatrix V = m_previousVertexPositions[m_iterationsCompleted];
+    // printFixedVertices(V);
+    // printMatrix(V, "NewV");
+    updateMeshPositions(V);
+    // computeFixedVertices();
 
-  // printSparseMatrix(m_Wl, "Wl");
-  m_Wl /= m_Sl;
-  // printVector(m_A, "m_A");
-  computeOneRingAreaVector();
-  // printSparseMatrix(m_Wh, "Wh");
-  updateWh();
-  // std::cout<<"number of fixed vertices:"<<fixedVertices.size()<<std::endl;
-  // printDiagonalElementsOfSparseMatrix(m_L, "L");
-  // m_L = computeLaplaceOperatorUsingIGL();
-  // m_previousDeltaCoords = m_L * V;
-  computeLaplaceOperator();
-  std::pair<double, int> maxPair = getMaximumAbsoluteDiagonalElement(m_L);
-  maxLIndex = maxPair.second;
-  std::cout << "Maximum element of L is:" << maxPair.second
-            << " with value:" << maxPair.first << std::endl;
-  //  setMaximumNumber(m_L,maxNumber);
-  // std::cout<<"Maximum element of L
-  // is:"<<getMaximumAbsoluteDiagonalElement(m_L)<<std::endl;
-
+    // printSparseMatrix(m_Wl, "Wl");
+    m_Wl /= m_Sl;
+    // printVector(m_A, "m_A");
+    computeOneRingAreaVector();
+    // printSparseMatrix(m_Wh, "Wh");
+    updateWh();
+    // std::cout<<"number of fixed vertices:"<<fixedVertices.size()<<std::endl;
+    // printDiagonalElementsOfSparseMatrix(m_L, "L");
+    // m_L = computeLaplaceOperatorUsingIGL();
+    // m_previousDeltaCoords = m_L * V;
+    computeLaplaceOperator();
+    VertexWithAttribute maxLVertex = getMaximumAbsoluteDiagonalElement(m_L);
+    std::cout << "Maximum L(" << maxLVertex.index << ")=" << maxLVertex.value
+              << std::endl;
+    std::cout << "maxL*Wl=" << maxLVertex.value << "*" << m_Wl.coeff(0, 0)
+              << "=" << maxLVertex.value * m_Wl.coeff(0, 0) << std::endl;
+    std::cout << "Wh(" << maxLVertex.index
+              << ")=" << m_Wh.coeff(maxLVertex.index, maxLVertex.index)
+              << std::endl;
+    //  setMaximumNumber(m_L,maxNumber);
+    // std::cout<<"Maximum element of L
+    // is:"<<getMaximumAbsoluteDiagonalElement(m_L)<<std::endl;
+  }
   std::cout << "Number of iterations completed:" << m_iterationsCompleted
             << std::endl;
   std::cout << "current volume/original volume="
@@ -193,12 +194,29 @@ void MeshContractor::executeContractionStep() {
   // m_L = computeLaplaceOperatorUsingIGL();
   // m_previousDeltaCoords = m_L * V;
   computeLaplaceOperator();
-  std::pair<double, int> maxPair = getMaximumAbsoluteDiagonalElement(m_L);
-  maxLIndex = maxPair.second;
-  std::cout << "Maximum diagonal element of L is vertex:" << maxPair.second
-            << " with value:" << maxPair.first << std::endl;
-  std::cout << "Vertex " << maxPair.second << " has Wh(" << maxPair.second
-            << ")=" << m_Wh.coeff(maxPair.second, maxPair.second) << std::endl;
+  // printDiagonalElementsOfSparseMatrix(m_L, "L");
+  if (maxLtoWhIndex != -1)
+    previousMaxLtoWhIndex = maxLtoWhIndex;
+  VertexWithAttribute maxLtoWhVertex = getMaximumLtoWhRatio(m_L, m_Wh);
+  std::cout << "Vertex " << maxLtoWhVertex.index
+            << " has the maximum ratio:r=|L/Wh|="
+            << "|" << m_L.coeff(maxLtoWhVertex.index, maxLtoWhVertex.index)
+            << "/" << m_Wh.coeff(maxLtoWhVertex.index, maxLtoWhVertex.index)
+            << "| =" << maxLtoWhVertex.value << std::endl;
+  maxLtoWhIndex = maxLtoWhVertex.index;
+
+  VertexWithAttribute maxLVertex = getMaximumAbsoluteDiagonalElement(m_L);
+  std::cout << "Maximum L(" << maxLVertex.index << ")=" << maxLVertex.value
+            << std::endl;
+  std::cout << "maxL*Wl=" << maxLVertex.value << "*" << m_Wl.coeff(0, 0) << "="
+            << maxLVertex.value * m_Wl.coeff(0, 0) << std::endl;
+  std::cout << "Wh(" << maxLVertex.index
+            << ")=" << m_Wh.coeff(maxLVertex.index, maxLVertex.index)
+            << std::endl;
+
+  size_t numPositiveDiagonalElements = getNumberOfPositiveDiagonalElements(m_L);
+  std::cout << "Number of positive diagonal elements:"
+            << numPositiveDiagonalElements << std::endl;
   //  setMaximumNumber(m_L,maxNumber);
   // std::cout<<"Maximum element of L
   // is:"<<getMaximumAbsoluteDiagonalElement(m_L)<<std::endl;
@@ -232,8 +250,9 @@ void MeshContractor::updateMeshPositions(EigenMatrix Vnew) {
 EigenMatrix MeshContractor::solveForNewVertexPositions(
     EigenMatrix currentVertexPositions) /*const*/ {
 
-  std::vector<size_t> fixedIndices = getFixedVertices();
-  std::cout << "Number of fixed vertices:" << fixedIndices.size() << std::endl;
+  // std::vector<size_t> fixedIndices = getFixedVertices();
+  // std::cout << "Number of fixed vertices:" << fixedIndices.size() <<
+  // std::endl;
 
   // for (size_t index = 0; index < m_M.number_of_vertices(); index++) {
   // for (auto index : fixedIndices) {
@@ -292,8 +311,17 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
 void MeshContractor::updateWl() { m_Wl *= m_Sl; }
 
 void MeshContractor::updateWh() {
+  lowOneRingAreaVertices.clear();
+  highOneRingAreaVertices.clear();
   for (size_t i = 0; i < m_M.number_of_vertices(); i++) {
     double initialToCurrentAreaRatio = m_A0(i) / m_A(i);
+    if (m_A(i) == 0)
+      std::cout << "ZERO AREA in function" << __func__ << std::endl;
+    if (initialToCurrentAreaRatio > 100)
+      lowOneRingAreaVertices.insert(i);
+    else
+      highOneRingAreaVertices.insert(i);
+
     double m_Whi = std::sqrt(initialToCurrentAreaRatio);
     assert(!std::isinf(m_Whi));
     assert(!std::isnan(m_Whi));
@@ -317,7 +345,6 @@ double MeshContractor::computeOneRingAreaAroundVertex(
 }
 
 void MeshContractor::computeLaplaceOperator() {
-  fixedVertices.clear();
 
   previousLaplaceOperator = m_L;
   m_L = SpMatrix(m_M.number_of_vertices(), m_M.number_of_vertices());
@@ -333,10 +360,11 @@ void MeshContractor::computeLaplaceOperator() {
     boost::optional<double> optionalWeight = computeCotangentWeight(ei);
     double weight;
     if (optionalWeight)
-      weight = optionalWeight.get() / 2;
+      weight = optionalWeight.get() / 4;
     else {
-      fixedVertices.insert(i);
-      fixedVertices.insert(j);
+      weight = std::pow(10, 6);
+      // fixedVertices.insert(i);
+      // fixedVertices.insert(j);
       // weight = previousLaplaceOperator.coeff(i, j);
       // std::cout << "Using previous cotangent weight for:" << i << "," << j
       //          << " with value:" << weight << std::endl;
@@ -421,8 +449,7 @@ MeshContractor::computeCotangentValue(Kernel::Vector_3 a,
   double sine = std::sqrt(sineSquared);
   assert(!std::isnan(sine));
   if (sine == 0) {
-    std::cout << "Handled zero sine issue." << std::endl;
-    std::cout << "sineSquared:" << sineSquared << std::endl;
+    std::cout << "SIN==0" << std::endl;
     return boost::none;
   }
 

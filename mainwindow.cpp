@@ -23,7 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
           SLOT(showVerticesStateChange(int)));
   connect(this, SIGNAL(actionSaveModelTriggered(std::string)), ui->openGLWidget,
           SLOT(saveModel(std::string)));
-  connect(this,SIGNAL(actionSaveSegmentTriggered(std::string)),ui->openGLWidget,SLOT(saveSegment(std::string)));
+  connect(this, SIGNAL(actionSaveSegmentTriggered(std::string)),
+          ui->openGLWidget, SLOT(saveSegment(std::string)));
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -40,7 +41,7 @@ void MainWindow::on_actionOpenFile_triggered() {
     emit modelLoaded(filenameString);
   }
   // uncheck show vertices when model is loaded
-  ui->checkBoxShowVertices->setChecked(false);
+  // ui->checkBoxShowVertices->setChecked(false);
 }
 
 void MainWindow::on_checkBoxMeshSurface_clicked(bool state) {
@@ -66,8 +67,7 @@ void MainWindow::on_actionSave_Model_triggered() {
   }
 }
 
-void MainWindow::on_actionSave_Segment_triggered()
-{
+void MainWindow::on_actionSave_Segment_triggered() {
   QString destinationDirectory = QFileDialog::getSaveFileName(
       this, tr("Save Model"), "../Models/", tr("Object file(*.off)"));
   if (destinationDirectory != NULL) {
@@ -75,7 +75,4 @@ void MainWindow::on_actionSave_Segment_triggered()
         destinationDirectory.toUtf8().constData();
     emit actionSaveSegmentTriggered(destinationDirectory_std);
   }
-    
 }
-
-

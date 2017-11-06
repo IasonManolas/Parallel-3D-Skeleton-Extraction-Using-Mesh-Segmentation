@@ -73,8 +73,6 @@ public:
   void handle_saveModel(const std::string destinationDirectory);
   void handle_saveSegment(const std::string destinationDirectory);
 
-  void handle_paintEdge();
-
 private:
   void loadPointSphere();
   void setProjectionMatrixUniform(Shader *shader);
@@ -83,7 +81,6 @@ private:
   bool rayIntersectsPolyhedron(const int &mouseX, const int &mouseY,
                                const int width, const int height,
                                Ray_intersection &intersection);
-  void updatePointSpheresOnVerticesPositions();
 
   void setSkeletonShaderUniforms(Shader *shader);
 };

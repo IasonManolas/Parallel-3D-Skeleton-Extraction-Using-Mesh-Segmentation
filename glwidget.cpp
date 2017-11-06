@@ -107,8 +107,6 @@ void GLWidget::cameraZoomChange_signal(float delta) {
 
 void GLWidget::cameraReset_signal() { scene.handle_cameraReset(); }
 
-void GLWidget::paintEdge_signal() { scene.handle_paintEdge(); }
-
 void GLWidget::initializeShaders() {
   defaultShader =
       new Shader("../shaders/vertex.glsl", "../shaders/fragment.glsl");
@@ -195,10 +193,6 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
     refinementEmbedding_signal();
     break;
 
-  case Qt::Key_E:
-    // makeCurrent();
-    paintEdge_signal();
-    break;
   case Qt::Key_A:
     scene.M.skeleton.updateMeshBuffers();
     break;
