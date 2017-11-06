@@ -129,18 +129,19 @@ bool hasInfinity(EigenMatrix M) {
 //            << std::endl;
 //  return highLIndices;
 //}
-#include <igl/cotmatrix.h>
-SpMatrix MeshContractor::computeLaplaceOperatorUsingIGL() {
-  EigenMatrix V = constructVertexMatrix();
-  SpMatrix igl_L;
-  igl::cotmatrix(V, F, igl_L);
-  return igl_L;
-  // removeInfinity(m_L);
-  // printSparseMatrix(m_L, "L");
 
-  // printSparseMatrix(m_L, "L");
-  // assert(!hasNaN(m_L));
-  // if (hasNaN(m_L))
-  //  fixNaN(m_L);
-}
+//#include <igl/cotmatrix.h>
+//SpMatrix MeshContractor::computeLaplaceOperatorUsingIGL() {
+//  EigenMatrix V = constructVertexMatrix();
+//  SpMatrix igl_L;
+//  igl::cotmatrix(V, F, igl_L);
+//  return igl_L;
+//  // removeInfinity(m_L);
+//  // printSparseMatrix(m_L, "L");
+//
+//  // printSparseMatrix(m_L, "L");
+//  // assert(!hasNaN(m_L));
+//  // if (hasNaN(m_L))
+//  //  fixNaN(m_L);
+//}
 #endif // DEBUG_MESHCONTRACTOR_H

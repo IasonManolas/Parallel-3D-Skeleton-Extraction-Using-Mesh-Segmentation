@@ -131,7 +131,7 @@ inline float findAverageEdgeLength(const CGALSurfaceMesh &M) {
     // random number in range [0,M.number_of_vertices()-1]
     int vertexIndex = rand() % M.number_of_vertices();
 
-    CGALSurfaceMesh::Halfedge_index hi = M.halfedge(vertexIndex);
+    CGALSurfaceMesh::Halfedge_index hi = M.halfedge(CGALSurfaceMesh::vertex_index(vertexIndex));
     double edgeLength =
         CGAL::Polygon_mesh_processing::edge_length(M.edge(hi), M);
     sum += edgeLength;
