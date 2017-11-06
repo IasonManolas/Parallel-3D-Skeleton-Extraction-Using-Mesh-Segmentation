@@ -83,7 +83,7 @@ private:
   std::vector<MyVertex> vertices;
   std::vector<GLuint> indices;
   double m_desiredRadius;
-  double m_radius_averageEdge_proportion{0.15};
+  double m_radius_averageEdge_proportion{0.10};
   CGALSurfaceMesh::Point m_position;
   Material m_material{Material(glm::vec3(1, 0, 0), glm::vec3(1, 0, 0),
                                glm::vec3(1, 0, 0), 128 * 0.25)};

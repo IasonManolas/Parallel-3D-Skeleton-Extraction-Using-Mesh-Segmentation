@@ -1,70 +1,15 @@
 #include "mesh.h"
 
-// bool icompare_pred(unsigned char a, unsigned char b) {
-//  return std::tolower(a) == std::tolower(b);
-//}
-//
-// bool iscompare(std::string const &a, std::string const &b) {
-//  if (a.length() == b.length()) {
-//    return std::equal(b.begin(), b.end(), a.begin(), icompare_pred);
-//  } else {
-//    return false;
-//  }
-//}
-// bool isAnObjFile(std::string filename) {
-//  std::string fileExtension(filename.end() - 3, filename.end());
-//  return iscompare(fileExtension, "obj");
-//}
-//
-// bool isAnOffFile(std::string filename) {
-//  std::string fileExtension(filename.end() - 3, filename.end());
-//  return iscompare(fileExtension, "off");
-//}
-
 void Mesh::loadPointSphere(PointSphere ps) { m_PS = ps; }
 
 void Mesh::handle_showVerticesStateChange(int state) {
   m_showPointSpheresOnVertices = bool(state);
 }
 
-void Mesh::handle_paintEdge() {
-  // std::vector<size_t> edge{0 + edgeCounter, 1 + edgeCounter};
-  skeleton.clear();
-  // std::vector<size_t> edge0{0, 1}, edge1{3, 4}, edge2{5, 6};
-  // std::vector<size_t> edge{0, 3};
-  // std::vector<std::vector<size_t>> edges{edge0, edge1, edge2};
-  std::vector<std::vector<size_t>> edges{{3, 0, 2, 1}};
-  addToSkeleton(edges, m_M);
-  // edgeCounter++;
-  // skeleton.append({}, {m_M.point(CGALSurfaceMesh::vertex_index(0)),
-  //                     m_M.point(CGALSurfaceMesh::vertex_index(1))});
-
-  // NOTE H SEIRA PAIZEI ROLO! AYTO EINAI LATHOS
-  // if (edgeCounter % 2 == 0) {
-  //  skeleton.append(
-  //      {}, {CGALSurfaceMesh::Point(0, 0, 0), CGALSurfaceMesh::Point(1, 1,
-  //      0)});
-  //  skeleton.append({{0, 1}}, {CGALSurfaceMesh::Point(0, 0, 0),
-  //                             CGALSurfaceMesh::Point(10, 0, 0)});
-  //} else {
-  //  skeleton.append(
-  //      {}, {CGALSurfaceMesh::Point(0, 1, 0), CGALSurfaceMesh::Point(0, -1,
-  //      0),
-  //           CGALSurfaceMesh::Point(1, 0, 0), CGALSurfaceMesh::Point(0, 1,
-  //           0)});
-  //}
-  // skeleton.m_vertices[0].x += step;
-  // skeleton.m_vertices.clear();
-  // skeleton.m_indices.clear();
-  // skeleton.m_vertices.push_back(glm::vec3(-1.0 + pointStep, 0, 0));
-  // skeleton.m_vertices.push_back(glm::vec3(1.5, 0, 0));
-  // skeleton.m_indices.push_back(0);
-  // skeleton.m_indices.push_back(1);
-}
-
 void Mesh::resetMeshAttributes() {
   m_indices.clear();
   m_vertices.clear();
+  pointSphereDrawingVector.clear();
   centerOfMass = glm::vec3(0.0);
   m_modelMatrix = glm::mat4(1.0);
   segmentsComputed = false;
@@ -187,7 +132,7 @@ void Mesh::handle_drawing(Shader *shader, Shader *skeletonShader,
 
   if (m_showPointSpheresOnVertices) {
     // draw specific vertices
-    for (PointSphere s : fixedVerticesDrawingVector) {
+    for (PointSphere s : pointSphereDrawingVector) {
       s.handle_drawing(shader, m_modelMatrix);
     }
   }
@@ -330,7 +275,9 @@ void Mesh::handle_saveModel(std::__cxx11::string destinationPathAndFileName) {
   if (!outFile) {
     std::cerr << "Can't save file: " << destinationPathAndFileName << std::endl;
   } else {
-    CGAL::write_off(outFile, m_M);
+    if (!CGAL::write_off(outFile, m_M))
+      std::cerr << "Can't save file: " << destinationPathAndFileName
+                << std::endl;
   }
   outFile.close();
 }
@@ -356,12 +303,18 @@ void Mesh::handle_meshContractionReversing() {
   DrawableMesh::updateDrawingVertices();
   updateMeshBuffers();
 
-  fixedVerticesDrawingVector.clear();
-  for (size_t vi : MC.getFixedVertices()) {
+  pointSphereDrawingVector.clear();
+  for (size_t vi : MC.getLowOneRingAreaVertices()) {
     PointSphere ps = m_PS;
     ps.setPosition(m_M.point(CGALSurfaceMesh::vertex_index(vi)));
     ps.setColor(glm::vec3(1, 0, 0));
-    fixedVerticesDrawingVector.push_back(ps);
+    pointSphereDrawingVector.push_back(ps);
+  }
+  for (size_t vi : MC.getHighOneRingAreaVertices()) {
+    PointSphere ps = m_PS;
+    ps.setPosition(m_M.point(CGALSurfaceMesh::vertex_index(vi)));
+    ps.setColor(glm::vec3(0, 1, 0));
+    pointSphereDrawingVector.push_back(ps);
   }
 }
 
@@ -375,12 +328,18 @@ void Mesh::handle_meshContraction() {
   DrawableMesh::updateDrawingVertices();
   updateMeshBuffers();
 
-  fixedVerticesDrawingVector.clear();
-  for (size_t vi : MC.getFixedVertices()) {
+  pointSphereDrawingVector.clear();
+  for (size_t vi : MC.getLowOneRingAreaVertices()) {
     PointSphere ps = m_PS;
     ps.setPosition(m_M.point(CGALSurfaceMesh::vertex_index(vi)));
     ps.setColor(glm::vec3(1, 0, 0));
-    fixedVerticesDrawingVector.push_back(ps);
+    pointSphereDrawingVector.push_back(ps);
+  }
+  for (size_t vi : MC.getHighOneRingAreaVertices()) {
+    PointSphere ps = m_PS;
+    ps.setPosition(m_M.point(CGALSurfaceMesh::vertex_index(vi)));
+    ps.setColor(glm::vec3(0, 1, 0));
+    pointSphereDrawingVector.push_back(ps);
   }
 }
 

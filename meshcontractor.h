@@ -40,11 +40,19 @@ public:
   void executeContractionStep();
   void executeContractionReversingStep();
 
-  size_t getMaxLIndex() { return maxLIndex; }
+  size_t getMaxLToWhIndex() { return maxLtoWhIndex; }
+  size_t getPreviousMaxLToWhIndex() { return previousMaxLtoWhIndex; }
   std::vector<size_t> getVerticesForWhichPreviousCotWeightWasUsed() {
     return problematicVertices;
   }
-  std::vector<size_t> getFixedVertices();
+  std::vector<size_t> getLowOneRingAreaVertices() {
+    return std::vector<size_t>{lowOneRingAreaVertices.begin(),
+                               lowOneRingAreaVertices.end()};
+  }
+  std::vector<size_t> getHighOneRingAreaVertices() {
+    return std::vector<size_t>{highOneRingAreaVertices.begin(),
+                               highOneRingAreaVertices.end()};
+  }
   void printFixedVertices(EigenMatrix verticesMatrix);
 
 private:
@@ -67,7 +75,8 @@ private:
   static constexpr size_t m_maxNumOfIterations{100};
   size_t m_iterationsCompleted{0};
 
-  std::set<size_t> fixedVertices;
+  std::set<size_t> lowOneRingAreaVertices;
+  std::set<size_t> highOneRingAreaVertices;
   std::vector<double> m_initialFaceAreas;
   std::vector<bool> isVertexFixed;
 
@@ -93,7 +102,8 @@ private:
   computeCotangentWeight(CGALSurfaceMesh::halfedge_index hei) const;
   boost::optional<double> computeCotangentValue(Kernel::Vector_3,
                                                 Kernel::Vector_3) const;
-  size_t maxLIndex;
+  int maxLtoWhIndex{-1};
+  int previousMaxLtoWhIndex{-1};
   std::vector<size_t> problematicVertices;
 };
 

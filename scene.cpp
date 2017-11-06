@@ -42,7 +42,8 @@ void Scene::initializeScene() {
   PS.setPosition(0, 0, 0);
   // loadMesh("../Models/Small/test.obj");
 
-  loadMesh("../Models/bunny_low.obj");
+  loadMesh("../Models/tyra_rightFoot.off");
+  // loadMesh("../Models/bunny_low.obj");
   // loadMesh("../Models/cylinder.obj");
   // loadMesh("../Models/Small/coctel.obj");
   // loadMesh("../Models/Small/Wrong by assimp/stretched cube.obj");
@@ -150,60 +151,6 @@ bool Scene::rayIntersectsPolyhedron(const int &mouseX, const int &mouseY,
   return false;
 }
 
-void Scene::updatePointSpheresOnVerticesPositions() {
-  m_pointSpheresOnVertices.clear();
-  // std::vector<size_t> highLVertices =
-  //    M.getVertexIndicesWithHighLaplacianValue();
-  std::vector<size_t> fixedVertices = M.MC.getFixedVertices();
-  for (const size_t v : fixedVertices) {
-    PointSphere tempPS = PS;
-    auto p(M.getM().point(CGALSurfaceMesh::vertex_index(v)));
-    tempPS.setPosition(p);
-    tempPS.setColor(glm::vec3(1, 0, 0));
-    tempPS.doubleSize();
-    m_pointSpheresOnVertices.push_back(tempPS);
-  }
-  // for (const auto v : M.M.vertices()) {
-  //   PointSphere tempPS = PS;
-  //   auto p(M.M.point(v));
-  //   tempPS.setPosition(p);
-  //   // if (std::find(highLVertices.begin(), highLVertices.end(), size_t(v))
-  //   !=
-  //   //     highLVertices.end()) {
-  //   //   tempPS.setColor(glm::vec3(0, 1, 0));
-  //   //   tempPS.doubleSize();
-  //   //   tempPS.doubleSize();
-  //   //   tempPS.doubleSize();
-  //   // }
-  //   m_pointSpheresOnVertices.push_back(tempPS);
-  // }
-  // for (size_t v : highLVertices) {
-  //   PointSphere tempPS = PS;
-  //   auto p(M.M.point(CGALSurfaceMesh::vertex_index(v)));
-  //   tempPS.setPosition(p);
-  //   if (std::find(highLVertices.begin(), highLVertices.end(), v) !=
-  //       highLVertices.end()) {
-  //     tempPS.setColor(glm::vec3(0, 1, 0));
-  //     tempPS.doubleSize();
-  //     tempPS.doubleSize();
-  //   }
-  //   m_pointSpheresOnVertices.push_back(tempPS);
-  // }
-  // for (size_t v : highLVerticesInPreviousIteration) {
-  //   PointSphere tempPS = PS;
-  //   auto p(M.M.point(CGALSurfaceMesh::vertex_index(v)));
-  //   tempPS.setPosition(p);
-  //   if (std::find(highLVertices.begin(), highLVertices.end(), v) !=
-  //       highLVertices.end()) {
-  //     tempPS.setColor(glm::vec3(1, 0, 0));
-  //     tempPS.doubleSize();
-  //     tempPS.doubleSize();
-  //   }
-  //   m_pointSpheresOnVertices.push_back(tempPS);
-  // }
-  // highLVerticesInPreviousIteration = highLVertices;
-}
-
 void Scene::handle_mouseMovement(const QVector2D &mouseDV) {
   camera.processMouseMovement(mouseDV);
   light.changeLightDirection(camera.getPosition());
@@ -222,8 +169,6 @@ void Scene::handle_saveSegment(
     const std::__cxx11::string destinationDirectory) {
   M.handle_saveSegment(destinationDirectory);
 }
-
-void Scene::handle_paintEdge() { M.handle_paintEdge(); }
 
 void Scene::setSceneUniforms(Shader *modelShader, Shader *axisShader) {
   modelShader->Use();

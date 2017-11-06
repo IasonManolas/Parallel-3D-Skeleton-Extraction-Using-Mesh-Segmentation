@@ -1,7 +1,29 @@
 #ifndef DEBUG_MESHCONTRACTOR_H
 #define DEBUG_MESHCONTRACTOR_H
 
-std::pair<double, int> getMaximumAbsoluteDiagonalElement(SpMatrix M) {
+struct VertexWithAttribute {
+  size_t index;
+  double value;
+  VertexWithAttribute(size_t i, double v) : index(i), value(v) {}
+};
+
+VertexWithAttribute getMaximumLtoWhRatio(SpMatrix L, SpMatrix Wh) {
+  double maxRatio = 0;
+  size_t maxIndex;
+  double ratio;
+  for (int i = 0; i < L.outerSize(); ++i) {
+    double Lii = std::abs(L.coeff(i, i));
+    double Whii = Wh.coeff(i, i);
+    ratio = Lii / Whii;
+    if (ratio > maxRatio) {
+      maxIndex = i;
+      maxRatio = ratio;
+    }
+  }
+  return VertexWithAttribute(maxIndex, maxRatio);
+}
+
+VertexWithAttribute getMaximumAbsoluteDiagonalElement(SpMatrix M) {
   double maxNumber = 0;
   int maxIndex = -1;
   for (int index = 0; index < M.outerSize(); ++index) {
@@ -12,7 +34,7 @@ std::pair<double, int> getMaximumAbsoluteDiagonalElement(SpMatrix M) {
     }
   }
 
-  return std::make_pair(maxNumber, maxIndex);
+  return VertexWithAttribute(maxIndex, maxNumber);
 }
 
 bool hasNaN(EigenMatrix M) {
@@ -38,6 +60,14 @@ bool hasNaN(SpMatrix M) {
     }
   }
   return false;
+}
+size_t getNumberOfPositiveDiagonalElements(SpMatrix M) {
+  size_t numberOfPositiveDiagonalElements{0};
+  for (int k = 0; k < M.outerSize(); ++k)
+    if (M.coeff(k, k) > 0)
+      numberOfPositiveDiagonalElements++;
+
+  return numberOfPositiveDiagonalElements;
 }
 
 void printSparseMatrix(SpMatrix M, std::string matrixName) {
