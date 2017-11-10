@@ -25,7 +25,7 @@ void Mesh::load(std::string filename) {
   normalizeMeshViaModelMatrix();
   initializeDrawingBuffers();
 
-  skeleton.initializeDrawingBuffers();
+  skeleton.initialize();
   segment.initialize();
 
   createCGALSurfaceMesh();
@@ -38,7 +38,7 @@ void Mesh::load(std::string filename) {
 
 void Mesh::assignSegmentColors() {
   for (CGALSurfaceMesh::face_index fIndex : m_M.faces()) {
-    std::size_t segmentIndex = segmentFaceMap[fIndex];
+    std::size_t segmentIndex = m_segmentFaceMap[fIndex];
     glm::vec3 color = colorPalette[segmentIndex];
     for (CGALSurfaceMesh::vertex_index vi :
          m_M.vertices_around_face(m_M.halfedge(fIndex))) {
@@ -71,7 +71,7 @@ size_t Mesh::constructSegmentMap() {
   // create a property-map ean are you sure the edge sean are you sure the
   // edge shared by two triangles is not duplicatehared by two triangles is
   // not duplicatefor segment-id
-  segmentFaceMap =
+  m_segmentFaceMap =
       m_M.add_property_map<face_descriptor, std::size_t>("f:sid").first;
   ;
   segmentsComputed = true;
@@ -80,7 +80,7 @@ size_t Mesh::constructSegmentMap() {
   // Any other scalar values can be used instead of using SDF values computed
   // using the CGAL function
   std::size_t number_of_segments =
-      CGAL::segmentation_via_sdf_values(m_M, segmentFaceMap);
+      CGAL::segmentation_via_sdf_values(m_M, m_segmentFaceMap);
 
   std::cout << "Number of segments: " << number_of_segments << std::endl;
   return number_of_segments;
@@ -159,7 +159,7 @@ void Mesh::populateVerticesAndIndices(std::__cxx11::string filename) {
 
 std::size_t Mesh::getCorrespondingSegmentIndex(
     const CGALSurfaceMesh::Face_index face_index) const {
-  return segmentFaceMap[face_index];
+  return m_segmentFaceMap[face_index];
 }
 
 Ray_intersection Mesh::intersects(Kernel::Ray_3 ray) const {
@@ -209,14 +209,12 @@ void Mesh::normalizeMeshViaModelMatrix() {
 
 MeshSegment Mesh::getMeshSegment() const {
   assert(selectedSegmentIndex);
-  std::cout << "Using segment " << selectedSegmentIndex.get()
-            << " to construct MeshSegment." << std::endl;
-  MeshSegment S(m_M, m_vertices, segmentFaceMap, selectedSegmentIndex.get(),
+  MeshSegment S(m_M, m_vertices, m_segmentFaceMap, selectedSegmentIndex.get(),
                 m_modelMatrix);
   return S;
 }
 MeshSegment Mesh::getMeshSegment(size_t segmentIndex) const {
-  MeshSegment S(m_M, m_vertices, segmentFaceMap, segmentIndex, m_modelMatrix);
+  MeshSegment S(m_M, m_vertices, m_segmentFaceMap, segmentIndex, m_modelMatrix);
   return S;
 }
 
@@ -226,6 +224,7 @@ void Mesh::handle_segmentSelection(Ray_intersection intersection) {
 
   std::cout << "Intersection segment:" << selectedSegmentIndex.get()
             << std::endl;
+
   colorPickedSegment();
   updateMeshBuffers();
 
@@ -235,13 +234,15 @@ void Mesh::handle_segmentSelection(Ray_intersection intersection) {
 
 size_t Mesh::computeSegments() {
   segmentsComputed = true;
-  return constructSegmentMap();
+  size_t numberOfSegments=constructSegmentMap();
+  return numberOfSegments;
 }
 
 void Mesh::handle_showSegments() {
   if (!segmentsComputed) {
     size_t numberOfSegments = computeSegments();
     assignSegmentColors();
+  constructSegmentGraph(numberOfSegments); //m_segmentGraph
     m_perSegmentSkeletonEdges.resize(numberOfSegments);
   }
   alphaValue = 1;
@@ -318,10 +319,13 @@ void Mesh::handle_meshContractionReversing() {
   }
 }
 
-void Mesh::handle_meshContraction() {
+void Mesh::handle_meshContraction(bool automatic) {
   if (m_M.has_garbage())
     m_M.collect_garbage();
 
+  if(automatic)
+  MC.contractMesh();
+  else
   MC.executeContractionStep();
   m_M = MC.getContractedMesh();
 
@@ -343,9 +347,11 @@ void Mesh::handle_meshContraction() {
   }
 }
 
-void Mesh::handle_segmentContraction() {
+void Mesh::handle_segmentContraction(bool automatic) {
   alphaValue = 0.4;
-  // SMC.contractMesh(std::pow(10, -4));
+  if(automatic)
+  SMC.contractMesh();
+  else
   SMC.executeContractionStep();
   CGALSurfaceMesh contractedSegment = SMC.getContractedMesh();
   segment.setM(contractedSegment);
@@ -388,10 +394,34 @@ void Mesh::addToSkeleton(
 
   skeleton.append(skeletonEdgesInSkeletonIndices, skeletonNodePositions);
 }
+
+void Mesh::constructSegmentGraph(size_t numberOfSegments)
+{
+   m_segmentGraph=UndirectedGraph(numberOfSegments);
+
+  for (CGALSurfaceMesh::face_index fIndex : m_M.faces()) {
+    size_t fSegmentIndex = getCorrespondingSegmentIndex(fIndex);
+
+    for(CGALSurfaceMesh::face_index neighbouringFaceIndex : m_M.faces_around_face(m_M.halfedge(fIndex))){
+        if(neighbouringFaceIndex==boost::graph_traits<CGALSurfaceMesh>::null_face()) continue;
+
+        size_t neigFSegmentIndex=getCorrespondingSegmentIndex(neighbouringFaceIndex);
+
+        if(fSegmentIndex!=neigFSegmentIndex)
+        {
+            bool successfullyAdded=m_segmentGraph.add_edge(fSegmentIndex,neigFSegmentIndex);
+            //assert(successfullyAdded);
+        }
+    }
+  }
+  std::cout<<"Segment graph has:"<<m_segmentGraph.num_vertices()<<" nodes"<<std::endl;
+  std::cout<<"Segment graph has:"<<m_segmentGraph.num_edges()<<" edges"<<std::endl;
+
+}
 void Mesh::handle_meshConnectivitySurgery() {
   ConnectivitySurgeon CS(m_M);
-  CS.extract_skeleton();
-  auto skeletonEdgesInMeshIndices = CS.getSkeleton();
+  CS.execute_connectivitySurgery();
+  auto skeletonEdgesInMeshIndices = CS.getSkeletonEdges();
   m_skeletonMeshMapping = CS.getSkeletonMeshMapping();
 
   addToSkeleton(skeletonEdgesInMeshIndices, m_M);
@@ -433,8 +463,8 @@ void Mesh::handle_segmentConnectivitySurgery() {
   assert(selectedSegmentIndex);
   CGALSurfaceMesh contractedSegment = segment.M();
   ConnectivitySurgeon CS(contractedSegment);
-  CS.extract_skeleton();
-  auto skeletonEdgesInMeshIndices = CS.getSkeleton();
+  CS.execute_connectivitySurgery();
+  auto skeletonEdgesInMeshIndices = CS.getSkeletonEdges();
 
   addToSkeleton(skeletonEdgesInMeshIndices, contractedSegment);
   m_showContractedSegment = false;

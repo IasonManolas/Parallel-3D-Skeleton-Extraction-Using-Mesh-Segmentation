@@ -121,9 +121,15 @@ void GLWidget::initializeShaders() {
 
 void GLWidget::contraction_signal() {
   if (mode == defaultView)
-    scene.handle_meshContraction();
+      if(contractionMode==automatic)
+    scene.handle_meshContraction(true);
+  else
+    scene.handle_meshContraction(false);
   else if (mode == segmentsView)
-    scene.handle_segmentContraction();
+      if(contractionMode==automatic)
+    scene.handle_segmentContraction(true);
+  else
+    scene.handle_segmentContraction(false);
 }
 
 void GLWidget::reverseContraction_signal() {
@@ -193,10 +199,6 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
     refinementEmbedding_signal();
     break;
 
-  case Qt::Key_A:
-    scene.M.skeleton.updateMeshBuffers();
-    break;
-
     // case Qt::Key_A:
     //  if (mode == contractSegment) {
     //    if (selectedSegmentIndex == -1) {
@@ -246,5 +248,22 @@ void GLWidget::saveModel(std::string destinationDirectory) {
   scene.handle_saveModel(destinationDirectory);
 }
 void GLWidget::saveSegment(std::string destinationDirectory) {
-  scene.handle_saveSegment(destinationDirectory);
+    scene.handle_saveSegment(destinationDirectory);
 }
+
+void GLWidget::updateContractionVolumeThreshold(int newThreshold)
+{
+    scene.M.MC.setVolumeThreshold(std::pow(10.0,newThreshold));
+}
+
+void GLWidget::updateContractionMode(bool newState)
+{
+   if(newState) contractionMode=automatic;
+   else contractionMode=manual;
+}
+
+void GLWidget::clearSkeleton()
+{
+   scene.handle_clearSkeleton();
+}
+

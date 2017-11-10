@@ -85,12 +85,12 @@ class ConnectivitySurgeon {
 
 public:
   ConnectivitySurgeon(const CGALSurfaceMesh &M) : m_M(M) {}
-  void extract_skeleton() {
+  void execute_connectivitySurgery() {
     init();
     collapse();
   }
 
-  std::vector<std::vector<size_t>> getSkeleton() {
+  std::vector<std::vector<size_t>> getSkeletonEdges() {
     std::vector<std::vector<size_t>> skeletonEdges;
     for (size_t i = 0; i < is_edge_deleted.size(); i++) {
       if (is_edge_deleted[i] == false) {

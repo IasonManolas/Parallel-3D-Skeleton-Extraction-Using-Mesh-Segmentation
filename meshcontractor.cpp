@@ -1,5 +1,7 @@
 #include "meshcontractor.h"
 #include "debug_meshcontractor.h"
+#include <Eigen/unsupported/Eigen/SparseExtra>
+double MeshContractor::m_volumeThreshold=std::pow(10,-6);
 SpMatrix concatenateVertically(SpMatrix A, SpMatrix B) {
   // A
   //---
@@ -82,9 +84,9 @@ MeshContractor::MeshContractor(CGALSurfaceMesh meshToContract /*,
         CGAL::Polygon_mesh_processing::face_area(fi, m_M));
 }
 
-void MeshContractor::contractMesh(const double volumeThresholdRatio) {
+void MeshContractor::contractMesh() {
   while (CGAL::Polygon_mesh_processing::volume(m_M) / m_originalVolume >
-             volumeThresholdRatio &&
+             m_volumeThreshold &&
          m_iterationsCompleted < m_maxNumOfIterations) {
     executeContractionStep();
   }
@@ -170,9 +172,14 @@ void MeshContractor::executeContractionReversingStep() {
             << std::endl;
 }
 
+void MeshContractor::setVolumeThreshold(double volumeThreshold)
+{
+    MeshContractor::m_volumeThreshold = volumeThreshold;
+}
+
 void MeshContractor::executeContractionStep() {
-  std::cout << "Contracting Mesh.." << std::endl;
-  EigenMatrix V = constructVertexMatrix();
+    std::cout << "Contracting Mesh.." << std::endl;
+    EigenMatrix V = constructVertexMatrix();
   // printMatrix(V, "V");
   // printFixedVertices(V);
 
@@ -265,6 +272,9 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
   SpMatrix WlL = m_Wl * m_L;
 
   SpMatrix A = concatenateVertically(WlL, m_Wh);
+  //Eigen::JacobiSVD<EigenMatrix> svd(EigenMatrix(A), Eigen::ComputeThinU | Eigen::ComputeThinV);
+  //std::cout << "Eigenvalues that are not exaclty 0:" << std::endl << svd.nonzeroSingularValues() << std::endl;
+  //Eigen::saveMarket(A,"../A.mat");
   // SpMatrix A(WlL.rows() + m_Wh.rows(), WlL.cols());
   // A << WlL, m_Wh;
   EigenMatrix Bupper = EigenMatrix::Zero(WlL.rows(), 3);
@@ -279,14 +289,40 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
   EigenMatrix B(Bupper.rows() + Blower.rows(), 3);
   B << Bupper, Blower;
 
+  //EigenMatrix newVertexPositions =svd.solve(B);
+
   // Solve system using SimplicialLDLT
   Eigen::SimplicialLDLT<SpMatrix> solver;
-  SpMatrix At = A.transpose();
-  SpMatrix AtA = A.transpose() * A;
-  solver.compute(AtA);
-  EigenMatrix AtB = A.transpose() * B;
-
+ SpMatrix At = A.transpose();
+ SpMatrix AtA = A.transpose() * A;
+ solver.compute(AtA);
+ EigenMatrix AtB = A.transpose() * B;
   EigenMatrix newVertexPositions = solver.solve(AtB);
+  assert(!hasInfinity(At));
+  assert(!hasNaN(At));
+  assert(!hasNaN(AtA));
+  assert(!hasNaN(AtB));
+  assert(!hasInfinity(AtA));
+  assert(!hasInfinity(AtB));
+
+ // Eigen::LeastSquaresConjugateGradient<SpMatrix> solver;
+ // solver.compute(A);
+ //if(solver.info()!=Eigen::Success)
+ //    std::cout<<"Decomposition failed!"<<std::endl;
+ // EigenMatrix newVertexPositions=solver.solve(B);
+ //if(solver.info()!=Eigen::Success)
+ //    std::cout<<"Solving failed!"<<std::endl;
+
+  //BiCGSTAB
+  //Eigen::BiCGSTAB<SpMatrix> solver;
+  //solver.compute(A);
+  //EigenMatrix newVertexPositions=solver.solve(B);
+  //std::cout << "estimated error: " << solver.error()<< std::endl;
+
+  //Eigen::ConjugateGradient<SpMatrix,Eigen::Lower|Eigen::Upper> solver;
+  //solver.compute(A);
+  //EigenMatrix newVertexPositions=solver.solve(B);
+  //std::cout << "estimated error: " << solver.error()<< std::endl;
 
   assert(!hasInfinity(m_L));
   assert(!hasInfinity(m_Wl));
@@ -294,14 +330,8 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
   assert(!hasNaN(WlL));
   assert(!hasInfinity(B));
   assert(!hasNaN(B));
-  assert(!hasNaN(At));
   assert(!hasNaN(A));
-  assert(!hasInfinity(At));
   assert(!hasInfinity(A));
-  assert(!hasNaN(AtA));
-  assert(!hasInfinity(AtA));
-  assert(!hasNaN(AtB));
-  assert(!hasInfinity(AtB));
   assert(!hasNaN(newVertexPositions));
   assert(!hasInfinity(newVertexPositions));
 
@@ -429,14 +459,23 @@ MeshContractor::computeCotangentValue(Kernel::Vector_3 a,
   assert(dot_aa != 0 && !std::isinf(dot_aa));
   assert(dot_bb != 0 && !std::isinf(dot_bb));
 
-  double cosine = dot_ab / CGAL::sqrt(dot_aa) / CGAL::sqrt(dot_bb);
-  // double lb=-0.99999999999;
-  // double ub=0.999999999999;
-  // cosine = (cosine < lb) ? lb : cosine;
-  // cosine = (cosine > ub) ? ub : cosine;
+  double cosine = dot_ab / (CGAL::sqrt(dot_aa) * CGAL::sqrt(dot_bb));
+  if (!(cosine>= -1 &&cosine<= 1)) {
+    std::cout << "cosine value out of bounds:" << cosine<< std::endl;
+    if (cosine< -1)
+      cosine= -1;
+    else
+      cosine= 1;
+  }
+
   double cosineSquared = cosine * cosine;
-  // cosineSquared = (cosineSquared < lb) ? lb : cosineSquared;
-  // cosineSquared = (cosineSquared > ub) ? ub : cosineSquared;
+  if (!(cosineSquared>= 0 && cosineSquared<= 1)) {
+    std::cout << "cosineSquared value out of bounds:" << cosineSquared << std::endl;
+    if (cosineSquared < 0)
+      cosineSquared = 0;
+    else
+      cosineSquared = 1;
+  }
   double sineSquared = double(1.0) - cosineSquared;
   if (!(sineSquared >= 0 && sineSquared <= 1)) {
     std::cout << "sineSquared value out of bounds:" << sineSquared << std::endl;
@@ -445,6 +484,12 @@ MeshContractor::computeCotangentValue(Kernel::Vector_3 a,
     else
       sineSquared = 1;
   }
+  // double lb=-0.99999999999;
+  // double ub=0.999999999999;
+  // cosine = (cosine < lb) ? lb : cosine;
+  // cosine = (cosine > ub) ? ub : cosine;
+  // cosineSquared = (cosineSquared < lb) ? lb : cosineSquared;
+  // cosineSquared = (cosineSquared > ub) ? ub : cosineSquared;
   assert(sineSquared >= 0 && sineSquared <= 1);
   double sine = std::sqrt(sineSquared);
   assert(!std::isnan(sine));
@@ -452,8 +497,10 @@ MeshContractor::computeCotangentValue(Kernel::Vector_3 a,
     std::cout << "SIN==0" << std::endl;
     return boost::none;
   }
-
-  return cosine / sine;
+  assert(sine>= -1 && sine<= 1);
+  assert(cosine>= -1 && cosine<= 1);
+  double cotWeight=cosine/sine;
+  return cotWeight;
 }
 
 CGALSurfaceMesh MeshContractor::getContractedMesh() const { return m_M; }

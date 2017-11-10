@@ -42,8 +42,8 @@ void Scene::initializeScene() {
   PS.setPosition(0, 0, 0);
   // loadMesh("../Models/Small/test.obj");
 
-  loadMesh("../Models/tyra_rightFoot.off");
-  // loadMesh("../Models/bunny_low.obj");
+  //loadMesh("../Models/tyra_rightFoot.off");
+   loadMesh("../Models/bunny_low.obj");
   // loadMesh("../Models/cylinder.obj");
   // loadMesh("../Models/Small/coctel.obj");
   // loadMesh("../Models/Small/Wrong by assimp/stretched cube.obj");
@@ -66,9 +66,9 @@ void Scene::handle_segmentSelection(float mousePosX, float mousePosY,
 
 void Scene::handle_showSegments() { M.handle_showSegments(); }
 
-void Scene::handle_segmentContraction() { M.handle_segmentContraction(); }
+void Scene::handle_segmentContraction(bool automatic) { M.handle_segmentContraction(automatic); }
 
-void Scene::handle_meshContraction() { M.handle_meshContraction(); }
+void Scene::handle_meshContraction(bool automatic) { M.handle_meshContraction(automatic); }
 
 void Scene::handle_meshConnectivitySurgery() {
   M.handle_meshConnectivitySurgery();
@@ -167,7 +167,12 @@ void Scene::handle_saveModel(const std::__cxx11::string destinationDirectory) {
 
 void Scene::handle_saveSegment(
     const std::__cxx11::string destinationDirectory) {
-  M.handle_saveSegment(destinationDirectory);
+    M.handle_saveSegment(destinationDirectory);
+}
+
+void Scene::handle_clearSkeleton()
+{
+    M.handle_clearSkeleton();
 }
 
 void Scene::setSceneUniforms(Shader *modelShader, Shader *axisShader) {
