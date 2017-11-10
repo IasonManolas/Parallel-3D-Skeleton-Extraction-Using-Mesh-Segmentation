@@ -36,7 +36,7 @@ public:
   MeshContractor(
       CGALSurfaceMesh meshToContract /*, std::vector<uint> indices*/);
   CGALSurfaceMesh getContractedMesh() const;
-  void contractMesh(const double volumeThreshold = std::pow(10, -6));
+  void contractMesh();
   void executeContractionStep();
   void executeContractionReversingStep();
 
@@ -55,12 +55,13 @@ public:
   }
   void printFixedVertices(EigenMatrix verticesMatrix);
 
+  void setVolumeThreshold(double volumeThreshold);
+
 private:
   // CGALSurfaceMesh &m_M;
   CGALSurfaceMesh m_M;
   double m_originalVolume;
-  double m_volumeThreshold{
-      std::pow(10, -6)}; // m_originalVolume/currentVolume least ratio so the
+  static double m_volumeThreshold; // m_originalVolume/currentVolume least ratio so the
                          // contraction process stops
   double m_Sl{2};
   SpMatrix m_Wh;

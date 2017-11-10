@@ -47,7 +47,9 @@ HEADERS  += mainwindow.h \
     debug_meshcontractor.h \
     drawablemesh.h \
     polygonalmesh.h \
-    drawableskeleton.h
+    drawableskeleton.h \
+    undirectedgraph.h \
+    meshskeleton.h
 #    tinyObjLoader/tiny_obj_loader.h
 
 FORMS    += mainwindow.ui

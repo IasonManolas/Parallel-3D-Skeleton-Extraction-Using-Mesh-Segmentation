@@ -33,6 +33,7 @@
 
 enum meshSurfaceVizualization { dontShowTriangles, showTriangles };
 enum Mode { defaultView, segmentsView };
+enum ContractionMode{automatic,manual};
 
 class GLWidget : public QOpenGLWidget {
   Q_OBJECT
@@ -76,6 +77,8 @@ private:
   int WIDTH{800};
   int HEIGHT{600};
   Mode mode{defaultView};
+  ContractionMode contractionMode{manual};
+
 
 public slots:
   void loadModel(std::string filename);
@@ -85,5 +88,8 @@ public slots:
   void showVerticesStateChange(int state);
   void saveModel(std::string);
   void saveSegment(std::string);
+  void updateContractionVolumeThreshold(int newThreshold);
+  void updateContractionMode(bool newState);
+  void clearSkeleton();
 };
 #endif // GLWIDGET_H

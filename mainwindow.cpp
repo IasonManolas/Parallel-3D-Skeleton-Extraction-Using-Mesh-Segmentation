@@ -25,6 +25,9 @@ MainWindow::MainWindow(QWidget *parent)
           SLOT(saveModel(std::string)));
   connect(this, SIGNAL(actionSaveSegmentTriggered(std::string)),
           ui->openGLWidget, SLOT(saveSegment(std::string)));
+  connect(this,SIGNAL(contractionVolumeThresholdChanged(int)),ui->openGLWidget,SLOT(updateContractionVolumeThreshold(int)));
+  connect(this,SIGNAL(updateContractionMode(bool)),ui->openGLWidget,SLOT(updateContractionMode(bool)));
+  connect(this,SIGNAL(clearSkeleton()),ui->openGLWidget,SLOT(clearSkeleton()));
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -75,4 +78,21 @@ void MainWindow::on_actionSave_Segment_triggered() {
         destinationDirectory.toUtf8().constData();
     emit actionSaveSegmentTriggered(destinationDirectory_std);
   }
+}
+
+void MainWindow::on_contractionThresholdSpinBox_valueChanged(int newThreshold)
+{
+    emit contractionVolumeThresholdChanged(newThreshold);
+
+}
+
+
+void MainWindow::on_contractionModeCheckBox_stateChanged(int arg1)
+{
+   emit updateContractionMode(bool(arg1));
+}
+
+void MainWindow::on_clearSkeletonButton_clicked()
+{
+   emit clearSkeleton();
 }

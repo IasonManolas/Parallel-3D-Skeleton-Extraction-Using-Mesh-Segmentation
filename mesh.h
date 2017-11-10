@@ -30,6 +30,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include <boost/optional/optional_io.hpp>
+#include <boost/graph/adjacency_list.hpp>
 //#include <QOpenGLContext>
 
 #include "meshloader.h"
@@ -43,10 +44,12 @@
 #include "pointsphere.h"
 #include "shader.h"
 #include "skeleton.h"
+#include "undirectedgraph.h"
 
 class Mesh : public DrawableMesh {
 public:
-  Mesh() : skeleton(Skeleton(m_PS, m_modelMatrix)) {}
+  Mesh() : skeleton(Skeleton(m_PS, m_modelMatrix)) {
+  }
 
   void load(std::string filename);
   void setUniforms(Shader *shader) override;
@@ -63,8 +66,8 @@ public:
   void colorPickedSegment();
   void handle_showSegments();
   void handle_meshContractionReversing();
-  void handle_meshContraction();
-  void handle_segmentContraction();
+  void handle_meshContraction(bool automatic);
+  void handle_segmentContraction(bool automatic);
   void handle_meshConnectivitySurgery();
   void handle_segmentConnectivitySurgery();
   void handle_meshRefinementEmbedding();
@@ -78,8 +81,8 @@ public:
   void handle_saveSegment(std::string destinationPathAndFileName);
   void loadPointSphere(PointSphere);
   void handle_showVerticesStateChange(int state);
+  void handle_clearSkeleton(){skeleton.clear();}
 
-  void handle_paintEdge();
   std::vector<size_t> getVertexIndicesWithHighLaplacianValue();
   // public data members
 public:
@@ -113,6 +116,7 @@ private:
                 const CGALSurfaceMesh &);
   void
   addToSkeleton(std::vector<std::vector<size_t>> skeletonEdgesInMeshIndices);
+  void constructSegmentGraph(size_t numberOfSegments); //populates m_segmentGraph
 
   CGALSurfaceMesh::Point computeCenterOfMass(
       std::vector<size_t> vertexIndices); // TODO merge to meshMeasuring
@@ -120,7 +124,8 @@ private:
 private:
   PointSphere m_PS;
 
-  Facet_int_map segmentFaceMap;
+  Facet_int_map m_segmentFaceMap;
+  UndirectedGraph m_segmentGraph;
   boost::optional<size_t> selectedSegmentIndex{boost::none};
 
   MeshContractor SMC; // segment mesh contractor

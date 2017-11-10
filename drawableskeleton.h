@@ -6,18 +6,22 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <vector>
+#include "pointsphere.h"
 
 class DrawableSkeleton {
 
 public:
-  DrawableSkeleton() {
-    m_vertices.push_back(glm::vec3(-1, 0, 0));
-    m_vertices.push_back(glm::vec3(1, 0, 0));
 
-    m_indices.push_back(0);
-    m_indices.push_back(1);
+  const PointSphere &m_PS;
+  const glm::mat4 &m_meshModelMatrix;
+  void Draw(Shader *skeletonShader, Shader *shader) {
+    skeletonShader->Use();
+    drawEdges();
+    shader->Use();
+    drawNodes(shader);
   }
-
+  // void setMaterial(const Material &value) { material = value; }
+private:
   void drawEdges() {
     glBindVertexArray(VAO);
     glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_INT, 0);
@@ -27,9 +31,14 @@ public:
 
     glBindVertexArray(0);
   }
-  // void setMaterial(const Material &value) { material = value; }
-private:
+  void drawNodes(Shader *shader) {
+    shader->Use();
+    for (PointSphere ps : m_drawingVector) {
+      ps.handle_drawing(shader, m_meshModelMatrix);
+    }
+  }
 protected:
+  std::vector<PointSphere> m_drawingVector;
   std::vector<glm::vec3> m_vertices;
   std::vector<uint> m_indices;
   uint VAO, VBO, EBO;
@@ -37,6 +46,8 @@ protected:
   //                  glm::vec3(0.5, 0.5, 0), // should be static constexpr
   //                  glm::vec3(0.6, 0.6, 0.5), 128 * 0.25};
 protected:
+  DrawableSkeleton(PointSphere &PS, glm::mat4 &modelMatrix):m_PS(PS),m_meshModelMatrix(modelMatrix) {
+  }
   void setUniforms() {}
 
   void updateMeshBuffers() {
@@ -44,16 +55,22 @@ protected:
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(glm::vec3),
-                 &m_vertices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, (m_vertices.size() + 1) * sizeof(glm::vec3),
+                 &m_vertices[0], GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLuint),
-                 &m_indices[0], GL_STATIC_DRAW);
+                 &m_indices[0], GL_DYNAMIC_DRAW);
 
-    glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                           (GLvoid *)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                          (GLvoid *)offsetof(glm::vec3, y));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                          (GLvoid *)offsetof(glm::vec3, z));
+    glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
   }
@@ -66,23 +83,28 @@ protected:
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(glm::vec3),
+    glBufferData(GL_ARRAY_BUFFER, (m_vertices.size() + 1) * sizeof(glm::vec3),
                  &m_vertices[0], GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLuint),
                  &m_indices[0], GL_DYNAMIC_DRAW);
 
-    glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                           (GLvoid *)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                          (GLvoid *)offsetof(glm::vec3, y));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                          (GLvoid *)offsetof(glm::vec3, z));
+    glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
     // std::cout << "printDebugInformation was called in "<<__func__<<std::endl;
     //     // printDebugInformation();
     //
   }
-
   void printDebugInformation() const {
     glBindVertexArray(VAO);
     for (int i = 0; i <= 1; i++) {

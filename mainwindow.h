@@ -25,6 +25,13 @@ private slots:
 
   void on_actionSave_Segment_triggered();
 
+  void on_contractionThresholdSpinBox_valueChanged(int newThreshold);
+
+
+  void on_contractionModeCheckBox_stateChanged(int arg1);
+
+  void on_clearSkeletonButton_clicked();
+
 signals:
   void modelLoaded(std::string filename);
   void stateCheckBoxAxesChanged(bool state);
@@ -33,6 +40,9 @@ signals:
   void stateCheckBoxShowVerticesChanged(int state);
   void actionSaveModelTriggered(std::string destination);
   void actionSaveSegmentTriggered(std::string destination);
+  void contractionVolumeThresholdChanged(int newValue);
+  void updateContractionMode(bool state);
+  void clearSkeleton();
 
 private:
   Ui::MainWindow *ui;
