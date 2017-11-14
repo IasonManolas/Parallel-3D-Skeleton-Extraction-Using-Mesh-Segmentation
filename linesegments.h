@@ -1,87 +1,30 @@
-#ifndef DRAWABLESKELETON_H
-#define DRAWABLESKELETON_H
+#ifndef LINESEGMENTS_H
+#define LINESEGMENTS_H
 
-#include "pointsphere.h"
 #include "shader.h"
-#include <glm/gtx/string_cast.hpp>
-#include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <vector>
 
-class DrawableSkeleton {
-
+class LineSegments {
 public:
-  void Draw(Shader *edgeShader, Shader *nodeShader, glm::mat4 meshModelMatrix) {
+  void Draw(Shader *edgeShader) const {
     edgeShader->Use();
-    GLint modelLoc = glGetUniformLocation(edgeShader->programID, "model");
-    if (modelLoc == -1)
-      std::cout << "Could not find model(matrix) uniform." << std::endl;
-    else
-      glUniformMatrix4fv(modelLoc, 1, GL_FALSE,
-                         glm::value_ptr(meshModelMatrix));
     drawEdges();
-    nodeShader->Use();
-    drawNodes(nodeShader, meshModelMatrix);
   }
-  // void setMaterial(const Material &value) { material = value; }
-private:
-  void drawEdges() {
-    glBindVertexArray(VAO);
-    glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_INT, 0);
-    // if (!m_vertices.empty())
-    //  for (auto vertex : m_vertices)
-    //    std::cout << glm::to_string(vertex) << std::endl;
+  LineSegments() {}
+  void clear() { m_vertices.clear(); }
 
-    glBindVertexArray(0);
-  }
-  void drawNodes(Shader *shader, glm::mat4 meshModelMatrix) {
-    shader->Use();
-    for (PointSphere ps : m_drawingVector) {
-      ps.handle_drawing(shader, meshModelMatrix);
-    }
+  void add_edge(glm::vec3 p1, glm::vec3 p2) {
+    m_vertices.push_back(p1);
+    m_vertices.push_back(p2);
+    updateMeshBuffers();
   }
 
-protected:
-  std::vector<PointSphere> m_drawingVector;
-  std::vector<glm::vec3> m_vertices;
-  std::vector<uint> m_indices;
-  uint VAO, VBO, EBO;
-  // Material material{glm::vec3(0.05, 0.05, 0.05),
-  //                  glm::vec3(0.5, 0.5, 0), // should be static constexpr
-  //                  glm::vec3(0.6, 0.6, 0.5), 128 * 0.25};
-protected:
-  DrawableSkeleton() {}
-  void setUniforms() {}
-
-  void updateMeshBuffers() {
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, (m_vertices.size() + 1) * sizeof(glm::vec3),
-                 &m_vertices[0], GL_DYNAMIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLuint),
-                 &m_indices[0], GL_DYNAMIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                          (GLvoid *)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                          (GLvoid *)offsetof(glm::vec3, y));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                          (GLvoid *)offsetof(glm::vec3, z));
-    glEnableVertexAttribArray(2);
-
-    glBindVertexArray(0);
-  }
   void initializeDrawingBuffers() {
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    // glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
 
@@ -89,9 +32,9 @@ protected:
     glBufferData(GL_ARRAY_BUFFER, (m_vertices.size() + 1) * sizeof(glm::vec3),
                  &m_vertices[0], GL_DYNAMIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLuint),
-                 &m_indices[0], GL_DYNAMIC_DRAW);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLuint),
+    //             &m_indices[0], GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                           (GLvoid *)0);
@@ -107,6 +50,44 @@ protected:
     // std::cout << "printDebugInformation was called in "<<__func__<<std::endl;
     //     // printDebugInformation();
     //
+  }
+
+private:
+  void drawEdges() const {
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_LINES, 0, m_vertices.size());
+    glBindVertexArray(0);
+  }
+  std::vector<glm::vec3> m_vertices;
+
+  uint VAO, VBO;
+  // Material material{glm::vec3(0.05, 0.05, 0.05),
+  //                  glm::vec3(0.5, 0.5, 0), // should be static constexpr
+  //                  glm::vec3(0.6, 0.6, 0.5), 128 * 0.25};
+private:
+  void updateMeshBuffers() {
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, (m_vertices.size() + 1) * sizeof(glm::vec3),
+                 &m_vertices[0], GL_DYNAMIC_DRAW);
+
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLuint),
+    //             &m_indices[0], GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                          (GLvoid *)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                          (GLvoid *)offsetof(glm::vec3, y));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                          (GLvoid *)offsetof(glm::vec3, z));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
   }
   void printDebugInformation() const {
     glBindVertexArray(VAO);
@@ -133,4 +114,5 @@ protected:
     printf("VAO = %ld\n", long(VAO));
   }
 };
-#endif // DRAWABLESKELETON_H
+
+#endif // LINESEGMENTS_H

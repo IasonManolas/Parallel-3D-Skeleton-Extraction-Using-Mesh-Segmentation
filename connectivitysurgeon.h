@@ -5,6 +5,7 @@
 #include <Eigen/Sparse>
 
 #include "cgaltypedefs.h"
+#include "skeleton.h"
 #include <ctime>
 
 /*
@@ -90,7 +91,7 @@ public:
     collapse();
   }
 
-  std::vector<std::vector<size_t>> getSkeletonEdges() {
+  std::vector<std::vector<size_t>> getSkeletonEdges() const {
     std::vector<std::vector<size_t>> skeletonEdges;
     for (size_t i = 0; i < is_edge_deleted.size(); i++) {
       if (is_edge_deleted[i] == false) {

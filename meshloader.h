@@ -87,6 +87,7 @@ load(std::string filename) {
 namespace meshMeasuring {
 
 inline double findMaxDimension(std::vector<MyVertex> vertices) {
+  assert(vertices.size() != 0);
   double xmax{vertices[0].Position.x}, xmin{vertices[0].Position.x},
       ymax{vertices[0].Position.y}, ymin{vertices[0].Position.y},
       zmax{vertices[0].Position.z}, zmin{vertices[0].Position.z};
@@ -131,7 +132,8 @@ inline float findAverageEdgeLength(const CGALSurfaceMesh &M) {
     // random number in range [0,M.number_of_vertices()-1]
     int vertexIndex = rand() % M.number_of_vertices();
 
-    CGALSurfaceMesh::Halfedge_index hi = M.halfedge(CGALSurfaceMesh::vertex_index(vertexIndex));
+    CGALSurfaceMesh::Halfedge_index hi =
+        M.halfedge(CGALSurfaceMesh::vertex_index(vertexIndex));
     double edgeLength =
         CGAL::Polygon_mesh_processing::edge_length(M.edge(hi), M);
     sum += edgeLength;
@@ -141,10 +143,7 @@ inline float findAverageEdgeLength(const CGALSurfaceMesh &M) {
 }
 }
 
-class OffLoader{
-OffLoader(std::string)
-{
-
-}
+class OffLoader {
+  OffLoader(std::string) {}
 };
 #endif // MESHLOADER_H

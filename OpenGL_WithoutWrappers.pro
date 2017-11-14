@@ -49,7 +49,8 @@ HEADERS  += mainwindow.h \
     polygonalmesh.h \
     drawableskeleton.h \
     undirectedgraph.h \
-    meshskeleton.h
+    meshskeleton.h \
+    linesegments.h
 #    tinyObjLoader/tiny_obj_loader.h
 
 FORMS    += mainwindow.ui

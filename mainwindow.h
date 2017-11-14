@@ -16,7 +16,6 @@ public:
 private slots:
   void on_checkBoxAxis_clicked(bool state);
   void on_actionOpenFile_triggered();
-  void on_checkBoxMeshSurface_clicked(bool state);
   void on_pushButtonResetCamera_clicked();
 
   void on_checkBoxShowVertices_stateChanged(int arg1);
@@ -27,15 +26,16 @@ private slots:
 
   void on_contractionThresholdSpinBox_valueChanged(int newThreshold);
 
-
   void on_contractionModeCheckBox_stateChanged(int arg1);
 
   void on_clearSkeletonButton_clicked();
 
+  void on_checkBoxMeshSurface_stateChanged(int arg1);
+
 signals:
   void modelLoaded(std::string filename);
   void stateCheckBoxAxesChanged(bool state);
-  void stateCheckBoxMeshSurfaceChanged(bool state);
+  void stateCheckBoxMeshSurfaceChanged(int state);
   void buttonResetCameraClicked();
   void stateCheckBoxShowVerticesChanged(int state);
   void actionSaveModelTriggered(std::string destination);

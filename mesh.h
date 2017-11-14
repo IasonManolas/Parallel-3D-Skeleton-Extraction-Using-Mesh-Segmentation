@@ -29,8 +29,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include <boost/optional/optional_io.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/optional/optional_io.hpp>
 //#include <QOpenGLContext>
 
 #include "meshloader.h"
@@ -41,15 +41,16 @@
 #include "material.h"
 #include "meshcontractor.h"
 #include "meshsegment.h"
+#include "meshskeleton.h"
 #include "pointsphere.h"
 #include "shader.h"
-#include "skeleton.h"
 #include "undirectedgraph.h"
 
 class Mesh : public DrawableMesh {
 public:
-  Mesh() : skeleton(Skeleton(m_PS, m_modelMatrix)) {
-  }
+  Mesh()
+      : /*skeleton(Skeleton(m_PS, m_modelMatrix)),*/ m_skeleton(
+            m_segmentGraph) {}
 
   void load(std::string filename);
   void setUniforms(Shader *shader) override;
@@ -57,7 +58,6 @@ public:
       const CGALSurfaceMesh::Face_index face_index) const;
   Ray_intersection intersects(Kernel::Ray_3 ray) const;
   MeshSegment getMeshSegment() const;
-  MeshSegment getMeshSegment(size_t segmentIndex) const;
   void handle_segmentSelection(Ray_intersection);
   void inflationDeflationDeformer(float deformationFactor); // TODO private
   size_t constructSegmentMap();                             // TODO private
@@ -72,18 +72,15 @@ public:
   void handle_segmentConnectivitySurgery();
   void handle_meshRefinementEmbedding();
   void handle_inflation() { inflation_handler(); }
-  void handle_deflation() {
-    deflation_handler();
-  } // TODO use this type of handlers.I like them.
-  void handle_drawing(Shader *shader, Shader *skeletonShader,
-                      glm::mat4 projectionViewMat);
+  void handle_deflation() { deflation_handler(); }
+  void handle_drawing(Shader *modelShader, Shader *edgeShader);
   void handle_saveModel(std::string destinationPathAndFileName);
   void handle_saveSegment(std::string destinationPathAndFileName);
-  void loadPointSphere(PointSphere);
+  void setPointSphere(PointSphere);
   void handle_showVerticesStateChange(int state);
-  void handle_clearSkeleton(){skeleton.clear();}
+  void handle_clearSkeleton() { m_skeleton.clear(); }
 
-  std::vector<size_t> getVertexIndicesWithHighLaplacianValue();
+  // std::vector<size_t> getVertexIndicesWithHighLaplacianValue();
   // public data members
 public:
   bool segmentsComputed{false};
@@ -92,7 +89,7 @@ public:
   MeshContractor MC;
   //    std::vector<Kernel::Vector_3> normals;
 
-  Skeleton skeleton{Skeleton(m_PS, m_modelMatrix)};
+  // Skeleton skeleton{Skeleton(m_PS, m_modelMatrix)};
   // private member functions
 
 private:
@@ -100,47 +97,36 @@ private:
   int findClosestVertex(Point intersectionPoint,
                         CGALSurfaceMesh::Face_index intersectingFaceIndex);
   void normalizeMeshViaModelMatrix();
-  void updateVertices(const MeshSegment &from);
   void inflation_handler();
   void deflation_handler();
-  void unselectSegment();
-  void updateCGALSurfaceMeshVertices(const MeshSegment &copyFrom);
   void updateDrawingVertices(const MeshSegment &copyFrom);
-  void handle_drawSpheresOnVertices(Shader *shader);
   void resetMeshAttributes();
-  void drawSkeleton(Shader *);
   void populateVerticesAndIndices(std::string filename);
   void drawThisMesh(Shader *);
+  Skeleton
+  convertToSkeleton(std::vector<std::vector<size_t>> skeletonEdgesInMeshIndices,
+                    const CGALSurfaceMesh &) const;
   void
-  addToSkeleton(std::vector<std::vector<size_t>> skeletonEdgesInMeshIndices,
-                const CGALSurfaceMesh &);
-  void
-  addToSkeleton(std::vector<std::vector<size_t>> skeletonEdgesInMeshIndices);
-  void constructSegmentGraph(size_t numberOfSegments); //populates m_segmentGraph
+  constructSegmentGraph(size_t numberOfSegments); // populates m_segmentGraph
 
-  CGALSurfaceMesh::Point computeCenterOfMass(
-      std::vector<size_t> vertexIndices); // TODO merge to meshMeasuring
-                                          // private data members
+  // CGALSurfaceMesh::Point computeCenterOfMass(
+  //    std::vector<size_t> vertexIndices); // TODO merge to meshMeasuring
+  // private data members
 private:
   PointSphere m_PS;
-
+  MeshSkeleton m_skeleton;
   Facet_int_map m_segmentFaceMap;
   UndirectedGraph m_segmentGraph;
   boost::optional<size_t> selectedSegmentIndex{boost::none};
 
   MeshContractor SMC; // segment mesh contractor
   MeshSegment segment{MeshSegment(m_modelMatrix)};
-  std::vector<std::vector<std::vector<size_t>>>
-      m_perSegmentSkeletonEdges; //[i][j][0 or 1]: get the vertex 0 or 1 of edge
-                                 // j in the ith segment.
   bool m_showContractedSegment{false};
-  std::vector<std::vector<size_t>> m_skeletonMeshMapping; // used in Refinement
+  // std::vector<std::vector<size_t>> m_skeletonMeshMapping; // used in
+  // Refinement
   std::vector<PointSphere> pointSphereDrawingVector; // holds all the points
                                                      // that should be drawn on
                                                      // the model
-  size_t edgeCounter{0};
-  float step{0.1};
-
   bool m_showPointSpheresOnVertices{false};
   // Embedding. NOTE
   // should not be

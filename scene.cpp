@@ -1,16 +1,8 @@
 #include "scene.h"
 
-void Scene::Draw(Shader *modelShader, Shader *axisShader,
-                 Shader *skeletonShader) {
-  setSceneUniforms(modelShader, axisShader);
-  if (m_showPointSpheresOnVertices) {
-    modelShader->Use();
-    for (PointSphere ps : m_pointSpheresOnVertices) {
-      ps.handle_drawing(modelShader, M.getModelMatrix());
-    }
-  }
-  glm::mat4 projectionViewMat = projectionMatrix * camera.getViewMatrix();
-  M.handle_drawing(modelShader, skeletonShader, projectionViewMat);
+void Scene::Draw(Shader *modelShader, Shader *axisShader, Shader *edgeShader) {
+  setSceneUniforms(modelShader, axisShader, edgeShader);
+  M.handle_drawing(modelShader, edgeShader);
   if (showAxes) {
     axisShader->Use();
     sceneAxes.Draw();
@@ -42,8 +34,8 @@ void Scene::initializeScene() {
   PS.setPosition(0, 0, 0);
   // loadMesh("../Models/Small/test.obj");
 
-  //loadMesh("../Models/tyra_rightFoot.off");
-   loadMesh("../Models/bunny_low.obj");
+  // loadMesh("../Models/tyra_rightFoot.off");
+  loadMesh("../Models/bunny_low.obj");
   // loadMesh("../Models/cylinder.obj");
   // loadMesh("../Models/Small/coctel.obj");
   // loadMesh("../Models/Small/Wrong by assimp/stretched cube.obj");
@@ -66,9 +58,13 @@ void Scene::handle_segmentSelection(float mousePosX, float mousePosY,
 
 void Scene::handle_showSegments() { M.handle_showSegments(); }
 
-void Scene::handle_segmentContraction(bool automatic) { M.handle_segmentContraction(automatic); }
+void Scene::handle_segmentContraction(bool automatic) {
+  M.handle_segmentContraction(automatic);
+}
 
-void Scene::handle_meshContraction(bool automatic) { M.handle_meshContraction(automatic); }
+void Scene::handle_meshContraction(bool automatic) {
+  M.handle_meshContraction(automatic);
+}
 
 void Scene::handle_meshConnectivitySurgery() {
   M.handle_meshConnectivitySurgery();
@@ -81,7 +77,6 @@ void Scene::handle_meshRefinementEmbedding() {
 void Scene::handle_segmentRefinementEmbedding() {}
 
 void Scene::handle_segmentConnectivitySurgery() {
-  std::cout << "in scene.cpp: handling seg" << std::endl;
   M.handle_segmentConnectivitySurgery();
 }
 
@@ -100,7 +95,7 @@ void Scene::loadMesh(std::__cxx11::string filename) {
   // M = Mesh(PS);
   M.load(filename);
   PS.updateRadius(M.getM());
-  M.loadPointSphere(PS);
+  M.setPointSphere(PS);
 }
 
 void Scene::handle_axesStateChange(bool value) { showAxes = value; }
@@ -167,25 +162,27 @@ void Scene::handle_saveModel(const std::__cxx11::string destinationDirectory) {
 
 void Scene::handle_saveSegment(
     const std::__cxx11::string destinationDirectory) {
-    M.handle_saveSegment(destinationDirectory);
+  M.handle_saveSegment(destinationDirectory);
 }
 
-void Scene::handle_clearSkeleton()
-{
-    M.handle_clearSkeleton();
-}
+void Scene::handle_clearSkeleton() { M.handle_clearSkeleton(); }
 
-void Scene::setSceneUniforms(Shader *modelShader, Shader *axisShader) {
+void Scene::setSceneUniforms(Shader *modelShader, Shader *axisShader,
+                             Shader *edgeShader) {
   modelShader->Use();
   light.setUniforms(modelShader);
   camera.setUniforms(modelShader);
   setProjectionMatrixUniform(modelShader);
 
+  edgeShader->Use();
+  camera.setUniforms(edgeShader);
+  setProjectionMatrixUniform(edgeShader);
+
   axisShader->Use();
+  camera.setUniforms(axisShader);
   setProjectionMatrixUniform(axisShader);
   glUniformMatrix4fv(glGetUniformLocation(axisShader->programID, "model"), 1,
                      GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
-  camera.setUniforms(axisShader);
 }
 
 void Scene::setProjectionMatrixUniform(Shader *shader) {

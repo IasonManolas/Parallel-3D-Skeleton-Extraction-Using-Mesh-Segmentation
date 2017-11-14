@@ -27,7 +27,7 @@ class Scene {
 public:
   Scene() {}
 
-  void Draw(Shader *modelShader, Shader *axisShader, Shader *skeletonShader);
+  void Draw(Shader *modelShader, Shader *axisShader, Shader *edgeShader);
   void updateProjectionMatrix(int w, int h);
 
   Mesh M;
@@ -45,9 +45,6 @@ private:
   float farPlane{100};
 
   bool m_showPointSpheresOnVertices{false};
-  std::vector<PointSphere> m_pointSpheresOnVertices;
-
-  std::vector<size_t> highLVerticesInPreviousIteration;
 
 public:
   void initializeScene();
@@ -77,7 +74,8 @@ public:
 private:
   void loadPointSphere();
   void setProjectionMatrixUniform(Shader *shader);
-  void setSceneUniforms(Shader *modelShader, Shader *axisShader);
+  void setSceneUniforms(Shader *modelShader, Shader *axisShader,
+                        Shader *edgeShader);
   void executeMeshConnectivitySurgery();
   bool rayIntersectsPolyhedron(const int &mouseX, const int &mouseY,
                                const int width, const int height,
