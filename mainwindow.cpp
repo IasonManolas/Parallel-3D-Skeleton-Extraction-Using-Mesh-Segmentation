@@ -15,8 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
           SLOT(loadModel(std::string)));
   connect(this, SIGNAL(stateCheckBoxAxesChanged(bool)), ui->openGLWidget,
           SLOT(updateAxesState(bool)));
-  connect(this, SIGNAL(stateCheckBoxMeshSurfaceChanged(bool)), ui->openGLWidget,
-          SLOT(updateMeshSurfaceState(bool)));
+  connect(this, SIGNAL(stateCheckBoxMeshSurfaceChanged(int)), ui->openGLWidget,
+          SLOT(updateMeshSurfaceState(int)));
   connect(this, SIGNAL(buttonResetCameraClicked()), ui->openGLWidget,
           SLOT(resetCamera()));
   connect(this, SIGNAL(stateCheckBoxShowVerticesChanged(int)), ui->openGLWidget,
@@ -25,9 +25,12 @@ MainWindow::MainWindow(QWidget *parent)
           SLOT(saveModel(std::string)));
   connect(this, SIGNAL(actionSaveSegmentTriggered(std::string)),
           ui->openGLWidget, SLOT(saveSegment(std::string)));
-  connect(this,SIGNAL(contractionVolumeThresholdChanged(int)),ui->openGLWidget,SLOT(updateContractionVolumeThreshold(int)));
-  connect(this,SIGNAL(updateContractionMode(bool)),ui->openGLWidget,SLOT(updateContractionMode(bool)));
-  connect(this,SIGNAL(clearSkeleton()),ui->openGLWidget,SLOT(clearSkeleton()));
+  connect(this, SIGNAL(contractionVolumeThresholdChanged(int)),
+          ui->openGLWidget, SLOT(updateContractionVolumeThreshold(int)));
+  connect(this, SIGNAL(updateContractionMode(bool)), ui->openGLWidget,
+          SLOT(updateContractionMode(bool)));
+  connect(this, SIGNAL(clearSkeleton()), ui->openGLWidget,
+          SLOT(clearSkeleton()));
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -47,12 +50,7 @@ void MainWindow::on_actionOpenFile_triggered() {
   // ui->checkBoxShowVertices->setChecked(false);
 }
 
-void MainWindow::on_checkBoxMeshSurface_clicked(bool state) {
-  emit stateCheckBoxMeshSurfaceChanged(state);
-}
-
 void MainWindow::on_pushButtonResetCamera_clicked() {
-  std::cout << "camera reseted" << std::endl;
   emit buttonResetCameraClicked();
 }
 
@@ -80,19 +78,16 @@ void MainWindow::on_actionSave_Segment_triggered() {
   }
 }
 
-void MainWindow::on_contractionThresholdSpinBox_valueChanged(int newThreshold)
-{
-    emit contractionVolumeThresholdChanged(newThreshold);
-
+void MainWindow::on_contractionThresholdSpinBox_valueChanged(int newThreshold) {
+  emit contractionVolumeThresholdChanged(newThreshold);
 }
 
-
-void MainWindow::on_contractionModeCheckBox_stateChanged(int arg1)
-{
-   emit updateContractionMode(bool(arg1));
+void MainWindow::on_contractionModeCheckBox_stateChanged(int arg1) {
+  emit updateContractionMode(bool(arg1));
 }
 
-void MainWindow::on_clearSkeletonButton_clicked()
-{
-   emit clearSkeleton();
+void MainWindow::on_clearSkeletonButton_clicked() { emit clearSkeleton(); }
+
+void MainWindow::on_checkBoxMeshSurface_stateChanged(int arg1) {
+  emit stateCheckBoxMeshSurfaceChanged(arg1);
 }

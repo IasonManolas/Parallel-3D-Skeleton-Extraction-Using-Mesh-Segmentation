@@ -24,7 +24,7 @@ GLWidget::~GLWidget() {
   delete defaultShader;
   delete axesShader;
   delete segmentShader;
-  delete skeletonShader;
+  delete edgeShader;
   delete activeShader;
   disconnect(&timer, SIGNAL(timeout()), this, SLOT(update()));
 }
@@ -73,11 +73,16 @@ void GLWidget::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glShadeModel(GL_SMOOTH);
   // glLineWidth(10);
-  if (surfaceState == dontShowTriangles)
+  if (surfaceState == fillSurface)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  else if (surfaceState == showTriangles)
+  else if (surfaceState == fillSurface_and_showWireframe) {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    scene.Draw(activeShader, axesShader, edgeShader);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  scene.Draw(activeShader, axesShader, skeletonShader);
+  } else if (surfaceState == showWireframe) {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  }
+  scene.Draw(activeShader, axesShader, edgeShader);
 }
 void GLWidget::mousePressEvent(QMouseEvent *event) {
   lastMousePos = QVector2D(event->localPos());
@@ -113,23 +118,22 @@ void GLWidget::initializeShaders() {
   axesShader = new Shader("../shaders/axesvs.glsl", "../shaders/axesfs.glsl");
   segmentShader =
       new Shader("../shaders/vertex.glsl", "../shaders/segmfragment.glsl");
-  skeletonShader = new Shader("../shaders/skeletonvertex.glsl",
-                              "../shaders/skeletonfragment.glsl");
+  edgeShader = new Shader("../shaders/edgevs.glsl", "../shaders/edgefs.glsl");
 
   activeShader = defaultShader;
 }
 
 void GLWidget::contraction_signal() {
   if (mode == defaultView)
-      if(contractionMode==automatic)
-    scene.handle_meshContraction(true);
-  else
-    scene.handle_meshContraction(false);
+    if (contractionMode == automatic)
+      scene.handle_meshContraction(true);
+    else
+      scene.handle_meshContraction(false);
   else if (mode == segmentsView)
-      if(contractionMode==automatic)
-    scene.handle_segmentContraction(true);
-  else
-    scene.handle_segmentContraction(false);
+    if (contractionMode == automatic)
+      scene.handle_segmentContraction(true);
+    else
+      scene.handle_segmentContraction(false);
 }
 
 void GLWidget::reverseContraction_signal() {
@@ -193,26 +197,13 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
     reverseContraction_signal();
     break;
   case Qt::Key_1:
+    makeCurrent();
     connectivitySurgery_signal();
+    doneCurrent();
     break;
   case Qt::Key_2:
     refinementEmbedding_signal();
     break;
-
-    // case Qt::Key_A:
-    //  if (mode == contractSegment) {
-    //    if (selectedSegmentIndex == -1) {
-    //      std::cout << "Please select a segment to contract." << std::endl;
-    //    } else {
-    //      // scene.contractSegment(selectedSegmentIndex);
-    //      scene.P.updateMeshBuffers();
-    //    }
-    //    break;
-    //  }
-    // case Qt::Key_R:
-    //  scene.contractMesh();
-    //  scene.P.updateMeshBuffers();
-    //  break;
   }
 }
 void GLWidget::keyReleaseEvent(QKeyEvent *event) {
@@ -220,25 +211,22 @@ void GLWidget::keyReleaseEvent(QKeyEvent *event) {
 }
 
 void GLWidget::loadModel(std::__cxx11::string filename) {
-  makeCurrent();
   activeShader = defaultShader;
   mode = defaultView;
+  makeCurrent();
   scene.loadMesh(filename);
+  doneCurrent();
 }
 
 void GLWidget::updateAxesState(bool state) {
   scene.handle_axesStateChange(state);
 }
 
-void GLWidget::updateMeshSurfaceState(bool state) {
+void GLWidget::updateMeshSurfaceState(int state) {
   surfaceState = static_cast<meshSurfaceVizualization>(state);
 }
 
-void GLWidget::resetCamera() {
-  std::cout << "camera reseted" << std::endl;
-
-  cameraReset_signal();
-}
+void GLWidget::resetCamera() { cameraReset_signal(); }
 
 void GLWidget::showVerticesStateChange(int state) {
   scene.handle_meshVerticesStateChange(state);
@@ -248,22 +236,18 @@ void GLWidget::saveModel(std::string destinationDirectory) {
   scene.handle_saveModel(destinationDirectory);
 }
 void GLWidget::saveSegment(std::string destinationDirectory) {
-    scene.handle_saveSegment(destinationDirectory);
+  scene.handle_saveSegment(destinationDirectory);
 }
 
-void GLWidget::updateContractionVolumeThreshold(int newThreshold)
-{
-    scene.M.MC.setVolumeThreshold(std::pow(10.0,newThreshold));
+void GLWidget::updateContractionVolumeThreshold(int newThreshold) {
+  scene.M.MC.setVolumeThreshold(std::pow(10.0, newThreshold));
 }
 
-void GLWidget::updateContractionMode(bool newState)
-{
-   if(newState) contractionMode=automatic;
-   else contractionMode=manual;
+void GLWidget::updateContractionMode(bool newState) {
+  if (newState)
+    contractionMode = automatic;
+  else
+    contractionMode = manual;
 }
 
-void GLWidget::clearSkeleton()
-{
-   scene.handle_clearSkeleton();
-}
-
+void GLWidget::clearSkeleton() { scene.handle_clearSkeleton(); }

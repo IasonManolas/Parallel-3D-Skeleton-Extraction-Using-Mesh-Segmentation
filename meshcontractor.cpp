@@ -1,7 +1,7 @@
 #include "meshcontractor.h"
 #include "debug_meshcontractor.h"
-#include <Eigen/unsupported/Eigen/SparseExtra>
-double MeshContractor::m_volumeThreshold=std::pow(10,-6);
+//#include <Eigen/unsupported/Eigen/SparseExtra>
+double MeshContractor::m_volumeThreshold = std::pow(10, -4);
 SpMatrix concatenateVertically(SpMatrix A, SpMatrix B) {
   // A
   //---
@@ -172,14 +172,13 @@ void MeshContractor::executeContractionReversingStep() {
             << std::endl;
 }
 
-void MeshContractor::setVolumeThreshold(double volumeThreshold)
-{
-    MeshContractor::m_volumeThreshold = volumeThreshold;
+void MeshContractor::setVolumeThreshold(double volumeThreshold) {
+  MeshContractor::m_volumeThreshold = volumeThreshold;
 }
 
 void MeshContractor::executeContractionStep() {
-    std::cout << "Contracting Mesh.." << std::endl;
-    EigenMatrix V = constructVertexMatrix();
+  std::cout << "Contracting Mesh.." << std::endl;
+  EigenMatrix V = constructVertexMatrix();
   // printMatrix(V, "V");
   // printFixedVertices(V);
 
@@ -272,9 +271,11 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
   SpMatrix WlL = m_Wl * m_L;
 
   SpMatrix A = concatenateVertically(WlL, m_Wh);
-  //Eigen::JacobiSVD<EigenMatrix> svd(EigenMatrix(A), Eigen::ComputeThinU | Eigen::ComputeThinV);
-  //std::cout << "Eigenvalues that are not exaclty 0:" << std::endl << svd.nonzeroSingularValues() << std::endl;
-  //Eigen::saveMarket(A,"../A.mat");
+  // Eigen::JacobiSVD<EigenMatrix> svd(EigenMatrix(A), Eigen::ComputeThinU |
+  // Eigen::ComputeThinV);
+  // std::cout << "Eigenvalues that are not exaclty 0:" << std::endl <<
+  // svd.nonzeroSingularValues() << std::endl;
+  // Eigen::saveMarket(A,"../A.mat");
   // SpMatrix A(WlL.rows() + m_Wh.rows(), WlL.cols());
   // A << WlL, m_Wh;
   EigenMatrix Bupper = EigenMatrix::Zero(WlL.rows(), 3);
@@ -289,14 +290,14 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
   EigenMatrix B(Bupper.rows() + Blower.rows(), 3);
   B << Bupper, Blower;
 
-  //EigenMatrix newVertexPositions =svd.solve(B);
+  // EigenMatrix newVertexPositions =svd.solve(B);
 
   // Solve system using SimplicialLDLT
   Eigen::SimplicialLDLT<SpMatrix> solver;
- SpMatrix At = A.transpose();
- SpMatrix AtA = A.transpose() * A;
- solver.compute(AtA);
- EigenMatrix AtB = A.transpose() * B;
+  SpMatrix At = A.transpose();
+  SpMatrix AtA = A.transpose() * A;
+  solver.compute(AtA);
+  EigenMatrix AtB = A.transpose() * B;
   EigenMatrix newVertexPositions = solver.solve(AtB);
   assert(!hasInfinity(At));
   assert(!hasNaN(At));
@@ -305,24 +306,24 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
   assert(!hasInfinity(AtA));
   assert(!hasInfinity(AtB));
 
- // Eigen::LeastSquaresConjugateGradient<SpMatrix> solver;
- // solver.compute(A);
- //if(solver.info()!=Eigen::Success)
- //    std::cout<<"Decomposition failed!"<<std::endl;
- // EigenMatrix newVertexPositions=solver.solve(B);
- //if(solver.info()!=Eigen::Success)
- //    std::cout<<"Solving failed!"<<std::endl;
+  // Eigen::LeastSquaresConjugateGradient<SpMatrix> solver;
+  // solver.compute(A);
+  // if(solver.info()!=Eigen::Success)
+  //    std::cout<<"Decomposition failed!"<<std::endl;
+  // EigenMatrix newVertexPositions=solver.solve(B);
+  // if(solver.info()!=Eigen::Success)
+  //    std::cout<<"Solving failed!"<<std::endl;
 
-  //BiCGSTAB
-  //Eigen::BiCGSTAB<SpMatrix> solver;
-  //solver.compute(A);
-  //EigenMatrix newVertexPositions=solver.solve(B);
-  //std::cout << "estimated error: " << solver.error()<< std::endl;
+  // BiCGSTAB
+  // Eigen::BiCGSTAB<SpMatrix> solver;
+  // solver.compute(A);
+  // EigenMatrix newVertexPositions=solver.solve(B);
+  // std::cout << "estimated error: " << solver.error()<< std::endl;
 
-  //Eigen::ConjugateGradient<SpMatrix,Eigen::Lower|Eigen::Upper> solver;
-  //solver.compute(A);
-  //EigenMatrix newVertexPositions=solver.solve(B);
-  //std::cout << "estimated error: " << solver.error()<< std::endl;
+  // Eigen::ConjugateGradient<SpMatrix,Eigen::Lower|Eigen::Upper> solver;
+  // solver.compute(A);
+  // EigenMatrix newVertexPositions=solver.solve(B);
+  // std::cout << "estimated error: " << solver.error()<< std::endl;
 
   assert(!hasInfinity(m_L));
   assert(!hasInfinity(m_Wl));
@@ -460,17 +461,18 @@ MeshContractor::computeCotangentValue(Kernel::Vector_3 a,
   assert(dot_bb != 0 && !std::isinf(dot_bb));
 
   double cosine = dot_ab / (CGAL::sqrt(dot_aa) * CGAL::sqrt(dot_bb));
-  if (!(cosine>= -1 &&cosine<= 1)) {
-    std::cout << "cosine value out of bounds:" << cosine<< std::endl;
-    if (cosine< -1)
-      cosine= -1;
+  if (!(cosine >= -1 && cosine <= 1)) {
+    std::cout << "cosine value out of bounds:" << cosine << std::endl;
+    if (cosine < -1)
+      cosine = -1;
     else
-      cosine= 1;
+      cosine = 1;
   }
 
   double cosineSquared = cosine * cosine;
-  if (!(cosineSquared>= 0 && cosineSquared<= 1)) {
-    std::cout << "cosineSquared value out of bounds:" << cosineSquared << std::endl;
+  if (!(cosineSquared >= 0 && cosineSquared <= 1)) {
+    std::cout << "cosineSquared value out of bounds:" << cosineSquared
+              << std::endl;
     if (cosineSquared < 0)
       cosineSquared = 0;
     else
@@ -497,9 +499,9 @@ MeshContractor::computeCotangentValue(Kernel::Vector_3 a,
     std::cout << "SIN==0" << std::endl;
     return boost::none;
   }
-  assert(sine>= -1 && sine<= 1);
-  assert(cosine>= -1 && cosine<= 1);
-  double cotWeight=cosine/sine;
+  assert(sine >= -1 && sine <= 1);
+  assert(cosine >= -1 && cosine <= 1);
+  double cotWeight = cosine / sine;
   return cotWeight;
 }
 

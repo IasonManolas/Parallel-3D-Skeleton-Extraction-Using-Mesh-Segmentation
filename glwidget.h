@@ -31,9 +31,13 @@
 #include "scene.h"
 #include "shader.h"
 
-enum meshSurfaceVizualization { dontShowTriangles, showTriangles };
+enum meshSurfaceVizualization {
+  fillSurface,
+  fillSurface_and_showWireframe,
+  showWireframe
+};
 enum Mode { defaultView, segmentsView };
-enum ContractionMode{automatic,manual};
+enum ContractionMode { automatic, manual };
 
 class GLWidget : public QOpenGLWidget {
   Q_OBJECT
@@ -60,15 +64,14 @@ private:
   void segmentDeformation_signal(bool inflation);
   void cameraZoomChange_signal(float delta);
   void cameraReset_signal();
-  void paintEdge_signal();
   void initializeShaders();
 
 private:
-  meshSurfaceVizualization surfaceState{dontShowTriangles};
+  meshSurfaceVizualization surfaceState{fillSurface};
   Shader *defaultShader{nullptr};
   Shader *axesShader{nullptr};
   Shader *segmentShader{nullptr};
-  Shader *skeletonShader{nullptr};
+  Shader *edgeShader{nullptr};
   Shader *activeShader{nullptr};
   Scene scene{};
   QTimer timer{};
@@ -77,13 +80,12 @@ private:
   int WIDTH{800};
   int HEIGHT{600};
   Mode mode{defaultView};
-  ContractionMode contractionMode{manual};
-
+  ContractionMode contractionMode{automatic};
 
 public slots:
   void loadModel(std::string filename);
   void updateAxesState(bool state);
-  void updateMeshSurfaceState(bool state);
+  void updateMeshSurfaceState(int state);
   void resetCamera();
   void showVerticesStateChange(int state);
   void saveModel(std::string);
