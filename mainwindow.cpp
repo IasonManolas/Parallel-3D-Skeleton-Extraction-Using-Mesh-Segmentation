@@ -31,6 +31,8 @@ MainWindow::MainWindow(QWidget *parent)
           SLOT(updateContractionMode(bool)));
   connect(this, SIGNAL(clearSkeleton()), ui->openGLWidget,
           SLOT(clearSkeleton()));
+  connect(this, SIGNAL(stateCheckBoxLaplacianHeatMapChanged(int)),
+          ui->openGLWidget, SLOT(updateLaplacianHeatMapVisualization(int)));
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -90,4 +92,8 @@ void MainWindow::on_clearSkeletonButton_clicked() { emit clearSkeleton(); }
 
 void MainWindow::on_checkBoxMeshSurface_stateChanged(int arg1) {
   emit stateCheckBoxMeshSurfaceChanged(arg1);
+}
+
+void MainWindow::on_laplacianHeatMapCheckBox_stateChanged(int arg1) {
+  emit stateCheckBoxLaplacianHeatMapChanged(arg1);
 }

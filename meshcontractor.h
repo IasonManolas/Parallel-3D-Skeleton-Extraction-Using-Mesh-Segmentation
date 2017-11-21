@@ -39,7 +39,9 @@ public:
   void contractMesh();
   void executeContractionStep();
   void executeContractionReversingStep();
+  void setVolumeThreshold(double volumeThreshold);
 
+  //~~~~~~~~DEBUG~~~~~~
   size_t getMaxLToWhIndex() { return maxLtoWhIndex; }
   size_t getPreviousMaxLToWhIndex() { return previousMaxLtoWhIndex; }
   std::vector<size_t> getVerticesForWhichPreviousCotWeightWasUsed() {
@@ -54,14 +56,14 @@ public:
                                highOneRingAreaVertices.end()};
   }
   void printFixedVertices(EigenMatrix verticesMatrix);
-
-  void setVolumeThreshold(double volumeThreshold);
+  std::vector<double> getLaplacianValues();
 
 private:
   // CGALSurfaceMesh &m_M;
   CGALSurfaceMesh m_M;
   double m_originalVolume;
-  static double m_volumeThreshold; // m_originalVolume/currentVolume least ratio so the
+  static double
+      m_volumeThreshold; // m_originalVolume/currentVolume least ratio so the
                          // contraction process stops
   double m_Sl{2};
   SpMatrix m_Wh;

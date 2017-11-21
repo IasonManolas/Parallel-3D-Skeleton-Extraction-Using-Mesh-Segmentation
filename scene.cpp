@@ -58,12 +58,20 @@ void Scene::handle_segmentSelection(float mousePosX, float mousePosY,
 
 void Scene::handle_showSegments() { M.handle_showSegments(); }
 
-void Scene::handle_segmentContraction(bool automatic) {
-  M.handle_segmentContraction(automatic);
+void Scene::handle_segmentContraction(bool automatic,
+                                      bool usingCGALSSkeletonization = false) {
+  if (!usingCGALSSkeletonization)
+    M.handle_segmentContraction(automatic);
+  else
+    M.handle_segmentSkeletonization();
 }
 
-void Scene::handle_meshContraction(bool automatic) {
-  M.handle_meshContraction(automatic);
+void Scene::handle_meshContraction(bool automatic,
+                                   bool usingCGALSSkeletonization = false) {
+  if (!usingCGALSSkeletonization)
+    M.handle_meshContraction(automatic);
+  else
+    M.handle_skeletonization();
 }
 
 void Scene::handle_meshConnectivitySurgery() {
@@ -166,6 +174,10 @@ void Scene::handle_saveSegment(
 }
 
 void Scene::handle_clearSkeleton() { M.handle_clearSkeleton(); }
+
+void Scene::handle_laplacianHeatMapStateChange(bool heatMapEnabled) {
+  M.handle_laplacianHeatMapStateChange(heatMapEnabled);
+}
 
 void Scene::setSceneUniforms(Shader *modelShader, Shader *axisShader,
                              Shader *edgeShader) {

@@ -2,6 +2,7 @@
 #define MYPOLYHEDRON_H
 
 //#include <unordered_set>
+#include <algorithm>
 
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
 #include <CGAL/Polygon_mesh_processing/orient_polygon_soup.h>
@@ -25,6 +26,9 @@
 #include <CGAL/Polygon_mesh_processing/measure.h>
 #include <CGAL/aff_transformation_tags.h>
 
+//#include <CGAL/boost/graph/helpers.h>
+#include <CGAL/extract_mean_curvature_flow_skeleton.h>
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -45,8 +49,10 @@
 #include "pointsphere.h"
 #include "shader.h"
 #include "undirectedgraph.h"
+#include "refinementembedding.h"
 
 class Mesh : public DrawableMesh {
+
 public:
   Mesh()
       : /*skeleton(Skeleton(m_PS, m_modelMatrix)),*/ m_skeleton(
@@ -79,6 +85,9 @@ public:
   void setPointSphere(PointSphere);
   void handle_showVerticesStateChange(int state);
   void handle_clearSkeleton() { m_skeleton.clear(); }
+  void handle_segmentSkeletonization();
+  void handle_skeletonization();
+  void handle_laplacianHeatMapStateChange(bool state);
 
   // std::vector<size_t> getVertexIndicesWithHighLaplacianValue();
   // public data members
@@ -108,6 +117,8 @@ private:
                     const CGALSurfaceMesh &) const;
   void
   constructSegmentGraph(size_t numberOfSegments); // populates m_segmentGraph
+  void updatePointSphereDrawingVector();
+  void updateLaplacianHeatMap();
 
   // CGALSurfaceMesh::Point computeCenterOfMass(
   //    std::vector<size_t> vertexIndices); // TODO merge to meshMeasuring
@@ -127,7 +138,9 @@ private:
   std::vector<PointSphere> pointSphereDrawingVector; // holds all the points
                                                      // that should be drawn on
                                                      // the model
+  std::vector<PointSphere> m_laplacianHeatMap;
   bool m_showPointSpheresOnVertices{false};
+  bool m_showLaplacianHeatMap{false};
   // Embedding. NOTE
   // should not be
   // present in the

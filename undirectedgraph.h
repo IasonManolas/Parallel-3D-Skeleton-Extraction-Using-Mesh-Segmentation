@@ -4,16 +4,6 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <cgaltypedefs.h>
 
-struct Node {
-  size_t idx; // index to a class like CGALSurfaceMesh
-  // CGALSurfaceMesh::Point pos;
-};
-
-struct UndirectedEdge {
-  size_t idx1;
-  size_t idx2;
-};
-
 class UndirectedGraph {
   using BoostGraph =
       boost::adjacency_list<boost::setS, boost::vecS, boost::undirectedS>;

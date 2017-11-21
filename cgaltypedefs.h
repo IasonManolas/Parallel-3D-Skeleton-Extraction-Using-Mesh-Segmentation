@@ -2,8 +2,10 @@
 #define CGALTYPEDEFS_H
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Simple_cartesian.h>
 #include <CGAL/Surface_mesh.h>
 using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+// using Kernel = CGAL::Simple_cartesian<double>;
 using CGALSurfaceMesh = CGAL::Surface_mesh<Kernel::Point_3>;
 using Ray = Kernel::Ray_3;
 using Point = Kernel::Point_3;

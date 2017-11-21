@@ -32,6 +32,8 @@ private slots:
 
   void on_checkBoxMeshSurface_stateChanged(int arg1);
 
+  void on_laplacianHeatMapCheckBox_stateChanged(int arg1);
+
 signals:
   void modelLoaded(std::string filename);
   void stateCheckBoxAxesChanged(bool state);
@@ -43,6 +45,7 @@ signals:
   void contractionVolumeThresholdChanged(int newValue);
   void updateContractionMode(bool state);
   void clearSkeleton();
+  void stateCheckBoxLaplacianHeatMapChanged(int state);
 
 private:
   Ui::MainWindow *ui;
