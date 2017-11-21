@@ -176,6 +176,15 @@ void MeshContractor::setVolumeThreshold(double volumeThreshold) {
   MeshContractor::m_volumeThreshold = volumeThreshold;
 }
 
+std::vector<double> MeshContractor::getLaplacianValues() {
+  std::vector<double> laplacianValues(m_M.number_of_vertices());
+
+  for (size_t i = 0; i < m_M.number_of_vertices(); i++) {
+    laplacianValues[i] = -m_L.coeff(i, i);
+  }
+  return laplacianValues;
+}
+
 void MeshContractor::executeContractionStep() {
   std::cout << "Contracting Mesh.." << std::endl;
   EigenMatrix V = constructVertexMatrix();
@@ -271,10 +280,11 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
   SpMatrix WlL = m_Wl * m_L;
 
   SpMatrix A = concatenateVertically(WlL, m_Wh);
-  // Eigen::JacobiSVD<EigenMatrix> svd(EigenMatrix(A), Eigen::ComputeThinU |
-  // Eigen::ComputeThinV);
-  // std::cout << "Eigenvalues that are not exaclty 0:" << std::endl <<
-  // svd.nonzeroSingularValues() << std::endl;
+  // Eigen::JacobiSVD<EigenMatrix> svd(EigenMatrix(A),
+  //                                  Eigen::ComputeThinU |
+  //                                  Eigen::ComputeThinV);
+  // std::cout << "Eigenvalues that are not exaclty 0:" << std::endl
+  //          << svd.nonzeroSingularValues() << std::endl;
   // Eigen::saveMarket(A,"../A.mat");
   // SpMatrix A(WlL.rows() + m_Wh.rows(), WlL.cols());
   // A << WlL, m_Wh;
@@ -297,8 +307,12 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
   SpMatrix At = A.transpose();
   SpMatrix AtA = A.transpose() * A;
   solver.compute(AtA);
+  if (solver.info() != Eigen::Success)
+    std::cout << "Decomposition failed!" << std::endl;
   EigenMatrix AtB = A.transpose() * B;
   EigenMatrix newVertexPositions = solver.solve(AtB);
+  if (solver.info() != Eigen::Success)
+    std::cout << "Solving failed!" << std::endl;
   assert(!hasInfinity(At));
   assert(!hasNaN(At));
   assert(!hasNaN(AtA));
@@ -346,8 +360,8 @@ void MeshContractor::updateWh() {
   highOneRingAreaVertices.clear();
   for (size_t i = 0; i < m_M.number_of_vertices(); i++) {
     double initialToCurrentAreaRatio = m_A0(i) / m_A(i);
-    if (m_A(i) == 0)
-      std::cout << "ZERO AREA in function" << __func__ << std::endl;
+    if (m_A(i) < 0.000000000001)
+      std::cout << "ZERO AREA in function: " << __func__ << std::endl;
     if (initialToCurrentAreaRatio > 100)
       lowOneRingAreaVertices.insert(i);
     else
@@ -391,7 +405,7 @@ void MeshContractor::computeLaplaceOperator() {
     boost::optional<double> optionalWeight = computeCotangentWeight(ei);
     double weight;
     if (optionalWeight)
-      weight = optionalWeight.get() / 4;
+      weight = optionalWeight.get() / 2;
     else {
       weight = std::pow(10, 6);
       // fixedVertices.insert(i);
@@ -445,8 +459,7 @@ boost::optional<double> MeshContractor::computeCotangentWeight(
   if (!cot1 || !cot2)
     return boost::none;
   double cotWeight = cot1.get() + cot2.get();
-  // assert(!std::isnan(cotWeight) && !std::isinf(cotWeight));
-  // return cotWeight > 2 * maxNumber ? maxNumber : cotWeight;
+
   return cotWeight;
 }
 boost::optional<double>

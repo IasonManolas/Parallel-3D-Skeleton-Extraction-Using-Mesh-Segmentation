@@ -4,17 +4,17 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
+QT       += core opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = OpenGL_WithoutWrappers
 TEMPLATE = app
 #CONFIG+=-std=c++1y
-#QMAKE_CC=clang
-#QMAKE_CXX=clang
+QMAKE_CC=clang
+QMAKE_CXX=clang
 
-QMAKE_CXXFLAGS+= -std=c++17
+QMAKE_CXXFLAGS+= -std=c++14
 #QMAKE_LFLAGS +=  -fopenmp
 
 SOURCES += main.cpp\
@@ -50,8 +50,8 @@ HEADERS  += mainwindow.h \
     drawableskeleton.h \
     undirectedgraph.h \
     meshskeleton.h \
-    linesegments.h
-#    tinyObjLoader/tiny_obj_loader.h
+    linesegments.h \
+refinementembedding.h
 
 FORMS    += mainwindow.ui
 

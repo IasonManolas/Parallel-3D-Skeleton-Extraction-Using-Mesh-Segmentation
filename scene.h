@@ -56,10 +56,11 @@ public:
   void handle_segmentSelection(float mousePosX, float mousePosY,
                                int windowWidth, int windowHeight);
   void handle_showSegments();
-  void handle_segmentContraction(bool automatic);
+  void handle_segmentContraction(bool automatic,
+                                 bool usingCGALSSkeletonization);
   void handle_segmentConnectivitySurgery();
   void handle_meshContractionReversing();
-  void handle_meshContraction(bool automatic);
+  void handle_meshContraction(bool automatic, bool usingCGALSSkeletonization);
   void handle_meshConnectivitySurgery();
   void handle_meshRefinementEmbedding();
   void handle_segmentRefinementEmbedding();
@@ -70,6 +71,7 @@ public:
   void handle_saveModel(const std::string destinationDirectory);
   void handle_saveSegment(const std::string destinationDirectory);
   void handle_clearSkeleton();
+  void handle_laplacianHeatMapStateChange(bool heatMapEnabled);
 
 private:
   void loadPointSphere();

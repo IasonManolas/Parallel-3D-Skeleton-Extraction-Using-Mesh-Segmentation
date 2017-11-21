@@ -36,7 +36,7 @@
          <enum>QFrame::Plain</enum>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="sceneRelated">
          <property name="geometry">
@@ -44,7 +44,7 @@
            <x>0</x>
            <y>0</y>
            <width>134</width>
-           <height>309</height>
+           <height>337</height>
           </rect>
          </property>
          <attribute name="label">
@@ -94,6 +94,19 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="pushButtonResetCamera">
+            <property name="maximumSize">
+             <size>
+              <width>149</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Reset</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
         <widget class="QWidget" name="contractionRelated">
@@ -102,7 +115,7 @@
            <x>0</x>
            <y>0</y>
            <width>137</width>
-           <height>295</height>
+           <height>323</height>
           </rect>
          </property>
          <attribute name="label">
@@ -162,7 +175,7 @@
            <x>0</x>
            <y>0</y>
            <width>134</width>
-           <height>309</height>
+           <height>337</height>
           </rect>
          </property>
          <attribute name="label">
@@ -191,19 +204,6 @@
           </item>
          </layout>
         </widget>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pushButtonResetCamera">
-        <property name="maximumSize">
-         <size>
-          <width>149</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Reset</string>
-        </property>
        </widget>
       </item>
      </layout>

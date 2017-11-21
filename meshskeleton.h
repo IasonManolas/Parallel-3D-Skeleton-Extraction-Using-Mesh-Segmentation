@@ -24,7 +24,8 @@ public:
   }
   void addSkeletonPart(Skeleton s,
                        boost::optional<size_t> segmentIndex = boost::none) {
-    if (segmentIndex) { // segment contraction
+
+    if (segmentIndex) { // skeleton part of a segment
       m_skeletonParts[segmentIndex.get()] = s;
       std::vector<size_t> adjacentSegments =
           m_segmentGraph.getAdjacentNodes(segmentIndex.get());
@@ -46,7 +47,7 @@ public:
         }
       }
 
-    } else { // whole mesh contraction
+    } else { // skeleton of the whole mesh
       m_skeletonParts.push_back(s);
     }
   }
@@ -59,7 +60,10 @@ public:
     m_segmentConnectingEdges.Draw(edgeShader);
   }
 
-  void clear() { m_skeletonParts.clear(); }
+  void clear() {
+    m_skeletonParts.clear();
+    m_segmentConnectingEdges.clear();
+  }
 };
 
 #endif // MESHSKELETON_H

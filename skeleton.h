@@ -3,17 +3,18 @@
 
 #include "cgaltypedefs.h"
 #include "drawableskeleton.h"
+#include <boost/graph/adjacency_list.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/mat4x4.hpp>
-class Skeleton : public DrawableSkeleton {
 
-public:
+class Skeleton : public DrawableSkeleton {
   // public member functions
   // NOTE PointSphere should not be an argument
   // but for some reason PointSphere cannot be
   // loaded in this class but only through
   // Scene::load.Maybe because
   // GLWidget::makeCurrent() needs to be called?
+public:
   Skeleton() : DrawableSkeleton() {}
   // void setUniforms(Shader *shader);
   void clear() {
@@ -31,6 +32,8 @@ public:
   void append(std::vector<std::vector<size_t>> newEdges,
               std::vector<CGALSurfaceMesh::Point> newNodePositions,
               PointSphere psPrototype) {
+
+    // appendToGraph(newEdges, newNodePositions);
     appendEdges(newEdges);
     appendNodes(newNodePositions, psPrototype);
     updateMeshBuffers();
@@ -48,9 +51,12 @@ public:
 
   // private member functions
 private:
-  void appendEdges(std::vector<std::vector<size_t>> &newEdges) {
+  // void appenToGraph(std::vector<std::vector<size_t>> newEdges, std::vector)
+  // {}
 
-    for (std::vector<size_t> edge : newEdges) {
+  void appendEdges(const std::vector<std::vector<size_t>> &newEdges) {
+
+    for (const std::vector<size_t> edge : newEdges) {
       m_indices.push_back(edge[0] + m_vertices.size());
       m_indices.push_back(edge[1] + m_vertices.size());
     }

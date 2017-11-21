@@ -117,23 +117,31 @@ void GLWidget::initializeShaders() {
       new Shader("../shaders/vertex.glsl", "../shaders/fragment.glsl");
   axesShader = new Shader("../shaders/axesvs.glsl", "../shaders/axesfs.glsl");
   segmentShader =
-      new Shader("../shaders/vertex.glsl", "../shaders/segmfragment.glsl");
+	  new Shader("../shaders/vertex.glsl", "../shaders/segmfragment.glsl");
   edgeShader = new Shader("../shaders/edgevs.glsl", "../shaders/edgefs.glsl");
 
   activeShader = defaultShader;
 }
 
+void GLWidget::cgalSkeletonization_signal() {
+  if (mode == defaultView) {
+    scene.handle_meshContraction(true, true);
+  } else if (mode == segmentsView) {
+    scene.handle_segmentContraction(true, true);
+  }
+}
+
 void GLWidget::contraction_signal() {
   if (mode == defaultView)
     if (contractionMode == automatic)
-      scene.handle_meshContraction(true);
+      scene.handle_meshContraction(true, false);
     else
-      scene.handle_meshContraction(false);
+      scene.handle_meshContraction(false, false);
   else if (mode == segmentsView)
     if (contractionMode == automatic)
-      scene.handle_segmentContraction(true);
+      scene.handle_segmentContraction(true, false);
     else
-      scene.handle_segmentContraction(false);
+      scene.handle_segmentContraction(false, false);
 }
 
 void GLWidget::reverseContraction_signal() {
@@ -204,6 +212,9 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
   case Qt::Key_2:
     refinementEmbedding_signal();
     break;
+  case Qt::Key_3:
+    cgalSkeletonization_signal();
+    break;
   }
 }
 void GLWidget::keyReleaseEvent(QKeyEvent *event) {
@@ -251,3 +262,7 @@ void GLWidget::updateContractionMode(bool newState) {
 }
 
 void GLWidget::clearSkeleton() { scene.handle_clearSkeleton(); }
+
+void GLWidget::updateLaplacianHeatMapVisualization(int state) {
+  scene.handle_laplacianHeatMapStateChange(bool(state));
+}
