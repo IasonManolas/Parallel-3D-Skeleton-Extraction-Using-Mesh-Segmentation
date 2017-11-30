@@ -76,13 +76,13 @@ class ConnectivitySurgeon {
   typedef boost::graph_traits<CGALSurfaceMesh>::halfedge_descriptor
       halfedge_descriptor;
 
-  class EdgeCompareFunctor {
-    std::vector<std::pair<double, size_t>> &m_edge_to_totalCost;
+  //class EdgeCompareFunctor {
+  //  std::vector<std::pair<double, size_t>> &m_edge_to_totalCost;
 
-  public:
-    EdgeCompareFunctor(std::vector<std::pair<double, size_t>> &totalCosts)
-        : m_edge_to_totalCost(totalCosts) {}
-  };
+  //public:
+  //  EdgeCompareFunctor(std::vector<std::pair<double, size_t>> &totalCosts)
+  //      : m_edge_to_totalCost(totalCosts) {}
+  //};
 
 public:
   ConnectivitySurgeon(const CGALSurfaceMesh &M) : m_M(M) {}
@@ -135,7 +135,7 @@ private:
 
   typedef typename boost::property_map<
       CGALSurfaceMesh, boost::halfedge_index_t>::type HalfedgeIndexMap;
-  HalfedgeIndexMap hedge_id_pmap;
+  //HalfedgeIndexMap hedge_id_pmap;
 
 private:
   void init() {
@@ -450,7 +450,7 @@ private:
   }
 
   void collapse() {
-    EdgeCompareFunctor edge_comparator(edge_to_totalCost);
+    //EdgeCompareFunctor edge_comparator(edge_to_totalCost);
     EdgeQueue edgeQueue(edge_to_totalCost);
     initialize_queue(edgeQueue);
 

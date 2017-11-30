@@ -84,11 +84,13 @@ public:
   void handle_saveSegment(std::string destinationPathAndFileName);
   void setPointSphere(PointSphere);
   void handle_showVerticesStateChange(int state);
-  void handle_clearSkeleton() { m_skeleton.clear(); }
+  void handle_clearSkeleton() { m_skeleton.clear();m_skeleton.setNumberOfSegments(m_numberOfSegments); }
   void handle_segmentSkeletonization();
   void handle_skeletonization();
-  void handle_laplacianHeatMapStateChange(bool state);
+  
 
+  void skeletonize();
+	void skeletonizeUsingSegmentation();
   // std::vector<size_t> getVertexIndicesWithHighLaplacianValue();
   // public data members
 public:
@@ -106,6 +108,7 @@ private:
   int findClosestVertex(Point intersectionPoint,
                         CGALSurfaceMesh::Face_index intersectingFaceIndex);
   void normalizeMeshViaModelMatrix();
+  void segmentMesh();
   void inflation_handler();
   void deflation_handler();
   void updateDrawingVertices(const MeshSegment &copyFrom);
@@ -118,7 +121,6 @@ private:
   void
   constructSegmentGraph(size_t numberOfSegments); // populates m_segmentGraph
   void updatePointSphereDrawingVector();
-  void updateLaplacianHeatMap();
 
   // CGALSurfaceMesh::Point computeCenterOfMass(
   //    std::vector<size_t> vertexIndices); // TODO merge to meshMeasuring
@@ -141,6 +143,8 @@ private:
   std::vector<PointSphere> m_laplacianHeatMap;
   bool m_showPointSpheresOnVertices{false};
   bool m_showLaplacianHeatMap{false};
+
+  size_t m_numberOfSegments{0};
   // Embedding. NOTE
   // should not be
   // present in the

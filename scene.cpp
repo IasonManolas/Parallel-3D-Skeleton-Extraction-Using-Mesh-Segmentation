@@ -175,9 +175,6 @@ void Scene::handle_saveSegment(
 
 void Scene::handle_clearSkeleton() { M.handle_clearSkeleton(); }
 
-void Scene::handle_laplacianHeatMapStateChange(bool heatMapEnabled) {
-  M.handle_laplacianHeatMapStateChange(heatMapEnabled);
-}
 
 void Scene::setSceneUniforms(Shader *modelShader, Shader *axisShader,
                              Shader *edgeShader) {

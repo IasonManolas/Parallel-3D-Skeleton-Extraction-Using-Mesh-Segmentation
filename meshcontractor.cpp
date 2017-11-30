@@ -2,6 +2,7 @@
 #include "debug_meshcontractor.h"
 //#include <Eigen/unsupported/Eigen/SparseExtra>
 double MeshContractor::m_volumeThreshold = std::pow(10, -4);
+double MeshContractor::m_areaThreshold= std::pow(10, -4);
 SpMatrix concatenateVertically(SpMatrix A, SpMatrix B) {
   // A
   //---
@@ -33,6 +34,7 @@ MeshContractor::MeshContractor(CGALSurfaceMesh meshToContract /*,
   // int nthreads = Eigen::nbThreads();
   // std::cout << "THREADS = " << nthreads << std::endl; // returns '1'
 
+
   if (!CGAL::is_closed(m_M)) {
     using Halfedge_handle =
         boost::graph_traits<CGALSurfaceMesh>::halfedge_descriptor;
@@ -46,6 +48,7 @@ MeshContractor::MeshContractor(CGALSurfaceMesh meshToContract /*,
     }
   }
   m_originalVolume = CGAL::Polygon_mesh_processing::volume(m_M);
+  m_originalArea=CGAL::Polygon_mesh_processing::area(m_M);
   m_Wh = SpMatrix(m_M.number_of_vertices(), m_M.number_of_vertices());
   // m_Wh = DiagMatrix(m_M.number_of_vertices());
   m_Wh.setIdentity();
@@ -87,7 +90,7 @@ MeshContractor::MeshContractor(CGALSurfaceMesh meshToContract /*,
 void MeshContractor::contractMesh() {
   while (CGAL::Polygon_mesh_processing::volume(m_M) / m_originalVolume >
              m_volumeThreshold &&
-         m_iterationsCompleted < m_maxNumOfIterations) {
+         m_iterationsCompleted < m_maxNumOfIterations && !m_degenerateFaceIsPresent && CGAL::Polygon_mesh_processing::area(m_M)/m_originalArea>m_areaThreshold) {
     executeContractionStep();
   }
 }
@@ -242,6 +245,9 @@ void MeshContractor::executeContractionStep() {
   std::cout << "current volume/original volume="
             << CGAL::Polygon_mesh_processing::volume(m_M) / m_originalVolume
             << std::endl;
+  std::cout << "current area/original area="
+            << CGAL::Polygon_mesh_processing::area(m_M) / m_originalArea
+            << std::endl;
 }
 
 EigenMatrix MeshContractor::constructVertexMatrix() const {
@@ -361,7 +367,10 @@ void MeshContractor::updateWh() {
   for (size_t i = 0; i < m_M.number_of_vertices(); i++) {
     double initialToCurrentAreaRatio = m_A0(i) / m_A(i);
     if (m_A(i) < 0.000000000001)
-      std::cout << "ZERO AREA in function: " << __func__ << std::endl;
+    {
+std::cout << "ZERO AREA in function: " << __func__ << std::endl;
+m_degenerateFaceIsPresent=true;
+    }
     if (initialToCurrentAreaRatio > 100)
       lowOneRingAreaVertices.insert(i);
     else
@@ -434,13 +443,13 @@ void MeshContractor::computeLaplaceOperator() {
   // assert(!hasInfinity(m_L));
 }
 boost::optional<double>
-MeshContractor::computeCotangentWeight(CGALSurfaceMesh::edge_index ei) const {
+MeshContractor::computeCotangentWeight(CGALSurfaceMesh::edge_index ei) {
   CGALSurfaceMesh::halfedge_index hei = m_M.halfedge(ei, 0);
   return computeCotangentWeight(hei);
 }
 
 boost::optional<double> MeshContractor::computeCotangentWeight(
-    CGALSurfaceMesh::halfedge_index hei) const {
+    CGALSurfaceMesh::halfedge_index hei) {
 
   CGALSurfaceMesh::Point a = m_M.point(m_M.source(hei)),
                          b = m_M.point(m_M.target(hei));
@@ -464,7 +473,7 @@ boost::optional<double> MeshContractor::computeCotangentWeight(
 }
 boost::optional<double>
 MeshContractor::computeCotangentValue(Kernel::Vector_3 a,
-                                      Kernel::Vector_3 b) const {
+                                      Kernel::Vector_3 b) {
   double dot_ab = a * b;
   double dot_aa = a.squared_length();
   double dot_bb = b.squared_length();
@@ -510,6 +519,7 @@ MeshContractor::computeCotangentValue(Kernel::Vector_3 a,
   assert(!std::isnan(sine));
   if (sine == 0) {
     std::cout << "SIN==0" << std::endl;
+    m_degenerateFaceIsPresent=true;
     return boost::none;
   }
   assert(sine >= -1 && sine <= 1);

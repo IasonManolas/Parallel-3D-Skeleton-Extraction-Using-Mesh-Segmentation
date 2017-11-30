@@ -94,6 +94,3 @@ void MainWindow::on_checkBoxMeshSurface_stateChanged(int arg1) {
   emit stateCheckBoxMeshSurfaceChanged(arg1);
 }
 
-void MainWindow::on_laplacianHeatMapCheckBox_stateChanged(int arg1) {
-  emit stateCheckBoxLaplacianHeatMapChanged(arg1);
-}

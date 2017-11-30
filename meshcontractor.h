@@ -64,6 +64,8 @@ private:
   double m_originalVolume;
   static double
       m_volumeThreshold; // m_originalVolume/currentVolume least ratio so the
+  double m_originalArea;
+	static double m_areaThreshold;
                          // contraction process stops
   double m_Sl{2};
   SpMatrix m_Wh;
@@ -100,14 +102,15 @@ private:
   void computeOneRingAreaVector();
   double computeOneRingAreaAroundVertex(CGALSurfaceMesh::Vertex_index) const;
   boost::optional<double>
-  computeCotangentWeight(CGALSurfaceMesh::edge_index ei) const;
+  computeCotangentWeight(CGALSurfaceMesh::edge_index ei);
   boost::optional<double>
-  computeCotangentWeight(CGALSurfaceMesh::halfedge_index hei) const;
+  computeCotangentWeight(CGALSurfaceMesh::halfedge_index hei);
   boost::optional<double> computeCotangentValue(Kernel::Vector_3,
-                                                Kernel::Vector_3) const;
+                                                Kernel::Vector_3);
   int maxLtoWhIndex{-1};
   int previousMaxLtoWhIndex{-1};
   std::vector<size_t> problematicVertices;
+  bool m_degenerateFaceIsPresent{false};
 };
 
 #endif // SEGMENTCONTRACTOR_H

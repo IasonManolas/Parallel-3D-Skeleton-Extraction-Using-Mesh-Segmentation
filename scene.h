@@ -71,7 +71,6 @@ public:
   void handle_saveModel(const std::string destinationDirectory);
   void handle_saveSegment(const std::string destinationDirectory);
   void handle_clearSkeleton();
-  void handle_laplacianHeatMapStateChange(bool heatMapEnabled);
 
 private:
   void loadPointSphere();

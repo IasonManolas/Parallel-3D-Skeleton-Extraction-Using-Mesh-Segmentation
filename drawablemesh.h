@@ -23,8 +23,8 @@ public:
 protected:
   uint VAO, VBO, EBO;
   Material material{glm::vec3(0.05, 0.05, 0.05),
-                    glm::vec3(0.5, 0.5, 0), // should be static constexpr
-                    glm::vec3(0.6, 0.6, 0.5), 128 * 0.25};
+                    glm::vec3(1.0, 0.75, 0.5), // should be static constexpr
+                    glm::vec3(0.1, 0.075, 0.05), 80 * 0.85};
   double alphaValue{1.0f};
   glm::mat4 m_modelMatrix{1.0}; //  modelSpace->worldSpace
   std::vector<glm::vec3> colorPalette{
