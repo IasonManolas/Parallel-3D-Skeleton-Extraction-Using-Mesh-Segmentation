@@ -14,8 +14,9 @@ TEMPLATE = app
 QMAKE_CC=clang
 QMAKE_CXX=clang
 
-QMAKE_CXXFLAGS+= -std=c++14
+QMAKE_CXXFLAGS+= -std=c++17
 #QMAKE_LFLAGS +=  -fopenmp
+#LIBS+= -lOpenCL
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -51,14 +52,11 @@ HEADERS  += mainwindow.h \
     undirectedgraph.h \
     meshskeleton.h \
     linesegments.h \
-refinementembedding.h
+refinementembedding.h \
+bidirectionalgraph.h
 
 FORMS    += mainwindow.ui
 
-unix:!macx: LIBS += -L$$PWD/'../CGAL build/build/lib/' -lCGAL
-
-INCLUDEPATH += $$PWD/'../CGAL build/build/include'
-DEPENDPATH += $$PWD/'../CGAL build/build/include'
 LIBS+=-lboost_system
 unix:!macx: LIBS += -L$$PWD/../../../../../usr/lib64/ -lGLEW
 
@@ -78,10 +76,14 @@ DISTFILES += \
     shaders/axesfs.glsl \
     shaders/axesvs.glsl
 
-INCLUDEPATH +=/usr/local/include/eigen3
-#INCLUDEPATH +=/usr/lib/gcc/x86_64-linux-gnu/5/include
+INCLUDEPATH +=/usr/include/eigen3
 
 #unix:!macx:
 LIBS +=  -lassimp
 
 LIBS +=  -lgmp
+LIBS+=-lCGAL
+
+
+INCLUDEPATH += $$PWD/../../../../usr/local/include
+DEPENDPATH += $$PWD/../../../../usr/local/include

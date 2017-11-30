@@ -66,6 +66,8 @@ private:
   void cameraReset_signal();
   void initializeShaders();
   void cgalSkeletonization_signal();
+  
+  void compareSkeletonizationMethods();
 
 private:
   meshSurfaceVizualization surfaceState{fillSurface};
@@ -94,6 +96,5 @@ public slots:
   void updateContractionVolumeThreshold(int newThreshold);
   void updateContractionMode(bool newState);
   void clearSkeleton();
-  void updateLaplacianHeatMapVisualization(int state);
 };
 #endif // GLWIDGET_H

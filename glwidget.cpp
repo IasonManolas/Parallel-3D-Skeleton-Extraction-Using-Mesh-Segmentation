@@ -66,7 +66,8 @@ void GLWidget::resizeGL(int w, int h) {
 }
 
 void GLWidget::paintGL() {
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClearColor(0,0,0,1);
+  //glClearColor(0.43f, 0.72f, 1.0f, 1.0f);
   // Enable blending
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -183,6 +184,21 @@ void GLWidget::wheelEvent(QWheelEvent *event) {
   }
 }
 
+#include <ctime>
+void GLWidget::compareSkeletonizationMethods()
+{
+
+    //  clock_t begin = clock();
+    //scene.M.skeletonize();
+    //  clock_t end = clock();
+    //    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    //    std::cout<<"Skeletonize WITHOUT segmentation:"<<elapsed_secs<<std::endl;
+clock_t begin = clock();
+	scene.M.skeletonizeUsingSegmentation();
+clock_t end = clock();
+double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	    std::cout<<"Skeletonize USING segmentation:"<<elapsed_secs<<std::endl;
+}
 void GLWidget::keyPressEvent(QKeyEvent *event) {
   switch (event->key()) {
 
@@ -214,6 +230,12 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
     break;
   case Qt::Key_3:
     cgalSkeletonization_signal();
+    break;
+  case Qt::Key_4:
+    mode=segmentsView;
+    activeShader = segmentShader;
+    showMeshSegments_signal();
+    compareSkeletonizationMethods();
     break;
   }
 }
@@ -263,6 +285,3 @@ void GLWidget::updateContractionMode(bool newState) {
 
 void GLWidget::clearSkeleton() { scene.handle_clearSkeleton(); }
 
-void GLWidget::updateLaplacianHeatMapVisualization(int state) {
-  scene.handle_laplacianHeatMapStateChange(bool(state));
-}

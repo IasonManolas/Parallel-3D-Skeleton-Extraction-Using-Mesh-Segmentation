@@ -12,15 +12,15 @@ void Mesh::handle_skeletonization() {
 	if (!CGAL::is_triangle_mesh(m_M)) {
 		std::cerr << "Input geometry is not triangulated." << std::endl;
 	} else {
-		using CGALSkeletonization =
-		    CGAL::Mean_curvature_flow_skeletonization<CGALSurfaceMesh>;
-		using CGALSkeleton = CGALSkeletonization::Skeleton;
-		using CGALSkeleton_vertex = CGALSkeleton::vertex_descriptor;
-		using CGALSkeleton_edge = CGALSkeleton::edge_descriptor;
+        using CGALSkeletonization =
+            CGAL::Mean_curvature_flow_skeletonization<CGALSurfaceMesh>;
+        using CGALSkeleton = CGALSkeletonization::Skeleton;
+        using CGALSkeleton_vertex = CGALSkeleton::vertex_descriptor;
+        using CGALSkeleton_edge = CGALSkeleton::edge_descriptor;
 
 		CGALSkeleton s;
 
-		// CGAL::extract_mean_curvature_flow_skeleton(m_M, s);
+         //CGAL::extract_mean_curvature_flow_skeleton(m_M, s);
 
 		auto it_pair = boost::edges(s);
 
@@ -48,8 +48,39 @@ void Mesh::handle_skeletonization() {
 	}
 }
 
-void Mesh::handle_laplacianHeatMapStateChange(bool state) {
-	m_showLaplacianHeatMap = state;
+void Mesh::segmentMesh()
+{
+	if (!segmentsComputed) {
+		size_t numberOfSegments = computeSegments();
+		constructSegmentGraph(numberOfSegments);  // m_segmentGraph
+		// m_perSegmentSkeletonEdges.resize(numberOfSegments);
+		m_skeleton.setNumberOfSegments(numberOfSegments);
+	}
+
+}
+
+void Mesh::skeletonize()
+{
+	handle_meshContraction(true);
+	handle_meshConnectivitySurgery();
+
+}
+
+void Mesh::skeletonizeUsingSegmentation()
+{
+	segmentMesh();
+
+	//for(size_t i=0;i<m_numberOfSegments;i++)
+	//{
+		selectedSegmentIndex=0;
+		colorPickedSegment();
+		updateMeshBuffers();
+		segment.setSegment(getMeshSegment());
+		SMC = MeshContractor(segment.M());
+		handle_segmentContraction(true);
+		handle_segmentConnectivitySurgery();
+	//}
+
 }
 
 void Mesh::resetMeshAttributes() {
@@ -126,11 +157,13 @@ size_t Mesh::constructSegmentMap() {
 	// Any other scalar values can be used instead of using SDF values
 	// computed
 	// using the CGAL function
-	std::size_t number_of_segments = CGAL::segmentation_via_sdf_values(
+	m_numberOfSegments= CGAL::segmentation_via_sdf_values(
+	    //m_M, m_segmentFaceMap, 2.0 * CGAL_PI / 3, 25, 3, 0.4);
+	    //m_M, m_segmentFaceMap, 2.0 * CGAL_PI / 3, 25, 4,0.5);
 	    m_M, m_segmentFaceMap, 2.0 * CGAL_PI / 3, 25, 3, 0.4);
 
-	std::cout << "Number of segments: " << number_of_segments << std::endl;
-	return number_of_segments;
+	std::cout << "Number of segments: " << m_numberOfSegments<< std::endl;
+	return m_numberOfSegments;
 }
 
 void Mesh::inflationDeflationDeformer(float deformationFactor) {
@@ -282,12 +315,8 @@ size_t Mesh::computeSegments() {
 }
 
 void Mesh::handle_showSegments() {
-	if (!segmentsComputed) {
-		size_t numberOfSegments = computeSegments();
-		constructSegmentGraph(numberOfSegments);  // m_segmentGraph
-		// m_perSegmentSkeletonEdges.resize(numberOfSegments);
-		m_skeleton.setNumberOfSegments(numberOfSegments);
-	}
+	segmentMesh();
+
 	alphaValue = 1;
 	assignSegmentColors();
 	updateMeshBuffers();
@@ -348,7 +377,6 @@ void Mesh::handle_meshContractionReversing() {
 	DrawableMesh::updateDrawingVertices();
 	updateMeshBuffers();
 
-	updateLaplacianHeatMap();
 
 	updatePointSphereDrawingVector();
 }
@@ -365,7 +393,6 @@ void Mesh::handle_meshContraction(bool automatic) {
 	DrawableMesh::updateDrawingVertices();
 	updateMeshBuffers();
 
-	updateLaplacianHeatMap();
 
 	updatePointSphereDrawingVector();
 }
@@ -420,6 +447,11 @@ Skeleton Mesh::convertToSkeleton(
 	}
 
 	s.append(skeletonEdgesInSkeletonIndices, skeletonNodePositions, m_PS);
+	for(auto edge:skeletonEdgesInSkeletonIndices)
+	{
+		for(auto v:edge)
+			std::cout<<"vertex index "<<v<<std::endl;
+	}
 	return s;
 }
 
@@ -468,47 +500,6 @@ void Mesh::updatePointSphereDrawingVector() {
 	}
 }
 
-void Mesh::updateLaplacianHeatMap() {
-	m_laplacianHeatMap.clear();
-	std::vector<double> laplacianValues = MC.getLaplacianValues();
-
-	double maxLaplacianValue =
-	    *(std::max_element(laplacianValues.begin(), laplacianValues.end()));
-	glm::vec3 red(1, 0, 0);
-
-	glm::vec3 green(0, 1, 0);
-
-	double meanLaplacianValue =
-	    std::accumulate(laplacianValues.begin(), laplacianValues.end(), 0) /
-	    laplacianValues.size();
-	glm::vec3 yellow(0.5, 0.5, 0);
-
-	glm::vec3 blue(0, 0, 1);
-
-	for (CGALSurfaceMesh::vertex_index vIndex : m_M.vertices()) {
-		PointSphere ps = m_PS;
-		ps.setPosition(
-		    m_M.point(CGALSurfaceMesh::vertex_index(vIndex)));
-		glm::vec3 color;
-		if (laplacianValues[size_t(vIndex)] < 0) {
-			color = blue;
-		} else if (laplacianValues[size_t(vIndex)] <=
-			   meanLaplacianValue) {
-			float howCloseToYellow =
-			    laplacianValues[size_t(vIndex)] /
-			    meanLaplacianValue;
-			color = glm::normalize((1 - howCloseToYellow) * green +
-					       howCloseToYellow * yellow);
-		} else {
-			float howCloseToRed =
-			    laplacianValues[size_t(vIndex)] / maxLaplacianValue;
-			color = glm::normalize((1 - howCloseToRed) * yellow +
-					       howCloseToRed * red);
-		}
-		ps.setColor(color);
-		m_laplacianHeatMap.push_back(ps);
-	}
-}
 void Mesh::handle_meshConnectivitySurgery() {
 	ConnectivitySurgeon CS(m_M);
 	CS.execute_connectivitySurgery();
@@ -520,13 +511,14 @@ void Mesh::handle_meshConnectivitySurgery() {
 }
 
 void Mesh::handle_meshRefinementEmbedding() {
+
 	std::cout << "Embedding Refinement.." << std::endl;
 
 	Kernel::Vector_3 node(0, 0, 0);
-	std::vector<Kernel::Vector_3> points{Kernel::Vector_3(0, 0, 0),
-					     Kernel::Vector_3(0.1, 0.1, 0.1)};
+	std::vector<Kernel::Vector_3> points{Kernel::Vector_3(0.5, 0.5, 0.5),Kernel::Vector_3(0, 0, 0)};
 
-	std::cout << "Node centerness:" << computeNodeCenterness(node, points)
+	double nc=computeNodeCenterness(node, points);
+	std::cout << "Node centerness:" << nc
 		  << std::endl;
 
 	// m_skeletonNodes.clear(); // forget skeleton node drawing vector.

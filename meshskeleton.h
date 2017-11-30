@@ -22,11 +22,7 @@ public:
     m_skeletonParts.clear();
     m_segmentConnectingEdges.initializeDrawingBuffers();
   }
-  void addSkeletonPart(Skeleton s,
-                       boost::optional<size_t> segmentIndex = boost::none) {
-
-    if (segmentIndex) { // skeleton part of a segment
-      m_skeletonParts[segmentIndex.get()] = s;
+  void connectAdjacentSkeletonParts(Skeleton s,boost::optional<size_t> segmentIndex = boost::none){
       std::vector<size_t> adjacentSegments =
           m_segmentGraph.getAdjacentNodes(segmentIndex.get());
       for (size_t adjacentSegment : adjacentSegments) {
@@ -46,6 +42,14 @@ public:
               adjacentSegmentNodePos[closestNodes.second]);
         }
       }
+
+  }
+  void addSkeletonPart(Skeleton s,
+                       boost::optional<size_t> segmentIndex = boost::none) {
+
+    if (segmentIndex) { // skeleton part of a segment
+      m_skeletonParts[segmentIndex.get()] = s;
+      //connectAdjacentSkeletonParts(s,segmentIndex);
 
     } else { // skeleton of the whole mesh
       m_skeletonParts.push_back(s);
