@@ -497,7 +497,11 @@ void Mesh::handle_meshConnectivitySurgery() {
 	const CGALSurfaceMesh &contractedMesh = m_M;
 	ConnectivitySurgeon CS(contractedMesh);
 	CS.execute_connectivitySurgery();
-	auto skeletonEdges = CS.getSkeletonEdges();
+	std::vector<Edge<CGALSurfaceMesh::Point>> skeletonEdges =
+	    CS.getSkeletonEdges();
+	for (auto e : skeletonEdges) {
+		std::cout << e.v1 << " " << e.v2 << std::endl;
+	}
 	// m_skeletonMeshMapping = CS.getSkeletonMeshMapping();
 
 	m_skeleton.addSkeletonPart(skeletonEdges, m_segmentGraph);
