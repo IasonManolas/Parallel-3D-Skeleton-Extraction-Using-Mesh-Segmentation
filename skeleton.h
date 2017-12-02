@@ -41,12 +41,22 @@ class Skeleton : public DrawableSkeleton {
 
 	using Edge = Edge<CGALSurfaceMesh::Point>;
 	// constructs the skeleton of the whole mesh
-	void populateSkeleton(std::vector<Edge> edges) {}
+	void populateSkeleton(std::vector<Edge> edges) {
+		for (const Edge &e : edges) {
+			// add edge to graph
 
-	// adds to the skeleton one part based on the segment graph and the
+			// populate drawing vector
+		}
+	}
+
+	// adds to the skeleton one part based on the segment graph and
+	// the
 	// provided index
 	void addSkeletonPart(std::vector<Edge> edges, UndirectedGraph m_graph) {
 		for (const Edge &e : edges) {
+			// add edge to graph
+
+			// populate drawing vector
 		}
 	}
 
