@@ -4,7 +4,6 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/mat4x4.hpp>
-#include "bidirectionalgraph.h"
 #include "cgaltypedefs.h"
 #include "drawableskeleton.h"
 
@@ -15,7 +14,6 @@ class Skeleton : public DrawableSkeleton {
 	// loaded in this class but only through
 	// Scene::load.Maybe because
 	// GLWidget::makeCurrent() needs to be called?
-	Bidirectional3DGraph m_graph;
 
        public:
 	Skeleton() : DrawableSkeleton() {}

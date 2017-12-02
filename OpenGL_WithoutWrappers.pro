@@ -14,7 +14,7 @@ TEMPLATE = app
 QMAKE_CC=clang
 QMAKE_CXX=clang
 
-QMAKE_CXXFLAGS+= -std=c++17
+QMAKE_CXXFLAGS+= -std=c++14
 #QMAKE_LFLAGS +=  -fopenmp
 #LIBS+= -lOpenCL
 
@@ -52,8 +52,7 @@ HEADERS  += mainwindow.h \
     undirectedgraph.h \
     meshskeleton.h \
     linesegments.h \
-refinementembedding.h \
-bidirectionalgraph.h
+refinementembedding.h 
 
 FORMS    += mainwindow.ui
 
