@@ -107,16 +107,16 @@ class ConnectivitySurgeon {
 		for (size_t i = 0; i < is_edge_deleted.size(); i++) {
 			if (is_edge_deleted[i] == false) {
 				Edge e(edge_to_vertex[i][0],
-				       &m_M.point(CGALSurfaceMesh::vertex_index(
+				       m_M.point(CGALSurfaceMesh::vertex_index(
 					   edge_to_vertex[i][0])),
 				       edge_to_vertex[i][1],
-				       &m_M.point(CGALSurfaceMesh::vertex_index(
-					   edge_to_vertex[i][1])))
+				       m_M.point(CGALSurfaceMesh::vertex_index(
+					   edge_to_vertex[i][1])));
 
-				    // std::pair<VertexIndex, VertexIndex> edge{
-				    //    std::make_pair(edge_to_vertex[i][0],
-				    //		   edge_to_vertex[i][1])};
-				    skeletonEdges.push_back(e);
+				// std::pair<VertexIndex, VertexIndex> edge{
+				//    std::make_pair(edge_to_vertex[i][0],
+				//		   edge_to_vertex[i][1])};
+				skeletonEdges.push_back(e);
 			}
 		}
 
