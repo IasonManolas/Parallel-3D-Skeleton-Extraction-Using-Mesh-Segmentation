@@ -159,7 +159,8 @@ DIST          = ../shaders/fragment.glsl \
 		../undirectedgraph.h \
 		../linesegments.h \
 		../refinementembedding.h \
-		../edge.h ../main.cpp \
+		../edge.h \
+		../node.h ../main.cpp \
 		../mainwindow.cpp \
 		../glwidget.cpp \
 		../meshcontractor.cpp \
@@ -335,7 +336,7 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents ../mainwindow.h ../glwidget.h ../shader.h ui_mainwindow.h ../camera.h ../directionallight.h ../light.h ../material.h ../scene.h ../axes.h ../meshloader.h ../pointsphere.h ../pointsphere.h ../cgaltypedefs.h ../meshsegment.h ../meshcontractor.h ../skeleton.h ../mesh.h ../connectivitysurgeon.h ../debug_meshcontractor.h ../drawablemesh.h ../polygonalmesh.h ../drawableskeleton.h ../undirectedgraph.h ../linesegments.h ../refinementembedding.h ../edge.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../mainwindow.h ../glwidget.h ../shader.h ui_mainwindow.h ../camera.h ../directionallight.h ../light.h ../material.h ../scene.h ../axes.h ../meshloader.h ../pointsphere.h ../pointsphere.h ../cgaltypedefs.h ../meshsegment.h ../meshcontractor.h ../skeleton.h ../mesh.h ../connectivitysurgeon.h ../debug_meshcontractor.h ../drawablemesh.h ../polygonalmesh.h ../drawableskeleton.h ../undirectedgraph.h ../linesegments.h ../refinementembedding.h ../edge.h ../node.h $(DISTDIR)/
 	$(COPY_FILE) --parents ../main.cpp ../mainwindow.cpp ../glwidget.cpp ../meshcontractor.cpp ../mesh.cpp ../scene.cpp ../connectivitysurgeon.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../mainwindow.ui $(DISTDIR)/
 
@@ -376,6 +377,7 @@ moc_glwidget.cpp: ../camera.h \
 		../cgaltypedefs.h \
 		../connectivitysurgeon.h \
 		../edge.h \
+		../node.h \
 		../skeleton.h \
 		../drawableskeleton.h \
 		../pointsphere.h \
@@ -413,7 +415,30 @@ main.o: ../main.cpp ../mainwindow.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../main.cpp
 
 mainwindow.o: ../mainwindow.cpp ../mainwindow.h \
-		ui_mainwindow.h
+		ui_mainwindow.h \
+		../glwidget.h \
+		../camera.h \
+		../shader.h \
+		../directionallight.h \
+		../light.h \
+		../material.h \
+		../mesh.h \
+		../meshloader.h \
+		../cgaltypedefs.h \
+		../connectivitysurgeon.h \
+		../edge.h \
+		../node.h \
+		../skeleton.h \
+		../drawableskeleton.h \
+		../pointsphere.h \
+		../undirectedgraph.h \
+		../drawablemesh.h \
+		../polygonalmesh.h \
+		../meshcontractor.h \
+		../meshsegment.h \
+		../refinementembedding.h \
+		../scene.h \
+		../axes.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../mainwindow.cpp
 
 glwidget.o: ../glwidget.cpp ../glwidget.h \
@@ -427,6 +452,7 @@ glwidget.o: ../glwidget.cpp ../glwidget.h \
 		../cgaltypedefs.h \
 		../connectivitysurgeon.h \
 		../edge.h \
+		../node.h \
 		../skeleton.h \
 		../drawableskeleton.h \
 		../pointsphere.h \
@@ -450,6 +476,7 @@ mesh.o: ../mesh.cpp ../mesh.h \
 		../cgaltypedefs.h \
 		../connectivitysurgeon.h \
 		../edge.h \
+		../node.h \
 		../skeleton.h \
 		../drawableskeleton.h \
 		../pointsphere.h \
@@ -470,6 +497,7 @@ scene.o: ../scene.cpp ../scene.h \
 		../cgaltypedefs.h \
 		../connectivitysurgeon.h \
 		../edge.h \
+		../node.h \
 		../skeleton.h \
 		../drawableskeleton.h \
 		../pointsphere.h \

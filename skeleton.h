@@ -39,14 +39,32 @@ class Skeleton : public DrawableSkeleton {
 		DrawableSkeleton::initializeDrawingBuffers();
 	}
 
-	using Edge = Edge<CGALSurfaceMesh::Point>;
+	using Node = Node<CGALSurfaceMesh::Point>;
 	// constructs the skeleton of the whole mesh
-	void populateSkeleton(std::vector<Edge> edges) {
-		for (const Edge &e : edges) {
+	// nodes could be extracted from edges but are provided for efficiency
+	void populateSkeleton(std::vector<Edge> edges,
+			      std::vector<Node> nodes) {
+		using EdgeIndex = size_t;
+		for (Node n : nodes) {
+			// skeletonNodes.insert(std::make_pair(i, 1));
+			// skeletonNodes.insert(std::make_pair(i, 2));
 			// add edge to graph
 
 			// populate drawing vector
 		}
+		// for (auto pair : skeletonNodes) {
+		// if (pair.second == 1) {
+		// 	auto &p = edges[pair.first].p1;
+		// 	PointSphere ps = m_PS;
+		// 	ps.setPosition(p);
+		// 	m_nodeDrawingVector.push_back(ps);
+		// 	} else {
+		// 		auto &p = edges[pair.first].p2;
+		// 		PointSphere ps = m_PS;
+		// 		ps.setPosition(p);
+		// 		m_nodeDrawingVector.push_back(ps);
+		// 	}
+		// }
 	}
 
 	// adds to the skeleton one part based on the segment graph and
@@ -81,7 +99,7 @@ class Skeleton : public DrawableSkeleton {
 			PointSphere tempPS = psPrototype;
 			tempPS.setPosition(p);
 			tempPS.setColor(glm::vec3(1, 0, 0));
-			m_drawingVector.push_back(tempPS);
+			m_nodeDrawingVector.push_back(tempPS);
 
 			m_vertices.push_back(glm::vec3(p.x(), p.y(), p.z()));
 		}

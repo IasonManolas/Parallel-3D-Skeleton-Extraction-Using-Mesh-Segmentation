@@ -52,7 +52,8 @@ HEADERS  += mainwindow.h \
     undirectedgraph.h \
     linesegments.h \
 refinementembedding.h \
-edge.h 
+edge.h \
+node.h
 
 FORMS    += mainwindow.ui
 
