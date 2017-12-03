@@ -1,15 +1,10 @@
 #ifndef EDGE_H
 #define EDGE_H
-using VertexIndex = size_t;  // vertex index in a mesh
-template <typename Point3D>
+#include "node.h"
 struct Edge {
-	Edge(VertexIndex v1, Point3D p1, VertexIndex v2, Point3D p2)
-	    : v1(v1), p1(p1), v2(v2), p2(p2) {}
+	Edge(Node n1, Node n2) : n1(n1), n2(n2) {}
 
-	VertexIndex v1;
-	Point3D p1;
-
-	VertexIndex v2;
-	Point3D p2;
+	Node n1;
+	Node n2;
 };
 #endif

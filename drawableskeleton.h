@@ -29,7 +29,9 @@ class DrawableSkeleton {
        private:
 	void drawEdges() {
 		glBindVertexArray(VAO);
-		glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_LINES, 0, m_vertices.size());
+		// glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_INT,
+		// 0);
 		// if (!m_vertices.empty())
 		//  for (auto vertex : m_vertices)
 		//    std::cout << glm::to_string(vertex) << std::endl;
@@ -38,13 +40,13 @@ class DrawableSkeleton {
 	}
 	void drawNodes(Shader *shader, glm::mat4 meshModelMatrix) {
 		shader->Use();
-		for (PointSphere ps : m_drawingVector) {
+		for (PointSphere ps : m_nodeDrawingVector) {
 			ps.handle_drawing(shader, meshModelMatrix);
 		}
 	}
 
        protected:
-	std::vector<PointSphere> m_drawingVector;
+	std::vector<PointSphere> m_nodeDrawingVector;
 	std::vector<glm::vec3> m_vertices;
 	std::vector<uint> m_indices;
 	uint VAO, VBO, EBO;
@@ -57,7 +59,7 @@ class DrawableSkeleton {
 	DrawableSkeleton(const PointSphere &ps) : m_PS(ps) {}
 	void setUniforms() {}
 	void clearDrawableSkeleton() {
-		m_drawingVector.clear();
+		m_nodeDrawingVector.clear();
 		m_vertices.clear();
 		m_indices.clear();
 		updateMeshBuffers();
@@ -71,10 +73,10 @@ class DrawableSkeleton {
 			     (m_vertices.size() + 1) * sizeof(glm::vec3),
 			     &m_vertices[0], GL_DYNAMIC_DRAW);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-			     m_indices.size() * sizeof(GLuint), &m_indices[0],
-			     GL_DYNAMIC_DRAW);
+		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		// glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+		// 	     m_indices.size() * sizeof(GLuint), &m_indices[0],
+		// 	     GL_DYNAMIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
 				      sizeof(glm::vec3), (GLvoid *)0);
@@ -93,7 +95,7 @@ class DrawableSkeleton {
 	void initializeDrawingBuffers() {
 		glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &VBO);
-		glGenBuffers(1, &EBO);
+		// glGenBuffers(1, &EBO);
 
 		glBindVertexArray(VAO);
 
@@ -102,10 +104,10 @@ class DrawableSkeleton {
 			     (m_vertices.size() + 1) * sizeof(glm::vec3),
 			     &m_vertices[0], GL_DYNAMIC_DRAW);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-			     m_indices.size() * sizeof(GLuint), &m_indices[0],
-			     GL_DYNAMIC_DRAW);
+		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		// glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+		// 	     m_indices.size() * sizeof(GLuint), &m_indices[0],
+		// 	     GL_DYNAMIC_DRAW);
 
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
 				      sizeof(glm::vec3), (GLvoid *)0);

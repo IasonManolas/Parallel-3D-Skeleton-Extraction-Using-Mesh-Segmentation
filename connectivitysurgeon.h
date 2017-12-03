@@ -101,17 +101,17 @@ class ConnectivitySurgeon {
 	}
 
 	using VertexIndex = size_t;
-	using Edge = Edge<CGALSurfaceMesh::Point>;
 	std::vector<Edge> getSkeletonEdges() const {
 		std::vector<Edge> skeletonEdges;
 		for (size_t i = 0; i < is_edge_deleted.size(); i++) {
 			if (is_edge_deleted[i] == false) {
-				Edge e(edge_to_vertex[i][0],
-				       m_M.point(CGALSurfaceMesh::vertex_index(
-					   edge_to_vertex[i][0])),
-				       edge_to_vertex[i][1],
-				       m_M.point(CGALSurfaceMesh::vertex_index(
-					   edge_to_vertex[i][1])));
+				Node n1(edge_to_vertex[i][0],
+					m_M.point(CGALSurfaceMesh::vertex_index(
+					    edge_to_vertex[i][0])));
+				Node n2(edge_to_vertex[i][1],
+					m_M.point(CGALSurfaceMesh::vertex_index(
+					    edge_to_vertex[i][1])));
+				Edge e(n1, n2);
 
 				// std::pair<VertexIndex, VertexIndex> edge{
 				//    std::make_pair(edge_to_vertex[i][0],
@@ -121,6 +121,17 @@ class ConnectivitySurgeon {
 		}
 
 		return skeletonEdges;
+	}
+	using Node = Node<CGALSurfaceMesh::Point>;
+	std::vector<Node> getSkeletonNodes() const {
+		std::vector<Node> nodes;
+		for (size_t i = 0; i < is_vertex_deleted.size(); i++) {
+			if (is_vertex_deleted[i] == false) {
+				Node n(i, vertex_to_point[i]);
+				nodes.push_back(n);
+			}
+		}
+		return nodes;
 	}
 
 	std::vector<std::vector<size_t>> getSkeletonMeshMapping() {
