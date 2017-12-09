@@ -49,9 +49,7 @@ HEADERS  += mainwindow.h \
     drawableskeleton.h \
     undirectedgraph.h \
     linesegments.h \
-refinementembedding.h \
-edge.h \
-node.h
+refinementembedding.h 
 
 FORMS    += mainwindow.ui
 

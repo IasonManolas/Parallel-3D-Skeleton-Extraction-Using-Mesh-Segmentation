@@ -6,7 +6,6 @@
 
 #include <ctime>
 #include "cgaltypedefs.h"
-#include "edge.h"
 #include "skeleton.h"
 
 /*

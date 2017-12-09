@@ -6,7 +6,6 @@
 #include <glm/mat4x4.hpp>
 #include "cgaltypedefs.h"
 #include "drawableskeleton.h"
-#include "edge.h"
 #include "undirectedgraph.h"
 
 class Skeleton : public DrawableSkeleton {
