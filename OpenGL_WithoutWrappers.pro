@@ -10,13 +10,11 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = OpenGL_WithoutWrappers
 TEMPLATE = app
-#CONFIG+=-std=c++1y
-QMAKE_CC=clang
-QMAKE_CXX=clang
 
 QMAKE_CXXFLAGS+= -std=c++14
-#QMAKE_LFLAGS +=  -fopenmp
-#LIBS+= -lOpenCL
+QMAKE_CXX = clang++
+CONFIG+=release
+
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -57,22 +55,13 @@ node.h
 
 FORMS    += mainwindow.ui
 
-LIBS+=-lboost_system
 unix:!macx: LIBS += -L$$PWD/../../../../../usr/lib64/ -lGLEW
 
-INCLUDEPATH += $$PWD/../../../../../usr/include/GL
-DEPENDPATH += $$PWD/../../../../../usr/include/GL
 
 DISTFILES += \
    shaders/fragment.glsl \
    shaders/vertex.glsl \
-    container.jpg \
-    nanosuit.obj \
-    Models/default.png \
-    Models/copyright.txt \
-    Models/default.mtl \
     Icons/Open_folder.png \
-    ../../cgal-demos/examples/Surface_mesh_segmentation/data/cactus.off \
     shaders/axesfs.glsl \
     shaders/axesvs.glsl
 
@@ -80,10 +69,15 @@ INCLUDEPATH +=/usr/include/eigen3
 
 #unix:!macx:
 LIBS +=  -lassimp
+LIBS+= /usr/local/lib/libCGAL.so
+LIBS+= /usr/lib/x86_64-linux-gnu/libgmp.so
+LIBS+=/usr/lib/x86_64-linux-gnu/libmpfr.so
+#LIBS+=/usr/lib/x86_64-linux-gnu/libboost_thread.so
+#LIBS+=/usr/lib/x86_64-linux-gnu/libboost_system.so
 
-LIBS +=  -lgmp
-LIBS+=-lCGAL
+
+INCLUDEPATH += /usr/local/include
+
+INCLUDEPATH+=/usr/include
 
 
-INCLUDEPATH += $$PWD/../../../../usr/local/include
-DEPENDPATH += $$PWD/../../../../usr/local/include

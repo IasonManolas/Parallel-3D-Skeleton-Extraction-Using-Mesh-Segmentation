@@ -5,10 +5,11 @@
 #include <vector>
 
 class PolygonalMesh {
+public:
+  CGALSurfaceMesh m_M; // In model coordinates
 protected:
   std::vector<MyVertex> m_vertices;
   std::vector<uint> m_indices;
-  CGALSurfaceMesh m_M;             // In model coordinates
   glm::vec3 centerOfMass{0, 0, 0}; // in model coordinates
   float maxDim{1.0};               // in model coordinates
   double averageEdgeLength{1};

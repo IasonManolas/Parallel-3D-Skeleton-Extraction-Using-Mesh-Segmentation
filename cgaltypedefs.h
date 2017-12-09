@@ -1,12 +1,11 @@
 #ifndef CGALTYPEDEFS_H
 #define CGALTYPEDEFS_H
 
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+//#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Surface_mesh.h>
-#include <CGAL/extract_mean_curvature_flow_skeleton.h>
-//using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
- using Kernel = CGAL::Simple_cartesian<double>;
+// using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+using Kernel = CGAL::Simple_cartesian<double>;
 using CGALSurfaceMesh = CGAL::Surface_mesh<Kernel::Point_3>;
 
 using Ray = Kernel::Ray_3;
@@ -29,8 +28,8 @@ using Ray_intersection =
     boost::optional<Tree::Intersection_and_primitive_id<Kernel::Ray_3>::Type>;
 #include <glm/vec3.hpp>
 struct MyVertex {
-  glm::vec3 Position;
-  glm::vec3 Normal;
-  glm::vec3 Color{glm::vec3(0.0f, 0.0f, 0.0f)};
+	glm::vec3 Position;
+	glm::vec3 Normal;
+	glm::vec3 Color{glm::vec3(0.0f, 0.0f, 0.0f)};
 };
-#endif // CGALTYPEDEFS_H
+#endif  // CGALTYPEDEFS_H

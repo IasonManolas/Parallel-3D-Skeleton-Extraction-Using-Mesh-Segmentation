@@ -1,8 +1,9 @@
 #include "scene.h"
 
-void Scene::Draw(Shader *modelShader, Shader *axisShader, Shader *edgeShader) {
-	setSceneUniforms(modelShader, axisShader, edgeShader);
-	M.handle_drawing(modelShader, edgeShader);
+void Scene::Draw(Shader *activeShader, Shader *axisShader, Shader *edgeShader,
+		 Shader *nodeShader) {
+	setSceneUniforms(activeShader, axisShader, edgeShader, nodeShader);
+	M.handle_drawing(activeShader, edgeShader, nodeShader);
 	if (showAxes) {
 		axisShader->Use();
 		sceneAxes.Draw();
@@ -59,17 +60,65 @@ void Scene::handle_showSegments() { M.handle_showSegments(); }
 
 void Scene::handle_segmentContraction(bool automatic,
 				      bool usingCGALSSkeletonization = false) {
-	if (!usingCGALSSkeletonization)
+	if (!usingCGALSSkeletonization) {
 		M.handle_segmentContraction(automatic);
-	else
+	} else {
 		M.handle_segmentSkeletonization();
+	}
 }
 
+#include <CGAL/extract_mean_curvature_flow_skeleton.h>
 void Scene::handle_meshContraction(bool automatic,
 				   bool usingCGALSSkeletonization = false) {
-	if (!usingCGALSSkeletonization) M.handle_meshContraction(automatic);
-	// else
-	// M.handle_skeletonization();
+	if (!usingCGALSSkeletonization) {
+		M.handle_meshContraction(automatic);
+	} else {
+		// M.handle_skeletonization();
+		typedef CGAL::Mean_curvature_flow_skeletonization<
+		    CGALSurfaceMesh>
+		    Skeletonization;
+		typedef Skeletonization::Skeleton Skeleton;
+		// if (!CGAL::is_triangle_mesh(tmesh)) {
+		// 	std::cout << "Input geometry is not
+		// triangulated." <<
+		// std::endl;
+		// 	return EXIT_FAILURE;
+		// }
+		Skeleton skeleton;
+		if (!CGAL::is_closed(M.m_M)) {
+			using halfedge_handle = boost::graph_traits<
+			    CGALSurfaceMesh>::halfedge_descriptor;
+			using facet_handle = boost::graph_traits<
+			    CGALSurfaceMesh>::face_descriptor;
+			BOOST_FOREACH (halfedge_handle h, halfedges(M.m_M)) {
+				if (M.m_M.is_border(h)) {
+					std::vector<facet_handle> patch_facets;
+					CGAL::Polygon_mesh_processing::
+					    triangulate_hole(M.m_M, h,
+							     std::back_inserter(
+								 patch_facets));
+				}
+			}
+		}
+
+		CGAL::extract_mean_curvature_flow_skeleton(M.m_M, skeleton);
+
+		M.m_skeleton.populateSkeleton(skeleton);
+		M.alphaValue = 0.4;
+
+		// Skeletonization mcs(M.m_M);
+		// mcs.contract_until_convergence();
+		// auto contractedMesh = mcs.meso_skeleton();
+		// std::cout << "Meso skeleton has: "
+		// 	  << contractedMesh.number_of_vertices() << "
+		// vertices"
+		// 	  << std::endl;
+
+		// std::cout << "Number of vertices of the skeleton: "
+		// << boost::num_vertices(skeleton) << "\n";
+		// std::cout << "Number of edges of the skeleton: "
+		// 	  << boost::num_edges(skeleton) << "\n";
+	}
 }
 
 void Scene::handle_meshConnectivitySurgery() {
@@ -101,7 +150,7 @@ void Scene::loadMesh(std::__cxx11::string filename) {
 	// M = Mesh(PS);
 	M.load(filename);
 	PS.updateRadius(M.getM());
-	M.setPointSphere(PS);
+	// M.setPointSphere(PS);
 }
 
 void Scene::handle_axesStateChange(bool value) { showAxes = value; }
@@ -175,21 +224,26 @@ void Scene::handle_saveSegment(
 void Scene::handle_clearSkeleton() { M.handle_clearSkeleton(); }
 
 void Scene::setSceneUniforms(Shader *modelShader, Shader *axisShader,
-			     Shader *edgeShader) {
+			     Shader *edgeShader, Shader *nodeShader) {
 	modelShader->Use();
 	light.setUniforms(modelShader);
 	camera.setUniforms(modelShader);
 	setProjectionMatrixUniform(modelShader);
-
-	edgeShader->Use();
-	camera.setUniforms(edgeShader);
-	setProjectionMatrixUniform(edgeShader);
 
 	axisShader->Use();
 	camera.setUniforms(axisShader);
 	setProjectionMatrixUniform(axisShader);
 	glUniformMatrix4fv(glGetUniformLocation(axisShader->programID, "model"),
 			   1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
+
+	edgeShader->Use();
+	camera.setUniforms(edgeShader);
+	setProjectionMatrixUniform(edgeShader);
+
+	nodeShader->Use();
+	light.setUniforms(nodeShader);
+	camera.setUniforms(nodeShader);
+	setProjectionMatrixUniform(nodeShader);
 }
 
 void Scene::setProjectionMatrixUniform(Shader *shader) {

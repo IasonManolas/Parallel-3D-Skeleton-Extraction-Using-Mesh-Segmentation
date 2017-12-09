@@ -26,7 +26,6 @@
 #include <boost/graph/copy.hpp>
 #include <boost/graph/graph_traits.hpp>
 
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Kernel_traits.h>
 #include <Eigen/Core>
 #include <functional>
@@ -71,19 +70,32 @@ class EdgeQueue {
 	bool empty() { return edgeHeap.size() == 0; }
 };
 
+template <typename TriangleMesh>
 class ConnectivitySurgeon {
 	using Matrix34d = Eigen::Matrix<double, 3, 4>;
 	using Matrix4d = Eigen::Matrix4d;
 
-	typedef boost::graph_traits<CGALSurfaceMesh>::vertex_descriptor
-	    vertex_descriptor;
-	typedef boost::graph_traits<CGALSurfaceMesh>::face_descriptor
-	    face_descriptor;
-	typedef boost::graph_traits<CGALSurfaceMesh>::edge_descriptor
-	    edge_descriptor;
-	typedef boost::graph_traits<CGALSurfaceMesh>::halfedge_descriptor
-	    halfedge_descriptor;
+	using vertex_descriptor =
+	    typename boost::graph_traits<TriangleMesh>::vertex_descriptor;
+	using face_descriptor =
+	    typename boost::graph_traits<TriangleMesh>::face_descriptor;
+	using edge_descriptor =
+	    typename boost::graph_traits<TriangleMesh>::edge_descriptor;
+	using halfedge_descriptor =
+	    typename boost::graph_traits<TriangleMesh>::halfedge_descriptor;
+	using Point3D = typename TriangleMesh::Point;
+	using Vertex_index = typename TriangleMesh::Vertex_index;
+	using Edge_index = typename TriangleMesh::Edge_index;
+	using Halfedge_index = typename TriangleMesh::Halfedge_index;
+	using Face_index = typename TriangleMesh::Face_index;
 
+	using Input_vertex_descriptor = size_t;
+	struct Vmap {
+		Point3D point;
+		std::vector<Input_vertex_descriptor> vertices;
+	};
+	using SkeletonGraph = boost::adjacency_list<boost::setS, boost::setS,
+						    boost::undirectedS, Vmap>;
 	// class EdgeCompareFunctor {
 	//  std::vector<std::pair<double, size_t>> &m_edge_to_totalCost;
 
@@ -92,59 +104,116 @@ class ConnectivitySurgeon {
 	//  &totalCosts)
 	//      : m_edge_to_totalCost(totalCosts) {}
 	//};
+	SkeletonGraph convert_to_skeleton() {
+		bool moveNodeToCenterOfMass = true;  // post preccesing step
+		SkeletonGraph skeletonGraph;
+		using Skeleton_node = typename SkeletonGraph::vertex_descriptor;
+
+		// PREPERATION
+		std::vector<int> new_vertex_id(vertex_to_edge.size(), -1);
+		std::vector<int> orig_vertex_id(vertex_to_edge.size(), -1);
+
+		size_t id = 0;
+		for (size_t i = 0; i < is_vertex_deleted.size(); ++i) {
+			if (!is_vertex_deleted[i]) {
+				orig_vertex_id[id] = static_cast<int>(i);
+				new_vertex_id[i] = id++;
+			}
+		}
+
+		size_t numberOfSkeletonNodes = id;
+		std::vector<Skeleton_node> id_to_vd(numberOfSkeletonNodes);
+
+		// NODES
+		// add nodes to skeleton graph
+		for (size_t i = 0; i < numberOfSkeletonNodes; ++i)
+			id_to_vd[i] = boost::add_vertex(skeletonGraph);
+
+		// set for each node the vertices that were collapsed to this
+		// node as well as the position of each node
+		size_t numberOfVertices = m_originalMesh.number_of_vertices();
+		std::cout << "OriginalMesh numOfVerts in convert_to_skeleton "
+			  << numberOfVertices << std::endl;
+		for (size_t i = 0; i < numberOfSkeletonNodes; ++i) {
+			int orig_id = orig_vertex_id[i];
+			Skeleton_node vd = id_to_vd[i];
+			Point3D p(0, 0, 0);
+			for (size_t vi : record[orig_id]) {
+				skeletonGraph[vd].vertices.push_back(vi);
+				Point3D pvi =
+				    m_originalMesh.point(Vertex_index(vi));
+				p = Point3D(p.x() + pvi.x(), p.y() + pvi.y(),
+					    p.z() + pvi.z());
+			}
+			if (moveNodeToCenterOfMass) {
+				double num = double(record[orig_id].size());
+				skeletonGraph[vd].point = Point3D(
+				    p.x() / num, p.y() / num, p.z() / num);
+				Point3D originalPosition =
+				    m_M.point(Vertex_index(orig_id));
+				std::cout << "Position would be "
+					  << originalPosition.x() << " "
+					  << originalPosition.y() << " "
+					  << originalPosition.z()
+					  << " but after refinement becomes "
+					  << skeletonGraph[vd].point.x() << " "
+					  << skeletonGraph[vd].point.y() << " "
+					  << skeletonGraph[vd].point.z()
+					  << std::endl;
+			} else
+				skeletonGraph[vd].point =
+				    vertex_to_point[orig_id];
+		}
+
+		// EDGES
+		using Skeleton_edge = typename SkeletonGraph::edge_descriptor;
+		for (size_t i = 0; i < is_edge_deleted.size(); ++i) {
+			if (!is_edge_deleted[i]) {
+				size_t p1 = edge_to_vertex[i][0];
+				size_t p2 = edge_to_vertex[i][1];
+				size_t p1_id =
+				    static_cast<size_t>(new_vertex_id[p1]);
+				size_t p2_id =
+				    static_cast<size_t>(new_vertex_id[p2]);
+				Skeleton_node p1_vd = id_to_vd[p1_id];
+				Skeleton_node p2_vd = id_to_vd[p2_id];
+
+				bool exist;
+				Skeleton_edge edge;
+				boost::tie(edge, exist) =
+				    boost::edge(p1_vd, p2_vd, skeletonGraph);
+				if (!exist) {
+					boost::add_edge(p1_vd, p2_vd,
+							skeletonGraph);
+				}
+			}
+		}
+
+		return skeletonGraph;
+	}
 
        public:
-	ConnectivitySurgeon(const CGALSurfaceMesh &M) : m_M(M) {}
-	void execute_connectivitySurgery() {
+	ConnectivitySurgeon(const TriangleMesh &collapsedMesh,
+			    const TriangleMesh &originalMesh)
+	    : m_M(collapsedMesh), m_originalMesh(originalMesh) {
+		size_t numberOfVertices = m_originalMesh.number_of_vertices();
+		std::cout << "Original mesh numOfVerts in constructor "
+			  << numberOfVertices << std::endl;
+	}
+	SkeletonGraph execute_connectivitySurgery() {
 		init();
 		collapse();
-	}
-
-	using VertexIndex = size_t;
-	std::vector<Edge> getSkeletonEdges() const {
-		std::vector<Edge> skeletonEdges;
-		for (size_t i = 0; i < is_edge_deleted.size(); i++) {
-			if (is_edge_deleted[i] == false) {
-				Node n1(edge_to_vertex[i][0],
-					m_M.point(CGALSurfaceMesh::vertex_index(
-					    edge_to_vertex[i][0])));
-				Node n2(edge_to_vertex[i][1],
-					m_M.point(CGALSurfaceMesh::vertex_index(
-					    edge_to_vertex[i][1])));
-				Edge e(n1, n2);
-
-				// std::pair<VertexIndex, VertexIndex> edge{
-				//    std::make_pair(edge_to_vertex[i][0],
-				//		   edge_to_vertex[i][1])};
-				skeletonEdges.push_back(e);
-			}
-		}
-
-		return skeletonEdges;
-	}
-	using Node = Node<CGALSurfaceMesh::Point>;
-	std::vector<Node> getSkeletonNodes() const {
-		std::vector<Node> nodes;
-		for (size_t i = 0; i < is_vertex_deleted.size(); i++) {
-			if (is_vertex_deleted[i] == false) {
-				Node n(i, vertex_to_point[i]);
-				nodes.push_back(n);
-			}
-		}
-		return nodes;
-	}
-
-	std::vector<std::vector<size_t>> getSkeletonMeshMapping() {
-		return record;
+		return convert_to_skeleton();
 	}
 
        private:
-	const CGALSurfaceMesh &m_M;
+	const TriangleMesh &m_M;
+	TriangleMesh m_originalMesh;
 
 	std::vector<std::vector<size_t>> edge_to_face;
 	std::vector<std::vector<size_t>> edge_to_vertex;
 	std::vector<std::vector<size_t>> vertex_to_edge;
-	std::vector<CGALSurfaceMesh::Point> vertex_to_point;
+	std::vector<Point3D> vertex_to_point;
 	std::vector<std::vector<size_t>> face_to_edge;
 
 	std::vector<std::vector<size_t>> record;
@@ -167,7 +236,7 @@ class ConnectivitySurgeon {
 	    edge_to_samplingCost;  // same as shapeCost
 
 	typedef typename boost::property_map<
-	    CGALSurfaceMesh, boost::halfedge_index_t>::type HalfedgeIndexMap;
+	    TriangleMesh, boost::halfedge_index_t>::type HalfedgeIndexMap;
 	// HalfedgeIndexMap hedge_id_pmap;
 
        private:
@@ -241,7 +310,7 @@ class ConnectivitySurgeon {
 	void initialize_edge_to_face() {
 		edge_to_face.resize(m_M.number_of_edges());
 		int face_id = 0;
-		const CGALSurfaceMesh &hg = m_M;
+		const TriangleMesh &hg = m_M;
 		BOOST_FOREACH (face_descriptor fd, faces(hg)) {
 			BOOST_FOREACH (
 			    halfedge_descriptor hd,
@@ -252,9 +321,9 @@ class ConnectivitySurgeon {
 			}
 			++face_id;
 		}
-		// for (CGALSurfaceMesh::edge_index ei : m_M.edges()) {
-		//   CGALSurfaceMesh::face_index f0(m_M.halfedge(ei, 0));
-		//   CGALSurfaceMesh::face_index f1(m_M.halfedge(ei, 1));
+		// for (Edge_index ei : m_M.edges()) {
+		//   Face_index f0(m_M.halfedge(ei, 0));
+		//   Face_index f1(m_M.halfedge(ei, 1));
 		//   // ERROR
 		//   // assert(f0 < m_M.number_of_faces() && f1 <
 		//   m_M.number_of_faces());
@@ -266,9 +335,9 @@ class ConnectivitySurgeon {
 
 	void initialize_edge_to_vertex() {
 		edge_to_vertex.resize(m_M.number_of_edges());
-		for (CGALSurfaceMesh::edge_index ei : m_M.edges()) {
-			CGALSurfaceMesh::vertex_index v0(m_M.vertex(ei, 0));
-			CGALSurfaceMesh::vertex_index v1(m_M.vertex(ei, 1));
+		for (Edge_index ei : m_M.edges()) {
+			Vertex_index v0(m_M.vertex(ei, 0));
+			Vertex_index v1(m_M.vertex(ei, 1));
 			assert(v0 < m_M.number_of_vertices() &&
 			       v1 < m_M.number_of_vertices());
 			assert(size_t(ei) < m_M.number_of_edges());
@@ -280,14 +349,14 @@ class ConnectivitySurgeon {
 
 	void initialize_vertex_to_edge() {
 		vertex_to_edge.resize(m_M.number_of_vertices());
-		for (CGALSurfaceMesh::vertex_index vi : m_M.vertices()) {
+		for (Vertex_index vi : m_M.vertices()) {
 			std::vector<size_t> edgesAroundVertex;
 			// the following will get all edges whenever there
 			// exists halfedge there
 			// exists its opposite and the map to the same edge.
-			for (CGALSurfaceMesh::halfedge_index hei :
+			for (Halfedge_index hei :
 			     CGAL::halfedges_around_source(vi, m_M)) {
-				CGALSurfaceMesh::edge_index ei = m_M.edge(hei);
+				Edge_index ei = m_M.edge(hei);
 				assert(size_t(ei) < m_M.number_of_edges());
 				edgesAroundVertex.push_back(size_t(ei));
 			}
@@ -299,16 +368,16 @@ class ConnectivitySurgeon {
 
 	void initialize_vertex_to_point() {
 		vertex_to_point.resize(m_M.number_of_vertices());
-		for (CGALSurfaceMesh::vertex_index vi : m_M.vertices()) {
+		for (Vertex_index vi : m_M.vertices()) {
 			vertex_to_point[size_t(vi)] = m_M.point(vi);
 		}
 	}
 
 	void initialize_face_to_edge() {
 		face_to_edge.resize(m_M.number_of_faces());
-		for (CGALSurfaceMesh::face_index fi : m_M.faces()) {
+		for (Face_index fi : m_M.faces()) {
 			std::vector<size_t> edgesOfFace;
-			for (CGALSurfaceMesh::edge_index ei :
+			for (Edge_index ei :
 			     CGAL::edges_around_face(m_M.halfedge(fi), m_M)) {
 				assert(size_t(ei) < m_M.number_of_edges());
 				edgesOfFace.push_back(size_t(ei));
@@ -455,7 +524,8 @@ class ConnectivitySurgeon {
 		double F = compute_F(i, Pj) + compute_F(j, Pj);
 		return F;
 	}
-	double compute_F(size_t vertexIndex, CGALSurfaceMesh::Point p) const {
+	double compute_F(size_t vertexIndex,
+			 typename TriangleMesh::Point p) const {
 		Eigen::Vector4d P(p.x(), p.y(), p.z(), 1);
 		return P.transpose() * vertex_to_Q[vertexIndex] * P;
 	}

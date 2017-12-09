@@ -62,10 +62,36 @@ class DrawableSkeleton {
 		m_nodeDrawingVector.clear();
 		m_vertices.clear();
 		m_indices.clear();
-		updateMeshBuffers();
+		updateDrawingBuffers();
 	}
 
-	void updateMeshBuffers() {
+	template <typename BoostGraph>
+	void populateDrawableSkeleton(const BoostGraph &skeleton) {
+		populateNodeDrawingVector(skeleton);
+		populateEdgeDrawingVector(skeleton);
+		updateDrawingBuffers();
+	}
+	template <typename BoostGraph>
+	void populateNodeDrawingVector(const BoostGraph &skeleton) {
+		BOOST_FOREACH (typename BoostGraph::vertex_descriptor v,
+			       boost::vertices(skeleton)) {
+			PointSphere ps = m_PS;
+			ps.setPosition(skeleton[v].point);
+			m_nodeDrawingVector.push_back(ps);
+		}
+	}
+	template <typename BoostGraph>
+	void populateEdgeDrawingVector(const BoostGraph &skeleton) {
+		BOOST_FOREACH (typename BoostGraph::edge_descriptor e,
+			       boost::edges(skeleton)) {
+			auto ps = skeleton[source(e, skeleton)].point;
+			auto pt = skeleton[target(e, skeleton)].point;
+			m_vertices.push_back(glm::vec3(ps.x(), ps.y(), ps.z()));
+			m_vertices.push_back(glm::vec3(pt.x(), pt.y(), pt.z()));
+		}
+	}
+
+	void updateDrawingBuffers() {
 		glBindVertexArray(VAO);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);

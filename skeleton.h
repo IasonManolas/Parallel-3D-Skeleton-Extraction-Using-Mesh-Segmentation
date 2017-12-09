@@ -16,16 +16,6 @@ class Skeleton : public DrawableSkeleton {
 	// loaded in this class but only through
 	// Scene::load.Maybe because
 	// GLWidget::makeCurrent() needs to be called?
-	using BoostGraph =
-	    boost::adjacency_list<boost::setS, boost::setS, boost::undirectedS>;
-	using GraphVertexDescriptor =
-	    BoostGraph::vertex_descriptor;  // this represents a descriptor of a
-	// vertex in boost::adjacency_list
-	using MeshVertexIndex =
-	    size_t;  // this represents an index in the actual mesh
-
-	BoostGraph m_graph;
-	std::vector<MeshVertexIndex> vd_to_meshIndex;
 
        public:
 	Skeleton(const PointSphere &ps) : DrawableSkeleton(ps) {}
@@ -34,75 +24,29 @@ class Skeleton : public DrawableSkeleton {
 	const std::vector<glm::vec3> &getNodePositions() const {
 		return DrawableSkeleton::m_vertices;
 	}
-	size_t getNumberOfNodes() const { return boost::num_vertices(m_graph); }
 	void initialize() {  // is called when there is an active OpenGL context
 		DrawableSkeleton::initializeDrawingBuffers();
 	}
 
-	using Node = Node<CGALSurfaceMesh::Point>;
+	// using Node = Node<CGALSurfaceMesh::Point>;
 	// constructs the skeleton of the whole mesh
 	// nodes could be extracted from edges but are provided for efficiency
-	void populateSkeleton(std::vector<Edge> edges,
-			      std::vector<Node> nodes) {
-		using EdgeIndex = size_t;
-		for (Node n : nodes) {
-			// skeletonNodes.insert(std::make_pair(i, 1));
-			// skeletonNodes.insert(std::make_pair(i, 2));
-			// add edge to graph
 
-			// populate drawing vector
-		}
-		// for (auto pair : skeletonNodes) {
-		// if (pair.second == 1) {
-		// 	auto &p = edges[pair.first].p1;
-		// 	PointSphere ps = m_PS;
-		// 	ps.setPosition(p);
-		// 	m_nodeDrawingVector.push_back(ps);
-		// 	} else {
-		// 		auto &p = edges[pair.first].p2;
-		// 		PointSphere ps = m_PS;
-		// 		ps.setPosition(p);
-		// 		m_nodeDrawingVector.push_back(ps);
-		// 	}
-		// }
+	template <typename Graph>
+	void populateSkeleton(Graph skeleton) {
+		populateDrawableSkeleton(skeleton);
+		std::cout << "Finished populating skeleton using boost graph."
+			  << std::endl;
 	}
-
 	// adds to the skeleton one part based on the segment graph and
 	// the
 	// provided index
-	void addSkeletonPart(std::vector<Edge> edges, UndirectedGraph m_graph) {
-		for (const Edge &e : edges) {
-			// add edge to graph
-
-			// populate drawing vector
-		}
-	}
-
-	void append(std::vector<std::vector<size_t>> newEdges,
-		    std::vector<CGALSurfaceMesh::Point> newNodePositions) {
-		// appendToGraph(newEdges, newNodePositions);
-		appendEdges(newEdges);
-		// appendNodes(newNodePositions);
-		updateMeshBuffers();
-	}
-
-       private:
-	void appendEdges(const std::vector<std::vector<size_t>> &newEdges) {
-		for (const std::vector<size_t> edge : newEdges) {
-			m_indices.push_back(edge[0] + m_vertices.size());
-			m_indices.push_back(edge[1] + m_vertices.size());
-		}
-	}
-	void appendNodes(std::vector<CGALSurfaceMesh::Point> newNodePositions,
-			 PointSphere psPrototype) {
-		for (CGALSurfaceMesh::Point p : newNodePositions) {
-			PointSphere tempPS = psPrototype;
-			tempPS.setPosition(p);
-			tempPS.setColor(glm::vec3(1, 0, 0));
-			m_nodeDrawingVector.push_back(tempPS);
-
-			m_vertices.push_back(glm::vec3(p.x(), p.y(), p.z()));
-		}
+	template <typename Graph>
+	void addSkeletonPart(Graph skeleton, size_t segmentIndex,
+			     UndirectedGraph) {
+		populateDrawableSkeleton(skeleton);
+		std::cout << "Finished adding skeleton part using boost graph."
+			  << std::endl;
 	}
 };
 
@@ -121,10 +65,9 @@ inline std::pair<size_t, size_t> findClosestNodes(
 	const std::vector<glm::vec3> &s2Nodes = s2.getNodePositions();
 	double minDistance = glmSquaredDistance(s1Nodes[0], s2Nodes[0]);
 	std::pair<size_t, size_t> indicesOfMinDistance(0, 0);
-	for (size_t index1 = 0; index1 < s1.getNumberOfNodes(); index1++) {
+	for (size_t index1 = 0; index1 < s1Nodes.size(); index1++) {
 		glm::vec3 s1NodePos = s1Nodes[index1];
-		for (size_t index2 = 0; index2 < s2.getNumberOfNodes();
-		     index2++) {
+		for (size_t index2 = 0; index2 < s2Nodes.size(); index2++) {
 			glm::vec3 s2NodePos = s2Nodes[index2];
 			double d = glmSquaredDistance(s1NodePos, s2NodePos);
 			if (d < minDistance) {
