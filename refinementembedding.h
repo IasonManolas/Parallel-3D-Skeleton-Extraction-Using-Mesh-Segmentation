@@ -5,6 +5,7 @@
 #include "cgaltypedefs.h"
 #include "skeleton.h"
 
+namespace SkeletonRefinement {
 template <typename Point>
 double computeNodeCenterness(Point node,
 			     std::vector<Point> pointsCollapsedToNode) {
@@ -16,10 +17,13 @@ double computeNodeCenterness(Point node,
 	};
 	double sumOfSquaredDifferences =
 	    std::accumulate(pointsCollapsedToNode.begin(),
-			    pointsCollapsedToNode.end(), double(0),lambda);
+			    pointsCollapsedToNode.end(), double(0), lambda);
 
 	return std::sqrt(sumOfSquaredDifferences /
 			 pointsCollapsedToNode.size());
+}
+
+inline void refine(Skeleton& skeleton) {}
 }
 
 #endif  // REFINEMENTEMBEDIING_H
