@@ -91,7 +91,9 @@ class ConnectivitySurgeon {
 	using Input_vertex_descriptor = size_t;
 	struct Vmap {
 		Point3D point;
-		std::vector<Input_vertex_descriptor> vertices;
+		std::vector<Input_vertex_descriptor>
+		    collapsed_vertices;  // This might not be needed
+		std::vector<Point3D> collapsed_positions;
 	};
 	using SkeletonGraph = boost::adjacency_list<boost::setS, boost::setS,
 						    boost::undirectedS, Vmap>;
@@ -141,6 +143,7 @@ class ConnectivitySurgeon {
 				skeletonGraph[vd].vertices.push_back(vi);
 				Point3D pvi =
 				    m_originalMesh.point(Vertex_index(vi));
+				skeletonGraph[vd].points.push_back(pvi);
 				p = Point3D(p.x() + pvi.x(), p.y() + pvi.y(),
 					    p.z() + pvi.z());
 			}

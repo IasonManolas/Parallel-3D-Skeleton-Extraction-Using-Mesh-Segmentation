@@ -12,7 +12,7 @@ TARGET = OpenGL_WithoutWrappers
 TEMPLATE = app
 
 QMAKE_CXXFLAGS+= -std=c++14
-QMAKE_CXX = clang++
+#QMAKE_CXX = clang++
 CONFIG+=release
 
 

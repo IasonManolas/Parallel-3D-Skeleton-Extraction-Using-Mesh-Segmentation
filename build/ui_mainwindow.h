@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 5.5.1
+** Created by: Qt User Interface Compiler version 5.9.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -214,26 +214,26 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "Thesis", 0));
-        actionOpenFile->setText(QApplication::translate("MainWindow", "OpenFile", 0));
+        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "Thesis", Q_NULLPTR));
+        actionOpenFile->setText(QApplication::translate("MainWindow", "OpenFile", Q_NULLPTR));
 #ifndef QT_NO_TOOLTIP
-        actionOpenFile->setToolTip(QApplication::translate("MainWindow", "Open File..", 0));
+        actionOpenFile->setToolTip(QApplication::translate("MainWindow", "Open File..", Q_NULLPTR));
 #endif // QT_NO_TOOLTIP
-        actionSave_Model->setText(QApplication::translate("MainWindow", "Save Model", 0));
-        actionSave_Segment->setText(QApplication::translate("MainWindow", "Save Segment", 0));
-        checkBoxShowVertices->setText(QApplication::translate("MainWindow", "Vertices", 0));
-        checkBoxMeshSurface->setText(QApplication::translate("MainWindow", "Grid", 0));
-        checkBoxAxis->setText(QApplication::translate("MainWindow", "Axis", 0));
-        pushButtonResetCamera->setText(QApplication::translate("MainWindow", "Reset", 0));
-        toolBox->setItemText(toolBox->indexOf(sceneRelated), QApplication::translate("MainWindow", "Scene", 0));
+        actionSave_Model->setText(QApplication::translate("MainWindow", "Save Model", Q_NULLPTR));
+        actionSave_Segment->setText(QApplication::translate("MainWindow", "Save Segment", Q_NULLPTR));
+        checkBoxShowVertices->setText(QApplication::translate("MainWindow", "Vertices", Q_NULLPTR));
+        checkBoxMeshSurface->setText(QApplication::translate("MainWindow", "Grid", Q_NULLPTR));
+        checkBoxAxis->setText(QApplication::translate("MainWindow", "Axis", Q_NULLPTR));
+        pushButtonResetCamera->setText(QApplication::translate("MainWindow", "Reset", Q_NULLPTR));
+        toolBox->setItemText(toolBox->indexOf(sceneRelated), QApplication::translate("MainWindow", "Scene", Q_NULLPTR));
         laplacianHeatMapCheckBox->setText(QApplication::translate("MainWindow", "Show Laplacian \n"
-"      Heat Map", 0));
+"      Heat Map", Q_NULLPTR));
         contractionModeCheckBox->setText(QApplication::translate("MainWindow", "  Automatic \n"
-" Contraction", 0));
-        toolBox->setItemText(toolBox->indexOf(contractionRelated), QApplication::translate("MainWindow", "Contraction", 0));
-        clearSkeletonButton->setText(QApplication::translate("MainWindow", "Clear Skeleton", 0));
-        toolBox->setItemText(toolBox->indexOf(skeletonPage), QApplication::translate("MainWindow", "Skeleton", 0));
-        menuSave->setTitle(QApplication::translate("MainWindow", "Save", 0));
+" Contraction", Q_NULLPTR));
+        toolBox->setItemText(toolBox->indexOf(contractionRelated), QApplication::translate("MainWindow", "Contraction", Q_NULLPTR));
+        clearSkeletonButton->setText(QApplication::translate("MainWindow", "Clear Skeleton", Q_NULLPTR));
+        toolBox->setItemText(toolBox->indexOf(skeletonPage), QApplication::translate("MainWindow", "Skeleton", Q_NULLPTR));
+        menuSave->setTitle(QApplication::translate("MainWindow", "Save", Q_NULLPTR));
     } // retranslateUi
 
 };
