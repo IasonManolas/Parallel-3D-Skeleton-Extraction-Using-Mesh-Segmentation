@@ -1,2 +1,3 @@
-- Node centerness refinement
-- Improve connectivity surgery performance
+- Connect skeleton parts
+- Code that computes the whole skeleton using segments
+- Performance improvement

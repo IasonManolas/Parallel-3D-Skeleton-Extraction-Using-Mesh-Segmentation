@@ -140,10 +140,12 @@ class ConnectivitySurgeon {
 			Skeleton_node vd = id_to_vd[i];
 			Point3D p(0, 0, 0);
 			for (size_t vi : record[orig_id]) {
-				skeletonGraph[vd].vertices.push_back(vi);
+				skeletonGraph[vd].collapsed_vertices.push_back(
+				    vi);
 				Point3D pvi =
 				    m_originalMesh.point(Vertex_index(vi));
-				skeletonGraph[vd].points.push_back(pvi);
+				skeletonGraph[vd].collapsed_positions.push_back(
+				    pvi);
 				p = Point3D(p.x() + pvi.x(), p.y() + pvi.y(),
 					    p.z() + pvi.z());
 			}

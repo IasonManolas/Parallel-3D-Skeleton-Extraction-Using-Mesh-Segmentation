@@ -11,8 +11,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = OpenGL_WithoutWrappers
 TEMPLATE = app
 
-QMAKE_CXXFLAGS+= -std=c++14
-#QMAKE_CXX = clang++
+QMAKE_CXXFLAGS+= -std=c++17
+QMAKE_CXX = clang++
 CONFIG+=release
 
 
@@ -63,8 +63,6 @@ DISTFILES += \
     shaders/axesfs.glsl \
     shaders/axesvs.glsl
 
-INCLUDEPATH +=/usr/include/eigen3
-
 #unix:!macx:
 LIBS +=  -lassimp
 LIBS+= /usr/local/lib/libCGAL.so
@@ -76,6 +74,9 @@ LIBS+=/usr/lib/x86_64-linux-gnu/libmpfr.so
 
 INCLUDEPATH += /usr/local/include
 
-INCLUDEPATH+=/usr/include
+#INCLUDEPATH+=/usr/include
 
+INCLUDEPATH+=/usr/include/assimp
+INCLUDEPATH+=/usr/include/eigen3
+INCLUDEPATH+=/usr/include/GL
 

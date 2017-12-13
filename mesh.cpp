@@ -502,6 +502,8 @@ void Mesh::handle_meshConnectivitySurgery() {
 	const CGALSurfaceMesh &contractedMesh = m_M;
 	ConnectivitySurgeon<CGALSurfaceMesh> CS(contractedMesh, m_originalMesh);
 	auto skeletonGraph = CS.execute_connectivitySurgery();
+	// SkeletonRefinement::refine(skeletonGraph, m_originalMesh);
+
 	// std::vector<Edge> skeletonEdges = CS.getSkeletonEdges();
 
 	// auto skeletonNodes = CS.getSkeletonNodes();
@@ -567,6 +569,8 @@ void Mesh::handle_segmentConnectivitySurgery() {
 
 	m_skeleton.addSkeletonPart(skeletonGraph, selectedSegmentIndex.get(),
 				   m_segmentGraph);
+	// SkeletonRefinement::refine(skeletonGraph,
+	// m_segment.getOriginalMesh());
 
 	m_showContractedSegment = false;
 }
