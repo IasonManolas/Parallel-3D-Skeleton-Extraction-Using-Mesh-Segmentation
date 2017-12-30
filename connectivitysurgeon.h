@@ -88,15 +88,6 @@ class ConnectivitySurgeon {
 	using Halfedge_index = typename TriangleMesh::Halfedge_index;
 	using Face_index = typename TriangleMesh::Face_index;
 
-	using Input_vertex_descriptor = size_t;
-	struct Vmap {
-		Point3D point;
-		std::vector<Input_vertex_descriptor>
-		    collapsed_vertices;  // This might not be needed
-		std::vector<Point3D> collapsed_positions;
-	};
-	using SkeletonGraph = boost::adjacency_list<boost::setS, boost::setS,
-						    boost::undirectedS, Vmap>;
 	// class EdgeCompareFunctor {
 	//  std::vector<std::pair<double, size_t>> &m_edge_to_totalCost;
 
@@ -106,7 +97,7 @@ class ConnectivitySurgeon {
 	//      : m_edge_to_totalCost(totalCosts) {}
 	//};
 	SkeletonGraph convert_to_skeleton() {
-		bool moveNodeToCenterOfMass = true;  // post preccesing step
+		bool moveNodeToCenterOfMass = false;  // post preccesing step
 		SkeletonGraph skeletonGraph;
 		using Skeleton_node = typename SkeletonGraph::vertex_descriptor;
 
@@ -133,8 +124,6 @@ class ConnectivitySurgeon {
 		// set for each node the vertices that were collapsed to this
 		// node as well as the position of each node
 		size_t numberOfVertices = m_originalMesh.number_of_vertices();
-		std::cout << "OriginalMesh numOfVerts in convert_to_skeleton "
-			  << numberOfVertices << std::endl;
 		for (size_t i = 0; i < numberOfSkeletonNodes; ++i) {
 			int orig_id = orig_vertex_id[i];
 			Skeleton_node vd = id_to_vd[i];
@@ -155,15 +144,6 @@ class ConnectivitySurgeon {
 				    p.x() / num, p.y() / num, p.z() / num);
 				Point3D originalPosition =
 				    m_M.point(Vertex_index(orig_id));
-				std::cout << "Position would be "
-					  << originalPosition.x() << " "
-					  << originalPosition.y() << " "
-					  << originalPosition.z()
-					  << " but after refinement becomes "
-					  << skeletonGraph[vd].point.x() << " "
-					  << skeletonGraph[vd].point.y() << " "
-					  << skeletonGraph[vd].point.z()
-					  << std::endl;
 			} else
 				skeletonGraph[vd].point =
 				    vertex_to_point[orig_id];
@@ -201,8 +181,6 @@ class ConnectivitySurgeon {
 			    const TriangleMesh &originalMesh)
 	    : m_M(collapsedMesh), m_originalMesh(originalMesh) {
 		size_t numberOfVertices = m_originalMesh.number_of_vertices();
-		std::cout << "Original mesh numOfVerts in constructor "
-			  << numberOfVertices << std::endl;
 	}
 	SkeletonGraph execute_connectivitySurgery() {
 		init();
@@ -245,70 +223,70 @@ class ConnectivitySurgeon {
 
        private:
 	void init() {
-		std::clock_t start;
-		start = std::clock();
+		// std::clock_t start;
+		// start = std::clock();
 		initialize_edge_to_face();
-		std::cout << "Time init_edge_to_face: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
-		start = std::clock();
+		// std::cout << "Time init_edge_to_face: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
+		// start = std::clock();
 		initialize_edge_to_vertex();
-		std::cout << "Time edge_to_vertex: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
-		start = std::clock();
+		// std::cout << "Time edge_to_vertex: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
+		// start = std::clock();
 		initialize_vertex_to_edge();
-		std::cout << "Time vertex_to_edge: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
-		start = std::clock();
+		// std::cout << "Time vertex_to_edge: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
+		// start = std::clock();
 		initialize_vertex_to_point();
-		std::cout << "Time vertex_to_point: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
-		start = std::clock();
+		// std::cout << "Time vertex_to_point: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
+		// start = std::clock();
 		initialize_face_to_edge();
-		std::cout << "Time face_to_edge: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
+		// std::cout << "Time face_to_edge: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
 
-		start = std::clock();
+		// start = std::clock();
 		initialize_record();
-		std::cout << "Time record: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
+		// std::cout << "Time record: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
 
-		start = std::clock();
+		// start = std::clock();
 		initialize_is_edge_deleted();
-		std::cout << "Time edge_deleted: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
-		start = std::clock();
+		// std::cout << "Time edge_deleted: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
+		// start = std::clock();
 		initialize_is_face_deleted();
-		std::cout << "Time face_deleted: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
-		start = std::clock();
+		// std::cout << "Time face_deleted: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
+		// start = std::clock();
 		initialize_is_vertex_deleted();
-		std::cout << "Time vertex_deleted: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
+		// std::cout << "Time vertex_deleted: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
 
-		start = std::clock();
+		// start = std::clock();
 		initialize_edge_to_totalCost();
-		std::cout << "Time edge_to_totalCost: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
+		//		std::cout << "Time edge_to_totalCost: "
+		//			  << (std::clock() - start) /
+		//				 (double)(CLOCKS_PER_SEC / 1000)
+		//			  << " ms" << std::endl;
 	}
 
 	void initialize_edge_to_face() {
@@ -413,19 +391,19 @@ class ConnectivitySurgeon {
 	void initialize_edge_to_totalCost() {
 		edge_to_totalCost.resize(m_M.number_of_edges());
 
-		std::clock_t start;
-		start = std::clock();
+		// std::clock_t start;
+		// start = std::clock();
 		initialize_edge_to_shapeCost();
-		std::cout << "Time edge_to_shapeCost: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
-		start = std::clock();
+		// std::cout << "Time edge_to_shapeCost: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
+		// start = std::clock();
 		initialize_edge_to_samplingCost();
-		std::cout << "Time edge_to_samplingCost: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
+		// std::cout << "Time edge_to_samplingCost: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
 
 		for (size_t index = 0; index < edge_to_totalCost.size();
 		     index++) {
@@ -457,12 +435,12 @@ class ConnectivitySurgeon {
 		start = std::clock();
 		initialize_vertex_to_Q();
 
-		std::cout << "Time initialize_vertex_to_Q: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
+		// std::cout << "Time initialize_vertex_to_Q: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
 
-		start = std::clock();
+		// start = std::clock();
 		for (size_t edgeIndex = 0; edgeIndex < edge_to_shapeCost.size();
 		     edgeIndex++) {
 			size_t i = edge_to_vertex[edgeIndex][0],
@@ -474,10 +452,10 @@ class ConnectivitySurgeon {
 			edge_to_shapeCost[edgeIndex] =
 			    std::make_pair(ij_shapeCost, ji_shapeCost);
 		}
-		std::cout << "Time rest of shape_cost: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
+		//		std::cout << "Time rest of shape_cost: "
+		//			  << (std::clock() - start) /
+		//				 (double)(CLOCKS_PER_SEC / 1000)
+		//			  << " ms" << std::endl;
 	}
 
 	void initialize_vertex_to_Q() {
@@ -659,11 +637,11 @@ class ConnectivitySurgeon {
 
 			edgeQueue.update();
 		}
-		std::cout << "Time collapse: "
-			  << (std::clock() - start) /
-				 (double)(CLOCKS_PER_SEC / 1000)
-			  << " ms" << std::endl;
-		print_stat();
+		// std::cout << "Time collapse: "
+		//	  << (std::clock() - start) /
+		//		 (double)(CLOCKS_PER_SEC / 1000)
+		//	  << " ms" << std::endl;
+		// print_stat();
 	}
 
 	void update_totalCost(size_t vGone, size_t vKept,

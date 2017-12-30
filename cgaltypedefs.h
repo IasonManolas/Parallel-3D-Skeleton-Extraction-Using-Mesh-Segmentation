@@ -33,4 +33,14 @@ struct MyVertex {
 	glm::vec3 Normal;
 	glm::vec3 Color{glm::vec3(0.0f, 0.0f, 0.0f)};
 };
+using Input_vertex_descriptor = size_t;
+using Point3D = CGALSurfaceMesh::Point;
+struct Vmap {
+	Point3D point;
+	std::vector<Input_vertex_descriptor>
+	    collapsed_vertices;  // This might not be needed
+	std::vector<Point3D> collapsed_positions;
+};
+using SkeletonGraph =
+    boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, Vmap>;
 #endif  // CGALTYPEDEFS_H

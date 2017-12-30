@@ -52,7 +52,8 @@ class Mesh : public DrawableMesh {
        public:
 	Mesh(const PointSphere &ps)
 	    : m_PS(ps),
-	      /*skeleton(Skeleton(m_PS, m_modelMatrix)),*/ m_skeleton(ps) {}
+	      /*skeleton(Skeleton(m_PS, m_modelMatrix)),*/ m_skeleton(
+		  ps, m_segmentGraph) {}
 
 	void load(std::string filename);
 	void setUniforms(Shader *shader) override;
@@ -91,7 +92,9 @@ class Mesh : public DrawableMesh {
 	// void handle_skeletonization();
 
 	void skeletonize();
-	void skeletonizeUsingSegmentation();
+	void runSkeletonizationMethods();
+	void parallelSkeletonization();
+	void serialSkeletonizationUsingSegments();
 	// std::vector<size_t> getVertexIndicesWithHighLaplacianValue();
 	// public data members
 
@@ -110,7 +113,10 @@ class Mesh : public DrawableMesh {
 	void constructSegmentGraph(
 	    size_t numberOfSegments);  // populates m_segmentGraph
 	void updatePointSphereDrawingVector();
-	CGALSurfaceMesh constructSelectedSegmentSurfaceMesh() const;
+	CGALSurfaceMesh constructSelectedSegmentSurfaceMesh(unsigned int) const;
+
+	void MySkeletonization(unsigned int segmentIndex);
+	void fillMeshHoles();
 
        private:
 	const PointSphere &m_PS;
@@ -133,6 +139,7 @@ class Mesh : public DrawableMesh {
 	bool m_showLaplacianHeatMap{false};
 	CGALSurfaceMesh m_originalMesh;
 
+	std::string filename;
 	size_t m_numberOfSegments{0};
 	// Embedding. NOTE
 	// should not be
@@ -140,7 +147,7 @@ class Mesh : public DrawableMesh {
 	// final version
        public:
 	bool segmentsComputed{false};
-	Skeleton m_skeleton{m_PS};
+	Skeleton m_skeleton{m_PS, m_segmentGraph};
 	// Shader *modelShader;
 	//    CGALPolyhedron P;
 	MeshContractor MC;

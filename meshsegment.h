@@ -79,16 +79,6 @@ class MeshSegment : public DrawableMesh {
 			if (m_segmentFaceMap[fIndex] == segmentIndex) {
 				CGALSurfaceMesh::Halfedge_index h =
 				    m_wholeMesh.halfedge(fIndex);
-				// CGALSurfaceMesh::Halfedge_index hNext =
-				// M.next_around_target(h);
-				// CGALSurfaceMesh::Halfedge_index hPrevious =
-				// M.next_around_source(h);
-
-				// CGALSurfaceMesh::Edge_index e1 = M.edge(h);
-				// CGALSurfaceMesh::Edge_index e2 =
-				// M.edge(hNext);
-				// CGALSurfaceMesh::Edge_index e3 =
-				// M.edge(hPrevious);
 
 				CGALSurfaceMesh::Vertex_index
 				    v1;  //= M.source(h);
@@ -146,21 +136,8 @@ class MeshSegment : public DrawableMesh {
 				faces.push_back(face);
 			}
 		}
-		// points= points;
-		std::cout << "is polygon soup polygon mesh:"
-			  << CGAL::Polygon_mesh_processing::
-				 is_polygon_soup_a_polygon_mesh(faces)
-			  << std::endl;
 		CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(
 		    points, faces, m_M);
-		std::cout << "Is closed:" << CGAL::is_closed(m_M) << std::endl;
-		if (!CGAL::is_closed(m_M)) {
-			std::cout << "Segment is not closed." << std::endl;
-			std::cout << "Stitching mesh.." << std::endl;
-			CGAL::Polygon_mesh_processing::stitch_borders(m_M);
-		}
-		std::cout << "Finished building Polygon Mesh." << std::endl;
-		std::cout << "Is closed:" << CGAL::is_closed(m_M) << std::endl;
 		return faces;
 	}
 

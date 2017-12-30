@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 5.9.2
+** Created by: Qt User Interface Compiler version 5.9.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -149,7 +149,7 @@ public:
 
         contractionModeCheckBox = new QCheckBox(contractionRelated);
         contractionModeCheckBox->setObjectName(QStringLiteral("contractionModeCheckBox"));
-        contractionModeCheckBox->setChecked(true);
+        contractionModeCheckBox->setChecked(false);
 
         verticalLayout_3->addWidget(contractionModeCheckBox);
 

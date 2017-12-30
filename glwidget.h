@@ -67,8 +67,6 @@ class GLWidget : public QOpenGLWidget {
 	void initializeShaders();
 	void cgalSkeletonization_signal();
 
-	void compareSkeletonizationMethods();
-
        private:
 	meshSurfaceVizualization surfaceState{fillSurface};
 	Shader *defaultShader{nullptr};

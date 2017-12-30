@@ -8,15 +8,18 @@ SpMatrix concatenateVertically(SpMatrix A, SpMatrix B) {
 	//---
 	// B
 	assert(A.cols() == B.cols());
-	std::vector<EigenTriplet> tripletVector;
+	std::vector<EigenTriplet> tripletVector(A.nonZeros() + B.nonZeros());
+	size_t nextElement = 0;
 	for (int k = 0; k < A.outerSize(); ++k) {
 		for (SpMatrix::InnerIterator it(A, k); it; ++it) {
-			tripletVector.push_back(
-			    EigenTriplet(it.row(), it.col(), it.value()));
+			tripletVector[nextElement] =
+			    EigenTriplet(it.row(), it.col(), it.value());
+			nextElement++;
 		}
 		for (SpMatrix::InnerIterator it(B, k); it; ++it) {
-			tripletVector.push_back(EigenTriplet(
-			    it.row() + A.rows(), it.col(), it.value()));
+			tripletVector[nextElement] = EigenTriplet(
+			    it.row() + A.rows(), it.col(), it.value());
+			nextElement++;
 		}
 	}
 	SpMatrix M(A.rows() + B.rows(), A.cols());
@@ -72,7 +75,7 @@ MeshContractor::MeshContractor(CGALSurfaceMesh meshToContract /*,
 	//  F(faceIndex, 2) = indices[i + 2];
 	//}
 	isVertexFixed.resize(m_M.number_of_vertices(), false);
-	std::cout << "Initializing laplace operator.." << std::endl;
+	// std::cout << "Initializing laplace operator.." << std::endl;
 	computeLaplaceOperator();
 	hasNaN(m_L);
 	hasInfinity(m_L);
@@ -87,15 +90,16 @@ MeshContractor::MeshContractor(CGALSurfaceMesh meshToContract /*,
 		    CGAL::Polygon_mesh_processing::face_area(fi, m_M));
 }
 
-void MeshContractor::contractMesh() {
+size_t MeshContractor::contractMesh() {
 	while (CGAL::Polygon_mesh_processing::volume(m_M) / m_originalVolume >
 		   m_volumeThreshold &&
-	       m_iterationsCompleted < m_maxNumOfIterations &&
-	       !m_degenerateFaceIsPresent &&
+	       m_iterationsCompleted < m_maxNumOfIterations /*&&
+	       !m_degenerateFaceIsPresent*/ /* &&
 	       CGAL::Polygon_mesh_processing::area(m_M) / m_originalArea >
-		   m_areaThreshold) {
+		   m_areaThreshold*/) {
 		executeContractionStep();
 	}
+	return m_iterationsCompleted;
 }
 
 // void MeshContractor::printFixedVertices(EigenMatrix verticesMatrix) {
@@ -130,16 +134,17 @@ void setMaximumNumber(SpMatrix &M, double maximumNumber) {
 	for (int k = 0; k < M.outerSize(); ++k)
 		for (SpMatrix::InnerIterator it(M, k); it; ++it) {
 			if (it.value() > maximumNumber) {
-				std::cout << "Changed from:" << it.value()
-					  << std::endl;
+				// std::cout << "Changed from:" << it.value()
+				//	  << std::endl;
 				M.coeffRef(it.row(), it.col()) = maximumNumber;
-				std::cout << "to:" << it.value() << std::endl;
+				// std::cout << "to:" << it.value() <<
+				// std::endl;
 			}
 		}
 }
 
 void MeshContractor::executeContractionReversingStep() {
-	std::cout << "Contracting Mesh.." << std::endl;
+	// std::cout << "Contracting Mesh.." << std::endl;
 
 	if (m_iterationsCompleted > 0) {
 		m_iterationsCompleted--;
@@ -164,24 +169,25 @@ void MeshContractor::executeContractionReversingStep() {
 		computeLaplaceOperator();
 		VertexWithAttribute maxLVertex =
 		    getMaximumAbsoluteDiagonalElement(m_L);
-		std::cout << "Maximum L(" << maxLVertex.index
-			  << ")=" << maxLVertex.value << std::endl;
-		std::cout << "maxL*Wl=" << maxLVertex.value << "*"
-			  << m_Wl.coeff(0, 0) << "="
-			  << maxLVertex.value * m_Wl.coeff(0, 0) << std::endl;
-		std::cout << "Wh(" << maxLVertex.index << ")="
-			  << m_Wh.coeff(maxLVertex.index, maxLVertex.index)
-			  << std::endl;
+		// std::cout << "Maximum L(" << maxLVertex.index
+		//	  << ")=" << maxLVertex.value << std::endl;
+		// std::cout << "maxL*Wl=" << maxLVertex.value << "*"
+		//	  << m_Wl.coeff(0, 0) << "="
+		//	  << maxLVertex.value * m_Wl.coeff(0, 0) << std::endl;
+		// std::cout << "Wh(" << maxLVertex.index << ")="
+		//	  << m_Wh.coeff(maxLVertex.index, maxLVertex.index)
+		//	  << std::endl;
 		//  setMaximumNumber(m_L,maxNumber);
 		// std::cout<<"Maximum element of L
 		// is:"<<getMaximumAbsoluteDiagonalElement(m_L)<<std::endl;
 	}
-	std::cout << "Number of iterations completed:" << m_iterationsCompleted
-		  << std::endl;
-	std::cout << "current volume/original volume="
-		  << CGAL::Polygon_mesh_processing::volume(m_M) /
-			 m_originalVolume
-		  << std::endl;
+	// std::cout << "Number of iterations completed:" <<
+	// m_iterationsCompleted
+	//		  << std::endl;
+	//	std::cout << "current volume/original volume="
+	//		  << CGAL::Polygon_mesh_processing::volume(m_M) /
+	//			 m_originalVolume
+	//		  << std::endl;
 }
 
 void MeshContractor::setVolumeThreshold(double volumeThreshold) {
@@ -198,69 +204,163 @@ std::vector<double> MeshContractor::getLaplacianValues() {
 }
 
 void MeshContractor::executeContractionStep() {
-	std::cout << "Contracting Mesh.." << std::endl;
+	// std::cout << "Contracting Mesh.." << std::endl;
+	// auto vertexMatrixConstructionTimeStart =
+	//    std::chrono::high_resolution_clock::now();
+
 	EigenMatrix V = constructVertexMatrix();
+
+	// auto vertexMatrixConstructionTimeEnd =
+	//    std::chrono::high_resolution_clock::now();
+	// double totalVertexMatrixConstructionTime =
+	//    std::chrono::duration<double>(vertexMatrixConstructionTimeEnd -
+	//				  vertexMatrixConstructionTimeStart)
+	//	.count();
 	// printMatrix(V, "V");
 	// printFixedVertices(V);
 
+	// auto systemSolvingTimeStart =
+	// std::chrono::high_resolution_clock::now();
+
 	V = solveForNewVertexPositions(V);
+
+	// auto systemSolvingTimeEnd =
+	// std::chrono::high_resolution_clock::now();
+	// double totalSystemSolvingTime =
+	//    std::chrono::duration<double>(systemSolvingTimeEnd -
+	//				  systemSolvingTimeStart)
+	//	.count();
 	if (m_iterationsCompleted + 1 == m_previousVertexPositions.size())
 		m_previousVertexPositions.push_back(V);
+
 	// printFixedVertices(V);
 	// printMatrix(V, "NewV");
+	// auto updateMeshPositionsTimeStart =
+	//    std::chrono::high_resolution_clock::now();
+
 	updateMeshPositions(V);
+
+	// auto updateMeshPositionsTimeEnd =
+	//    std::chrono::high_resolution_clock::now();
+	// double totalUpdateMeshPositionsTime =
+	//    std::chrono::duration<double>(updateMeshPositionsTimeEnd -
+	//				  updateMeshPositionsTimeStart)
+	//	.count();
 	// computeFixedVertices();
 	// printSparseMatrix(m_Wl, "Wl");
+	// auto updateWlTimeStart = std::chrono::high_resolution_clock::now();
+
 	updateWl();
+
+	// auto updateWlTimeEnd = std::chrono::high_resolution_clock::now();
+	// double totalUpdateWlTime =
+	//    std::chrono::duration<double>(updateWlTimeEnd - updateWlTimeStart)
+	//	.count();
 	// printVector(m_A, "m_A");
+	// auto oneRingAreaTimeStart =
+	// std::chrono::high_resolution_clock::now();
 	computeOneRingAreaVector();
+	// auto oneRingAreaTimeEnd = std::chrono::high_resolution_clock::now();
+	// double totalOneRingAreaTime =
+	//    std::chrono::duration<double>(oneRingAreaTimeEnd -
+	//				  oneRingAreaTimeStart)
+	//	.count();
 	// printSparseMatrix(m_Wh, "Wh");
+	// auto updateWhTimeStart = std::chrono::high_resolution_clock::now();
 	updateWh();
+	// auto updateWhTimeEnd = std::chrono::high_resolution_clock::now();
+	// double totalUpdateWhTime =
+	//    std::chrono::duration<double>(updateWhTimeEnd - updateWhTimeStart)
+	//	.count();
 	// std::cout<<"number of fixed
 	// vertices:"<<fixedVertices.size()<<std::endl;
 	// printDiagonalElementsOfSparseMatrix(m_L, "L");
 	// m_L = computeLaplaceOperatorUsingIGL();
 	// m_previousDeltaCoords = m_L * V;
+	// auto laplaceComputationTimeStart =
+	//    std::chrono::high_resolution_clock::now();
 	computeLaplaceOperator();
+	// auto laplaceComputationTimeEnd =
+	//    std::chrono::high_resolution_clock::now();
+	// double totalLaplaceComputationTime =
+	//    std::chrono::duration<double>(laplaceComputationTimeEnd -
+	//				  laplaceComputationTimeStart)
+	//	.count();
 	// printDiagonalElementsOfSparseMatrix(m_L, "L");
-	if (maxLtoWhIndex != -1) previousMaxLtoWhIndex = maxLtoWhIndex;
-	VertexWithAttribute maxLtoWhVertex = getMaximumLtoWhRatio(m_L, m_Wh);
-	std::cout << "Vertex " << maxLtoWhVertex.index
-		  << " has the maximum ratio:r=|L/Wh|="
-		  << "|"
-		  << m_L.coeff(maxLtoWhVertex.index, maxLtoWhVertex.index)
-		  << "/"
-		  << m_Wh.coeff(maxLtoWhVertex.index, maxLtoWhVertex.index)
-		  << "| =" << maxLtoWhVertex.value << std::endl;
-	maxLtoWhIndex = maxLtoWhVertex.index;
+	// if (maxLtoWhIndex != -1) previousMaxLtoWhIndex = maxLtoWhIndex;
+	// VertexWithAttribute maxLtoWhVertex = getMaximumLtoWhRatio(m_L, m_Wh);
+	// std::cout << "Vertex " << maxLtoWhVertex.index
+	//	  << " has the maximum ratio:r=|L/Wh|="
+	//	  << "|"
+	//	  << m_L.coeff(maxLtoWhVertex.index, maxLtoWhVertex.index)
+	//	  << "/"
+	//	  << m_Wh.coeff(maxLtoWhVertex.index, maxLtoWhVertex.index)
+	//	  << "| =" << maxLtoWhVertex.value << std::endl;
+	// maxLtoWhIndex = maxLtoWhVertex.index;
 
-	VertexWithAttribute maxLVertex = getMaximumAbsoluteDiagonalElement(m_L);
-	std::cout << "Maximum L(" << maxLVertex.index
-		  << ")=" << maxLVertex.value << std::endl;
-	std::cout << "maxL*Wl=" << maxLVertex.value << "*" << m_Wl.coeff(0, 0)
-		  << "=" << maxLVertex.value * m_Wl.coeff(0, 0) << std::endl;
-	std::cout << "Wh(" << maxLVertex.index
-		  << ")=" << m_Wh.coeff(maxLVertex.index, maxLVertex.index)
-		  << std::endl;
+	// VertexWithAttribute maxLVertex =
+	// getMaximumAbsoluteDiagonalElement(m_L);
+	// std::cout << "Maximum L(" << maxLVertex.index
+	//	  << ")=" << maxLVertex.value << std::endl;
+	// std::cout << "maxL*Wl=" << maxLVertex.value << "*" << m_Wl.coeff(0,
+	// 0)
+	//	  << "=" << maxLVertex.value * m_Wl.coeff(0, 0) << std::endl;
+	// std::cout << "Wh(" << maxLVertex.index
+	//	  << ")=" << m_Wh.coeff(maxLVertex.index, maxLVertex.index)
+	//	  << std::endl;
 
-	size_t numPositiveDiagonalElements =
-	    getNumberOfPositiveDiagonalElements(m_L);
-	std::cout << "Number of positive diagonal elements:"
-		  << numPositiveDiagonalElements << std::endl;
-	//  setMaximumNumber(m_L,maxNumber);
-	// std::cout<<"Maximum element of L
-	// is:"<<getMaximumAbsoluteDiagonalElement(m_L)<<std::endl;
+	//	size_t numPositiveDiagonalElements =
+	//	    getNumberOfPositiveDiagonalElements(m_L);
+	//	std::cout << "Number of positive diagonal elements:"
+	//		  << numPositiveDiagonalElements << std::endl;
+	//	setMaximumNumber(m_L, maxNumber);
+	//	std::cout << "Maximum element of L is: "
+	//		  << getMaximumAbsoluteDiagonalElement(m_L) <<
+	// std::endl;
 
 	m_iterationsCompleted++;
-	std::cout << "Number of iterations completed:" << m_iterationsCompleted
-		  << std::endl;
-	std::cout << "current volume/original volume="
-		  << CGAL::Polygon_mesh_processing::volume(m_M) /
-			 m_originalVolume
-		  << std::endl;
-	std::cout << "current area/original area="
-		  << CGAL::Polygon_mesh_processing::area(m_M) / m_originalArea
-		  << std::endl;
+	// std::cout << "Number of iterations completed:" <<
+	// m_iterationsCompleted
+	//	  << std::endl;
+	// std::cout << "current volume/original volume="
+	//	  << CGAL::Polygon_mesh_processing::volume(m_M) /
+	//		 m_originalVolume
+	//	  << std::endl;
+	// std::cout << "current area/original area="
+	//	  << CGAL::Polygon_mesh_processing::area(m_M) / m_originalArea
+	//	  << std::endl
+	//	  << std::endl;
+	// double totalExecutionTime =
+	//    totalVertexMatrixConstructionTime + totalSystemSolvingTime +
+	//    totalUpdateMeshPositionsTime + totalUpdateWlTime +
+	//    totalOneRingAreaTime + totalUpdateWhTime +
+	//    totalLaplaceComputationTime;
+
+	//	std::cout << "totalVertexMatrixConstructionTime="
+	//		  << totalVertexMatrixConstructionTime /
+	// totalExecutionTime
+	//		  << std::endl;
+	//	std::cout << "totalSystemSolvingTime="
+	//		  << totalSystemSolvingTime / totalExecutionTime <<
+	// std::endl;
+	//	std::cout << "totalUpdateMeshPositionsTime="
+	//		  << totalUpdateMeshPositionsTime / totalExecutionTime
+	//		  << std::endl;
+	//	std::cout << "totalUpdateWlTime="
+	//		  << totalUpdateWlTime / totalExecutionTime <<
+	// std::endl;
+	//	std::cout << "totalOneRingAreaTime="
+	//		  << totalOneRingAreaTime / totalExecutionTime <<
+	// std::endl;
+	//	std::cout << "totalUpdateWhTime="
+	//		  << totalUpdateWhTime / totalExecutionTime <<
+	// std::endl;
+	//	std::cout << "totalLaplaceComputationTime="
+	//		  << totalLaplaceComputationTime / totalExecutionTime
+	//		  << std::endl;
+
+	// int nothing;
+	// std::cin >> nothing;
 }
 
 EigenMatrix MeshContractor::constructVertexMatrix() const {
@@ -280,6 +380,8 @@ void MeshContractor::updateMeshPositions(EigenMatrix Vnew) {
 	}
 }
 
+#include <Eigen/SparseQR>
+#include <unsupported/Eigen/SparseExtra>
 EigenMatrix MeshContractor::solveForNewVertexPositions(
     EigenMatrix currentVertexPositions) /*const*/ {
 	// std::vector<size_t> fixedIndices = getFixedVertices();
@@ -294,9 +396,19 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
 	// m_Wh.coeffRef(index, index) = 1;
 	//}
 
+	// auto t1 = std::chrono::high_resolution_clock::now();
 	SpMatrix WlL = m_Wl * m_L;
+	// auto t2 = std::chrono::high_resolution_clock::now();
+	// auto durationBlock1 =
+	//    std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1)
+	//	.count();
 
+	// t1 = std::chrono::high_resolution_clock::now();
 	SpMatrix A = concatenateVertically(WlL, m_Wh);
+	// t2 = std::chrono::high_resolution_clock::now();
+	// auto durationBlock2 =
+	//    std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1)
+	//	.count();
 	// Eigen::JacobiSVD<EigenMatrix> svd(EigenMatrix(A),
 	//                                  Eigen::ComputeThinU |
 	//                                  Eigen::ComputeThinV);
@@ -305,7 +417,12 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
 	// Eigen::saveMarket(A,"../A.mat");
 	// SpMatrix A(WlL.rows() + m_Wh.rows(), WlL.cols());
 	// A << WlL, m_Wh;
+	// t1 = std::chrono::high_resolution_clock::now();
 	EigenMatrix Bupper = EigenMatrix::Zero(WlL.rows(), 3);
+	// t2 = std::chrono::high_resolution_clock::now();
+	// auto durationBlock3 =
+	//    std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1)
+	//	.count();
 	// for (size_t vi : fixedIndices) {
 	//  // std::cout << "Before:" << Bupper(vi, 0) << std::endl;
 	//  Bupper(vi, 0) = m_previousDeltaCoords(vi, 0);
@@ -313,61 +430,164 @@ EigenMatrix MeshContractor::solveForNewVertexPositions(
 	//  Bupper(vi, 2) = m_previousDeltaCoords(vi, 2);
 	//  // std::cout << "After:" << Bupper(vi, 0) << std::endl;
 	//}
+	// t1 = std::chrono::high_resolution_clock::now();
 	EigenMatrix Blower = (m_Wh * currentVertexPositions);
 	EigenMatrix B(Bupper.rows() + Blower.rows(), 3);
 	B << Bupper, Blower;
+	// t2 = std::chrono::high_resolution_clock::now();
+	// auto durationBlock4 =
+	//    std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1)
+	//	.count();
 
 	// EigenMatrix newVertexPositions =svd.solve(B);
 
 	// Solve system using SimplicialLDLT
+	// t1 = std::chrono::high_resolution_clock::now();
 	Eigen::SimplicialLDLT<SpMatrix> solver;
 	SpMatrix At = A.transpose();
-	SpMatrix AtA = A.transpose() * A;
+	SpMatrix AtA = At * A;
 	solver.compute(AtA);
 	if (solver.info() != Eigen::Success)
 		std::cout << "Decomposition failed!" << std::endl;
-	EigenMatrix AtB = A.transpose() * B;
-	EigenMatrix newVertexPositions = solver.solve(AtB);
+	EigenMatrix AtB = At * B;
+	EigenMatrix x = solver.solve(AtB);
 	if (solver.info() != Eigen::Success)
 		std::cout << "Solving failed!" << std::endl;
-	assert(!hasInfinity(At));
-	assert(!hasNaN(At));
-	assert(!hasNaN(AtA));
-	assert(!hasNaN(AtB));
-	assert(!hasInfinity(AtA));
-	assert(!hasInfinity(AtB));
+	// std::string A_destination =
+	//    "../../Debug Contraction/A_SimplicialLDLT.mtx";
+	// std::string B_destination =
+	//    "../../Debug Contraction/B_SimplicialLDLT.mtx";
+	// std::string X_destination =
+	//    "../../Debug Contraction/X_simplicialLDLT.mtx";
+
+	// std::string info_destination =
+	//    "../../Debug Contraction/info_simplicialLDLT.txt";
+	// std::ofstream myfile(destination);
+	// myfile << "Max value in A:" << maxValueA << "\n"
+	//       << "Min value in A:" << minValueA << "\n"
+	//       << "Max value in B:" << maxValueB << "\n"
+	//       << "Min value in B:" << minValueB << "\n"
+	//       << "residual:" << r << std::endl;
+
+	// t2 = std::chrono::high_resolution_clock::now();
+	// auto durationBlock5 =
+	//    std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1)
+	//	.count();
+	// assert(!hasInfinity(At));
+	// assert(!hasNaN(At));
+	// assert(!hasNaN(AtA));
+	// assert(!hasNaN(AtB));
+	// assert(!hasInfinity(AtA));
+	// assert(!hasInfinity(AtB));
 
 	// Eigen::LeastSquaresConjugateGradient<SpMatrix> solver;
 	// solver.compute(A);
-	// if(solver.info()!=Eigen::Success)
-	//    std::cout<<"Decomposition failed!"<<std::endl;
-	// EigenMatrix newVertexPositions=solver.solve(B);
-	// if(solver.info()!=Eigen::Success)
-	//    std::cout<<"Solving failed!"<<std::endl;
+	// if (solver.info() != Eigen::Success)
+	//	std::cout << "Decomposition failed!" << std::endl;
+	// EigenMatrix x = solver.solve(B);
+	// if (solver.info() != Eigen::Success)
+	//	std::cout << "Solving failed!" << std::endl;
+	// std::cout << "estimated error: " << solver.error() << std::endl;
+
+	// Eigen::SparseQR<SpMatrix, Eigen::COLAMDOrdering<int>> solver; //TOO
+	// SLOW!
+	// Eigen::SparseQR<SpMatrix, Eigen::AMDOrdering<int>> solver;  // FAILS
+	// Eigen::SparseQR<SpMatrix, Eigen::NaturalOrdering<int>> solver;  //
+	// solver.compute(A);
+	// if (solver.info() != Eigen::Success)
+	//	std::cout << "Decomposition failed!" << std::endl;
+	// EigenMatrix x = solver.solve(B);
+	// if (solver.info() != Eigen::Success)
+	//	std::cout << "Solving failed!" << std::endl;
 
 	// BiCGSTAB
 	// Eigen::BiCGSTAB<SpMatrix> solver;
-	// solver.compute(A);
-	// EigenMatrix newVertexPositions=solver.solve(B);
-	// std::cout << "estimated error: " << solver.error()<< std::endl;
+	// SpMatrix At = A.transpose();
+	// SpMatrix AtA = At * A;
+	// solver.compute(AtA);
+	// EigenMatrix newVertexPositions = solver.solve(At * B);
+	// std::cout << "estimated error: " << solver.error() << std::endl;
 
-	// Eigen::ConjugateGradient<SpMatrix,Eigen::Lower|Eigen::Upper> solver;
-	// solver.compute(A);
-	// EigenMatrix newVertexPositions=solver.solve(B);
-	// std::cout << "estimated error: " << solver.error()<< std::endl;
+	// Eigen::ConjugateGradient<SpMatrix, Eigen::Lower | Eigen::Upper>
+	// solver;
+	// SpMatrix At = A.transpose();
+	// SpMatrix AtA = At * A;
+	// solver.compute(AtA);
+	// EigenMatrix newVertexPositions = solver.solve(At * B);
+	// std::cout << "estimated error: " << solver.error() << std::endl;
 
-	assert(!hasInfinity(m_L));
-	assert(!hasInfinity(m_Wl));
-	assert(!hasInfinity(WlL));
-	assert(!hasNaN(WlL));
-	assert(!hasInfinity(B));
-	assert(!hasNaN(B));
-	assert(!hasNaN(A));
-	assert(!hasInfinity(A));
-	assert(!hasNaN(newVertexPositions));
-	assert(!hasInfinity(newVertexPositions));
+	// Eigen::saveMarket(A, "../../Debug
+	// Contraction/A_ConjugateGradient.mtx");
+	// Eigen::saveMarket(B, "../../Debug
+	// Contraction/B_ConjugateGradient.mtx");
+	// Eigen::saveMarket(newVertexPositions,
+	//		  "../../Debug Contraction/X_ConjugateGradient.mtx");
+	// std::string infoDestination =
+	//    "../../Debug Contraction/info_ConjugateGradient.txt";
 
-	return newVertexPositions;
+	// auto maxValueA = getMaximum(A);
+	// auto minValueA = getMinimum(A);
+	// auto maxValueB = getMaximum(B);
+	// auto minValueB = getMinimum(B);
+
+	// double r = (A.transpose() * (A * x) - A.transpose() * B).norm() /
+	//	   (A.transpose() * B).norm();
+	// std::cout << "Iteration number:" << m_iterationsCompleted << "\n"
+	//	  << "Max value in A:" << maxValueA << "\n"
+	//	  << "Min value in A:" << minValueA << "\n"
+	//	  << "Max value in B:" << maxValueB << "\n"
+	//	  << "Min value in B:" << minValueB << "\n"
+	//	  //<< "Error:" << solver.error() << "\n"
+	//	  << "residual:" << r << "\n"
+	//	  << std::endl;
+	// std::ofstream myfile(info_destination, std::ios_base::app);
+	// myfile << "Iteration number:" << m_iterationsCompleted << "\n"
+	//       << "Max value in A:" << maxValueA << "\n"
+	//       << "Min value in A:" << minValueA << "\n"
+	//       << "Max value in B:" << maxValueB << "\n"
+	//       << "Min value in B:" << minValueB << "\n"
+	//       //<< "Error:" << solver.error() << "\n"
+	//       << "residual:" << r << "\n"
+	//       << std::endl;
+	// myfile.close();
+
+	// Eigen::saveMarket(A, A_destination);
+	// Eigen::saveMarket(B, B_destination);
+	// Eigen::saveMarket(x, X_destination);
+	// assert(!hasInfinity(m_L));
+	// assert(!hasInfinity(m_Wl));
+	// assert(!hasInfinity(WlL));
+	// assert(!hasNaN(WlL));
+	// assert(!hasInfinity(B));
+	// assert(!hasNaN(B));
+	// assert(!hasNaN(A));
+	// assert(!hasInfinity(A));
+	// assert(!hasNaN(newVertexPositions));
+	// assert(!hasInfinity(newVertexPositions));
+
+	// double totalDuration = durationBlock1 + durationBlock2 +
+	//		       durationBlock3 + durationBlock4 + durationBlock5;
+
+	// std::cout << "durationBlock1=" << (double)durationBlock1 /
+	// totalDuration
+	//	  << std::endl;
+	// std::cout << "durationBlock2=" << (double)durationBlock2 /
+	// totalDuration
+	//	  << std::endl;
+	// std::cout << "durationBlock3=" << (double)durationBlock3 /
+	// totalDuration
+	//	  << std::endl;
+	// std::cout << "durationBlock4=" << (double)durationBlock4 /
+	// totalDuration
+	//	  << std::endl;
+	// std::cout << "durationBlock5=" << (double)durationBlock5 /
+	// totalDuration
+	//	  << std::endl;
+
+	// int nothing;
+	// std::cin >> nothing;
+
+	return x;
 }
 
 void MeshContractor::updateWl() { m_Wl *= m_Sl; }
@@ -427,7 +647,7 @@ void MeshContractor::computeLaplaceOperator() {
 		if (optionalWeight)
 			weight = optionalWeight.get() / 2;
 		else {
-			weight = std::pow(10, 6);
+			weight = std::pow(10, 3);
 			// fixedVertices.insert(i);
 			// fixedVertices.insert(j);
 			// weight = previousLaplaceOperator.coeff(i, j);
@@ -497,8 +717,8 @@ boost::optional<double> MeshContractor::computeCotangentValue(
 
 	double cosine = dot_ab / (CGAL::sqrt(dot_aa) * CGAL::sqrt(dot_bb));
 	if (!(cosine >= -1 && cosine <= 1)) {
-		std::cout << "cosine value out of bounds:" << cosine
-			  << std::endl;
+		// std::cout << "cosine value out of bounds:" << cosine
+		//	  << std::endl;
 		if (cosine < -1)
 			cosine = -1;
 		else
@@ -507,8 +727,8 @@ boost::optional<double> MeshContractor::computeCotangentValue(
 
 	double cosineSquared = cosine * cosine;
 	if (!(cosineSquared >= 0 && cosineSquared <= 1)) {
-		std::cout << "cosineSquared value out of bounds:"
-			  << cosineSquared << std::endl;
+		// std::cout << "cosineSquared value out of bounds:"
+		//	  << cosineSquared << std::endl;
 		if (cosineSquared < 0)
 			cosineSquared = 0;
 		else
@@ -516,8 +736,9 @@ boost::optional<double> MeshContractor::computeCotangentValue(
 	}
 	double sineSquared = double(1.0) - cosineSquared;
 	if (!(sineSquared >= 0 && sineSquared <= 1)) {
-		std::cout << "sineSquared value out of bounds:" << sineSquared
-			  << std::endl;
+		// std::cout << "sineSquared value out of bounds:" <<
+		// sineSquared
+		//	  << std::endl;
 		if (sineSquared < 0)
 			sineSquared = 0;
 		else

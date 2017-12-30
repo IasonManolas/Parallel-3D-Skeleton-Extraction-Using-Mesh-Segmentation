@@ -191,22 +191,6 @@ void GLWidget::wheelEvent(QWheelEvent *event) {
 	}
 }
 
-#include <ctime>
-void GLWidget::compareSkeletonizationMethods() {
-	//  clock_t begin = clock();
-	// scene.M.skeletonize();
-	//  clock_t end = clock();
-	//    double elapsed_secs = double(end - begin) /
-	//    CLOCKS_PER_SEC;
-	//    std::cout<<"Skeletonize WITHOUT
-	//    segmentation:"<<elapsed_secs<<std::endl;
-	clock_t begin = clock();
-	scene.M.skeletonizeUsingSegmentation();
-	clock_t end = clock();
-	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-	std::cout << "Skeletonize USING segmentation:" << elapsed_secs
-		  << std::endl;
-}
 void GLWidget::keyPressEvent(QKeyEvent *event) {
 	switch (event->key()) {
 		case Qt::Key_M:
@@ -230,17 +214,17 @@ void GLWidget::keyPressEvent(QKeyEvent *event) {
 			connectivitySurgery_signal();
 			doneCurrent();
 			break;
-		case Qt::Key_3:
-			refinementEmbedding_signal();
-			break;
 		// case Qt::Key_3:
-		//   cgalSkeletonization_signal();
-		//   break;
+		//	refinementEmbedding_signal();
+		//	break;
+		case Qt::Key_3:
+			scene.M.runSkeletonizationMethods();
+			break;
 		case Qt::Key_4:
-			mode = segmentsView;
-			activeShader = segmentShader;
-			showMeshSegments_signal();
-			compareSkeletonizationMethods();
+			cgalSkeletonization_signal();
+			break;
+		case Qt::Key_P:
+			scene.M.parallelSkeletonization();
 			break;
 	}
 }

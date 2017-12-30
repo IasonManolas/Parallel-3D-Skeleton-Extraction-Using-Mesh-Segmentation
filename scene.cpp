@@ -36,7 +36,7 @@ void Scene::initializeScene() {
 	// loadMesh("../Models/Small/test.obj");
 
 	// loadMesh("../Models/tyra_rightFoot.off");
-	loadMesh("../Models/bunny_low.obj");
+	loadMesh("../Models/Test Set/bunny_low.obj");
 	// loadMesh("../Models/cylinder.obj");
 	// loadMesh("../Models/Small/coctel.obj");
 	// loadMesh("../Models/Small/Wrong by assimp/stretched cube.obj");
@@ -101,13 +101,31 @@ void Scene::handle_meshContraction(bool automatic,
 			}
 		}
 
-		CGAL::extract_mean_curvature_flow_skeleton(M.m_M, skeleton);
+		// CGAL::extract_mean_curvature_flow_skeleton(M.m_M, skeleton);
 
-		M.m_skeleton.populateSkeleton(skeleton);
-		M.alphaValue = 0.4;
+		// M.m_skeleton.populateSkeleton(skeleton);
+		// M.alphaValue = 0.4;
 
-		// Skeletonization mcs(M.m_M);
-		// mcs.contract_until_convergence();
+		auto cgalContractionTimeStart =
+		    std::chrono::high_resolution_clock::now();
+		Skeletonization mcs(M.m_M);
+		mcs.contract_until_convergence();
+		auto cgalContraactionTimeEnd =
+		    std::chrono::high_resolution_clock::now();
+
+		std::cout << "total contraction time using cgal:"
+			  << std::chrono::duration<double>(
+				 cgalContraactionTimeEnd -
+				 cgalContractionTimeStart)
+				 .count()
+			  << std::endl;
+
+		std::cout << "Volume meso skeleton/original:"
+			  << CGAL::Polygon_mesh_processing::volume(
+				 mcs.meso_skeleton()) /
+				 CGAL::Polygon_mesh_processing::volume(M.m_M)
+			  << std::endl;
+
 		// auto contractedMesh = mcs.meso_skeleton();
 		// std::cout << "Meso skeleton has: "
 		// 	  << contractedMesh.number_of_vertices() << "

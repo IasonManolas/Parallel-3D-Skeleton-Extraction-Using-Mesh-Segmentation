@@ -36,7 +36,7 @@ class MeshContractor {
 	MeshContractor(
 	    CGALSurfaceMesh meshToContract /*, std::vector<uint> indices*/);
 	CGALSurfaceMesh getContractedMesh() const;
-	void contractMesh();
+	size_t contractMesh();
 	void executeContractionStep();
 	void executeContractionReversingStep();
 	void setVolumeThreshold(double volumeThreshold);
