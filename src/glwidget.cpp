@@ -62,11 +62,14 @@ void GLWidget::paintGL() {
   scene.Draw(activeShader, axesShader, edgeShader, defaultShader);
 }
 void GLWidget::mousePressEvent(QMouseEvent *event) {
+  QVector2D mouseOffset = QVector2D(event->localPos()) - lastMousePos;
   lastMousePos = QVector2D(event->localPos());
   if (mode == segmentsView) {
     if (event->button() == Qt::RightButton) {
       segmentSelection_signal(lastMousePos.x(), lastMousePos.y());
     }
+  } else {
+    scene.handle_mouseMovement(mouseOffset);
   }
 }
 
@@ -91,7 +94,7 @@ void GLWidget::cameraReset_signal() { scene.handle_cameraReset(); }
 
 void GLWidget::initializeShaders() {
   const std::string shaderDirectory = "../../shaders/";
-  defaultShader = new Shader((shaderDirectory + "/vertex.glsl").c_str(),
+  defaultShader = new Shader((shaderDirectory + "vertex.glsl").c_str(),
                              (shaderDirectory + "fragment.glsl").c_str());
   axesShader = new Shader((shaderDirectory + "axesvs.glsl").c_str(),
                           (shaderDirectory + "axesfs.glsl").c_str());

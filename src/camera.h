@@ -8,6 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/rotate_vector.hpp> //glm::rotat
+#include <glm/gtx/string_cast.hpp>
 
 #include <QVector2D>
 #include <QVector3D>
@@ -23,6 +24,8 @@ public:
   }
 
   void calculateRotationMatrix(const QVector2D &mouseDV) {
+    if (mouseDV.x() == 0 && mouseDV.y() == 0)
+      return;
     glm::vec3 rotationAxis(-mouseDV.y(), -mouseDV.x(),
                            0.0); // prepei na peristrefetai ws pros to
                                  // peristrammeno systhma syntetagmenwn kai oxi
@@ -31,7 +34,8 @@ public:
     rotationAxis = glm::normalize(rotationAxis);
     glm::quat rot = glm::angleAxis(angle, rotationAxis);
     rotationQ = rotationQ * rot;
-    // std::cout << glm::to_string(rotationQ) << std::endl;
+    //    std::cout << glm::to_string(rot) << std::endl;
+    std::cout << angle << std::endl;
     rotationMatrix = glm::toMat4(rotationQ);
   }
 
@@ -76,7 +80,7 @@ public:
   }
 
   void resetCamera() {
-    rotationQ = glm::quat();
+    rotationQ = glm::quat(1.0, 0.0, 0.0, 0.0);
     rotationMatrix = glm::mat4(1);
     distance = 3;
     updateVectors();
@@ -96,8 +100,7 @@ private:
 
   glm::mat4 viewMatrix{glm::mat4(1)};
 
-  glm::quat rotationQ{
-      glm::quat()}; // this quaternion represents the orientation of the cam?
+  glm::quat rotationQ{1.0, 0.0, 0.0, 0.0};
   glm::mat4 rotationMatrix{glm::mat4(1)};
 };
 #endif // CAMERA_H
